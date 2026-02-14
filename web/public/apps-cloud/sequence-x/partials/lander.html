@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SEQUENCE-X // INFO</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+
+    <style>
+        /* CANVA STYLE BLOB BACKGROUND (EMAS & BIRU) */
+        .blob-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
+        }
+        .blob {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5; animation: float 10s infinite alternate;
+        }
+        .blob-blue {
+            top: -10%; left: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, #54d7f6 0%, transparent 70%);
+        }
+        .blob-gold {
+            bottom: -20%; right: -20%; width: 70vw; height: 70vw;
+            background: radial-gradient(circle, #ffd700 0%, transparent 70%);
+            animation-delay: -5s;
+        }
+        @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(20px, 40px); } }
+    </style>
+</head>
+<body class="hide-scrollbar">
+
+    <div class="blob-bg">
+        <div class="blob blob-blue"></div>
+        <div class="blob blob-gold"></div>
+    </div>
+
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in text-center lg:text-left pt-10 lg:pt-0 flex flex-col justify-center">
+
+                <div class="mx-auto lg:mx-0 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full inline-flex items-center w-fit mb-6">
+                    <span class="text-[10px] text-cyan-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="zap" class="w-3 h-3"></i> CONTENT AUTOMATION
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-6 font-display">
+                    STOP EDIT VIDEO <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">SATU PER SATU!</span>
+                </h1>
+
+                <p class="text-sm lg:text-base font-normal leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0" style="color: var(--text-muted);">
+                    Capek edit manual? Sequence-X adalah "Cheat Code" buat ternak ratusan konten VT/Reels otomatis tanpa burnout. Masalahnya bukan ide, tapi eksekusi.
+                </p>
+
+                <div class="grid grid-cols-3 gap-2 max-w-md mx-auto lg:mx-0">
+                    <div class="glass-panel p-3 rounded-lg text-center border border-white/5">
+                        <div class="text-cyan-400 font-black text-lg">10X</div>
+                        <div class="text-[8px] text-gray-500 uppercase tracking-wider">SPEED</div>
+                    </div>
+                    <div class="glass-panel p-3 rounded-lg text-center border border-white/5">
+                        <div class="text-yellow-400 font-black text-lg">0%</div>
+                        <div class="text-[8px] text-gray-500 uppercase tracking-wider">SERVER LOAD</div>
+                    </div>
+                    <div class="glass-panel p-3 rounded-lg text-center border border-white/5">
+                        <div class="text-white font-black text-lg">∞</div>
+                        <div class="text-[8px] text-gray-500 uppercase tracking-wider">UNLIMITED</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative z-10 animate-fade-in delay-100 pt-10 lg:pt-0 flex flex-col justify-center gap-6">
+
+                <div class="glass-panel p-6 rounded-2xl border border-white/10">
+                    <h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+                        <i data-lucide="terminal" class="w-4 h-4 text-cyan-500"></i> CARA KERJA
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400">1</div>
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-200">Siapkan Aset</h4>
+                                <p class="text-[10px] text-gray-500 mt-1">Upload video Hook, Body, dan CTA ke dalam folder yang tersedia.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400">2</div>
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-200">Atur Overlay</h4>
+                                <p class="text-[10px] text-gray-500 mt-1">Tulis caption copywriting untuk setiap variasi video.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded bg-white/5 flex items-center justify-center text-[10px] font-bold text-gray-400">3</div>
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-200">Generate</h4>
+                                <p class="text-[10px] text-gray-500 mt-1">Engine akan meracik kombinasi video unik secara massal.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl border border-white/10 bg-cyan-900/10">
+                    <h3 class="font-bold text-sm mb-2 text-cyan-400">KENAPA SEQUENCE-X?</h3>
+                    <p class="text-[10px] text-gray-400 leading-relaxed mb-4">
+                        Kompetitor lo upload 5 video sehari. Lo take satu video aja seharian? Kapan cuannya? Lo butuh sistem pabrik, bukan skill editing manual.
+                    </p>
+                    <div class="flex items-center gap-2 text-[10px] text-gray-500">
+                        <i data-lucide="shield-check" class="w-3 h-3 text-green-500"></i>
+                        <span>Client-Side Render (Aman & Privasi Terjaga)</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Lucide Icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

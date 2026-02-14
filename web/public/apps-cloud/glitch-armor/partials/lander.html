@@ -1,0 +1,103 @@
+<!DOCTYPE  html >
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>APP INFO</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/assets/lander/main.js"></script>
+<link rel="stylesheet" href="/assets/lander/style.css">
+</head>
+<body class="hide-scrollbar">
+<div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+    <div class="desktop-grid">
+
+        <div class="relative z-10 animate-fade-in">
+            <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                <span class="text-[10px] text-cyan-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                    <i data-lucide="shield-off" class="w-3 h-3"></i> ART PROTECTION V1.0
+                </span>
+            </div>
+
+            <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                LINDUNGI KARYA. <br> <span class="gradient-text">DARI AI PENCURI.</span>
+            </h1>
+
+            <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                Jangan biarkan gaya gambarmu dicuri dan dikloning oleh AI Scraper. Suntikkan "Invisible Noise" untuk merusak proses training AI tanpa mengubah estetika visual karyamu.
+            </p>
+        </div>
+
+        <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+            <div class="glass-panel p-5 rounded-2xl">
+                <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-500">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="text-sm font-bold">Cara Proteksi</h3>
+                </div>
+
+                <ul class="space-y-4">
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Upload Artwork</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Pilih file gambar (JPG/PNG) yang ingin dilindungi sebelum diposting.</span>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Inject Noise</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Algoritma akan menyisipkan <i>Adversarial Perturbation</i> ke dalam piksel.</span>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Download Safe File</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Unduh gambar yang sudah "beracun" bagi AI tapi tetap indah bagi manusia.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="glass-panel p-4 rounded-xl">
+                    <i data-lucide="eye-off" class="w-5 h-5 mb-2 text-cyan-500"></i>
+                    <h4 class="text-xs font-bold mb-1">Invisible Shield</h4>
+                    [Image of adversarial perturbation visual comparison]
+                    <p class="text-[10px] leading-relaxed mt-2" style="color: var(--text-muted);">
+                        Mata manusia melihat gambar normal, tapi "mata" AI melihat noise acak yang membingungkan.
+                    </p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl">
+                    <i data-lucide="cpu" class="w-5 h-5 mb-2 text-purple-500"></i>
+                    <h4 class="text-xs font-bold mb-1">Client-Side</h4>
+                    <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                        Proses injeksi noise dilakukan di browser. Karya aslimu tidak pernah diupload ke server kami.
+                    </p>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                <h3 class="text-xs font-bold mb-1">Adversarial Perturbation</h3>
+                <p class="text-[10px]" style="color: var(--text-muted);">
+                    Teknik memanipulasi data piksel mikroskopis untuk merusak proses <i>feature extraction</i> pada model AI Generatif (Anti-Training).
+                </p>
+            </div>
+
+            <div class="text-center mt-2 px-4 lg:hidden">
+                <p class="text-[10px] italic opacity-50">
+                    "Protect your art, confuse the machine."
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+    "id": "keyword-mixer",
+    "name": "ACAK KATA KUNCI SEO & GOOGLE ADS - DOMINASI PENCARIAN",
+    "version": "1.0.0",
+    "description": "Tools wajib marketer! Campur, gabungkan, dan lipatgandakan kata kunci (Long Tail Keywords). Fitur auto-match type Google Ads dan analisa kepadatan keyword.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 9,
+    "slug": "keyword-mixer",
+    "capabilities": [
+        "local_storage"
+    ],
+    "tags": [
+        "seo",
+        "marketing",
+        "google ads",
+        "keyword tool",
+        "generator"
+    ]
+}

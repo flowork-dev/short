@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Story Sequencer | Final Copy</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@700&family=Courier+Prime&family=Creepster&family=Inter:wght@400;900&family=Lobster&family=Monoton&family=Orbitron:wght@900&family=Oswald&family=Playfair+Display&family=Roboto&display=swap" rel="stylesheet">
+
+    <style>
+        :root { --bg-dark: #050507; --accent: #00f5ff; --border: #222; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; padding: 0; width: 100vw; height: 100vh; background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* HEADER */
+        .header { height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid var(--border); background: #0a0a0f; z-index: 50; }
+        .logo { font-family: 'Orbitron', monospace; font-size: 14px; letter-spacing: 1px; }
+        .logo span { color: var(--accent); }
+
+        .mode-switch { display: flex; background: #222; border-radius: 4px; padding: 2px; gap:5px; }
+        .mode-btn { background: none; border: 1px solid transparent; color: #888; padding: 4px 10px; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 2px; }
+        .mode-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 10px rgba(0,245,255,0.4); }
+
+        /* WORKSPACE */
+        .workspace { flex: 1; position: relative; overflow: hidden; background: #111; display: flex; align-items: center; justify-content: center; touch-action: none; padding: 20px; }
+        .canvas-wrapper { box-shadow: 0 0 50px rgba(0,0,0,0.5); transform-origin: center center; border: 2px solid var(--accent); background: #000; }
+        canvas { display: block; touch-action: none; }
+
+        /* BOTTOM DOCK */
+        .bottom-dock { flex-shrink: 0; background: #0a0a0f; border-top: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+        .dock-toolbar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-around; background: #15151a; }
+        .tool-btn { background: none; border: none; color: #aaa; font-size: 24px; padding: 0 15px; height: 100%; cursor: pointer; display: flex; align-items: center; }
+        .tool-btn:active { color: var(--accent); transform: scale(0.9); }
+        .tool-btn.highlight { color: var(--accent); }
+
+        .slide-strip { height: 90px; display: flex; align-items: center; gap: 10px; padding: 10px; overflow-x: auto; background: #0a0a0f; }
+        .slide-card { min-width: 60px; height: 100%; background: #222; border: 1px solid #444; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; position: relative; overflow: hidden; }
+        .slide-card.active { border-color: var(--accent); color: var(--accent); background: #111; }
+        .slide-thumb-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
+        .slide-card.active .slide-thumb-img { opacity: 1; }
+        .btn-add { min-width: 50px; height: 100%; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 20px; cursor: pointer; }
+
+        /* SETTINGS OVERLAY */
+        .settings-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 85%; max-height: 700px; background: #111; border-top: 1px solid var(--accent); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); }
+        .settings-overlay.open { transform: translateY(0); }
+        .overlay-header { padding: 12px 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron'; font-size: 12px; color: var(--accent); background: #151515; }
+        .overlay-body { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
+
+        /* CONTROLS */
+        .control-section { display: none; }
+        .control-section.active { display: block; }
+        .control-group { margin-bottom: 20px; border-bottom: 1px solid #222; padding-bottom: 15px; }
+        .c-label { font-size: 10px; color: #888; font-weight: bold; display: block; margin-bottom: 8px; letter-spacing: 1px; }
+        .c-input, .c-select { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; font-size: 14px; border-radius: 4px; outline: none; }
+        .c-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+        .btn-action { width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #444; font-size: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-action.active { background: var(--accent); color: black; border-color: var(--accent); }
+        .btn-primary { background: rgba(0, 245, 255, 0.2); border-color: var(--accent); color: var(--accent); }
+
+        input[type="color"] { -webkit-appearance: none; appearance: none; border: 1px solid #444; width: 100%; height: 35px; background: none; cursor: pointer; padding: 0; border-radius: 4px; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+        input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+        #toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; opacity: 0; transition: 0.3s; pointer-events: none; border: 1px solid var(--accent); z-index: 200; font-weight: bold; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+
+        /* === FOOTER STYLING MANUAL (FIX BERANTAKAN) === */
+        #global-footer {
+            flex-shrink: 0; /* Jangan sampai kegencet */
+            background: #000;
+            border-top: 1px solid #222;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            font-family: monospace;
+            display: flex; /* Biar rapi kalau ada konten grid */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        /* Reset bawaan kalau footer load elemen aneh */
+        #global-footer * { max-width: 100%; }
+        #global-footer i, #global-footer svg { vertical-align: middle; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+    <input type="file" id="imgUploadInput" accept="image/*" style="display: none;" onchange="App.handleImageUpload(this)">
+
+    <header class="header">
+        <div class="logo">COMIC<span>SEQ</span></div>
+        <div class="mode-switch">
+            <button class="mode-btn active" id="btn-mode-img" onclick="App.setMode('image')">EDIT IMG</button>
+            <button class="mode-btn" id="btn-mode-grid" onclick="App.setMode('grid')">EDIT GRID</button>
+        </div>
+    </header>
+
+    <div class="workspace" id="stageContainer">
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+    </div>
+
+    <footer class="bottom-dock">
+        <div class="dock-toolbar">
+            <button class="tool-btn" onclick="document.getElementById('imgUploadInput').click()"><i class="mdi mdi-image-plus"></i></button>
+            <button class="tool-btn" onclick="App.addBubble('speech')"><i class="mdi mdi-comment-outline"></i></button>
+            <button class="tool-btn" onclick="App.addBubble('thought')"><i class="mdi mdi-cloud-outline"></i></button>
+            <button class="tool-btn highlight" onclick="App.openSettings('page')"><i class="mdi mdi-tune-vertical"></i></button>
+            <button class="tool-btn" style="color:#0f0;" onclick="App.exportAllSlides()"><i class="mdi mdi-download"></i></button>
+            <button class="tool-btn" style="color:#ff4444;" onclick="App.deleteSlide()"><i class="mdi mdi-delete"></i></button>
+        </div>
+        <div class="slide-strip" id="slidesList">
+            <div class="btn-add" onclick="App.addSlide()">+</div>
+        </div>
+    </footer>
+
+    <div id="global-footer">Loading Footer...</div>
+
+    <div class="settings-overlay" id="settingsPanel">
+        <div class="overlay-header">
+            <span id="overlayTitle">SETTINGS</span>
+            <i class="mdi mdi-chevron-down" onclick="App.closeSettings()" style="font-size: 24px; cursor: pointer;"></i>
+        </div>
+        <div class="overlay-body">
+
+            <div id="section-page" class="control-section">
+                <div class="control-group">
+                    <label class="c-label" style="color:yellow;">1. GRID CONFIG</label>
+                    <div class="c-row">
+                        <div style="flex:1">
+                            <span class="c-label" style="font-size:9px">BENTUK</span>
+                            <select class="c-input" id="gridShape" onchange="App.updateGridLogic()">
+                                <option value="square">KOTAK (1:1)</option>
+                                <option value="portrait">PANJANG (9:16)</option>
+                                <option value="landscape">LEBAR (16:9)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="c-row">
+                        <div style="flex:1">
+                            <span class="c-label" style="font-size:9px">KOLOM</span>
+                            <input type="number" class="c-input" min="1" max="10" value="3" id="gridCols" onchange="App.updateGridLogic()">
+                        </div>
+                        <div style="flex:1">
+                            <span class="c-label" style="font-size:9px">BARIS</span>
+                            <input type="number" class="c-input" min="1" max="50" value="3" id="gridRows" onchange="App.updateGridLogic()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="c-label" style="color:var(--accent)">2. CAPTION STYLE</label>
+                    <textarea id="captionInput" class="c-input" rows="2" placeholder="Text..." oninput="App.updateCaption('text', this.value)"></textarea>
+
+                    <div class="c-row" style="margin-top:15px">
+                        <div style="flex:1"><span class="c-label" style="font-size:9px">BG WIDTH</span><input type="range" min="100" max="3000" id="capWidth" oninput="App.updateCaption('width', this.value)"></div>
+                        <div style="flex:1"><span class="c-label" style="font-size:9px">BG HEIGHT</span><input type="range" min="50" max="1000" id="capHeight" oninput="App.updateCaption('height', this.value)"></div>
+                    </div>
+
+                    <div class="c-row" style="margin-top:10px;">
+                        <div style="flex:1">
+                            <span class="c-label" style="font-size:9px">FONT</span>
+                            <select class="c-input" id="capFont" onchange="App.updateCaption('fontFamily', this.value)">
+                                <option value="Arial">Arial</option>
+                                <option value="Bangers">Bangers</option>
+                                <option value="Comic Neue">Comic Neue</option>
+                                <option value="Courier Prime">Courier</option>
+                                <option value="Creepster">Creepster</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Lobster">Lobster</option>
+                                <option value="Monoton">Monoton</option>
+                                <option value="Orbitron">Orbitron</option>
+                                <option value="Oswald">Oswald</option>
+                                <option value="Playfair Display">Playfair</option>
+                                <option value="Roboto">Roboto</option>
+                            </select>
+                        </div>
+                        <div style="flex:1">
+                            <span class="c-label" style="font-size:9px">TEXT SIZE</span>
+                            <input type="range" min="10" max="200" id="capSize" oninput="App.updateCaption('fontSize', this.value)">
+                        </div>
+                    </div>
+
+                    <div class="c-row">
+                        <div style="flex:1"><span class="c-label" style="font-size:9px">BG COLOR</span><input type="color" id="capBgColor" oninput="App.updateCaption('bgColor', this.value)"></div>
+                        <div style="flex:1"><span class="c-label" style="font-size:9px">TEXT COLOR</span><input type="color" id="capTextColor" oninput="App.updateCaption('color', this.value)"></div>
+                    </div>
+                    <div style="margin-top:10px"><span class="c-label" style="font-size:9px">OPACITY (0-1)</span><input type="range" min="0" max="1" step="0.1" id="capBgAlpha" oninput="App.updateCaption('bgAlpha', this.value)"></div>
+                </div>
+
+                <div class="control-group" style="margin-top:30px;">
+                    <button class="btn-action btn-primary" onclick="App.exportAllSlides()">DOWNLOAD</button>
+                </div>
+            </div>
+
+            <div id="section-bubble" class="control-section">
+                <div class="control-group">
+                    <label class="c-label">EDIT BUBBLE TEXT</label>
+                    <textarea id="bubbleTextInput" class="c-input" rows="3" oninput="App.updateBubble('text', this.value)"></textarea>
+                </div>
+
+                <div class="control-group">
+                    <div class="c-row" style="margin-bottom:10px;">
+                        <div style="flex:1">
+                            <span class="c-label" style="font-size:9px">FONT</span>
+                            <select class="c-input" id="bubbleFont" onchange="App.updateBubble('fontFamily', this.value)">
+                                <option value="Arial">Arial</option>
+                                <option value="Bangers">Bangers</option>
+                                <option value="Comic Neue">Comic Neue</option>
+                                <option value="Courier Prime">Courier</option>
+                                <option value="Creepster">Creepster</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Lobster">Lobster</option>
+                                <option value="Monoton">Monoton</option>
+                                <option value="Orbitron">Orbitron</option>
+                                <option value="Oswald">Oswald</option>
+                                <option value="Playfair Display">Playfair</option>
+                                <option value="Roboto">Roboto</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="c-row">
+                        <div style="flex:1"><span class="c-label" style="font-size:9px">TEXT</span><input type="color" id="bubbleTextColor" oninput="App.updateBubble('color', this.value)"></div>
+                        <div style="flex:1"><span class="c-label" style="font-size:9px">BG</span><input type="color" id="bubbleBgColor" oninput="App.updateBubble('bgColor', this.value)"></div>
+                    </div>
+                    <div style="margin-top:10px"><span class="c-label" style="font-size:9px">BUBBLE SIZE</span><input type="range" min="30" max="500" style="width:100%" id="bubbleShapeSizeRange" oninput="App.updateBubble('shapeSize', this.value)"></div>
+                    <div style="margin-top:10px"><span class="c-label" style="font-size:9px">FONT SIZE</span><input type="range" min="10" max="200" style="width:100%" id="bubbleTextSizeRange" oninput="App.updateBubble('fontSize', this.value)"></div>
+                </div>
+                <button class="btn-action" style="background:#400; border-color:red;" onclick="App.deleteSelectedBubble()">DELETE BUBBLE</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="toast">Notification</div>
+
+    <script>
+        const Canvas = { el: document.getElementById('mainCanvas'), ctx: document.getElementById('mainCanvas').getContext('2d'), width: 1080, height: 1080 };
+        const State = { slides: [], currIdx: -1, mode: 'image', dragStart: { x:0, y:0 }, isResizing: false, pinchDist: null, selectedBubble: -1, dragTarget: null };
+
+        function hexToRgba(hex, alpha) { let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')'; } return hex; }
+
+        const App = {
+            init() { this.addSlide(); this.updateGridLogic(); window.addEventListener('resize', () => this.autoFitPreview()); this.initGestures(); },
+
+            drawText(ctx, text, x, y, fontSize, fontFamily, color) {
+                ctx.font = `${fontSize}px "${fontFamily}"`;
+                ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                const lines = text.split('\n');
+                const lineHeight = fontSize * 1.2;
+                const startY = y - ((lines.length - 1) * lineHeight) / 2;
+                lines.forEach((line, i) => ctx.fillText(line, x, startY + (i * lineHeight)));
+            },
+
+            drawCloud(ctx, x, y, size) {
+                ctx.beginPath();
+                const r = size;
+                ctx.ellipse(0, 0, r*1.2, r*0.8, 0, 0, Math.PI*2);
+                const bumps = 7;
+                for(let i=0; i<bumps; i++) {
+                    const ang = (i / bumps) * Math.PI * 2;
+                    ctx.arc(Math.cos(ang) * r, Math.sin(ang) * (r*0.7), r*0.5, 0, Math.PI*2);
+                }
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(-r*0.8, r*0.8, r*0.2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(-r*1.1, r*1.1, r*0.15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            },
+
+            updateGridLogic() {
+                const r = parseInt(document.getElementById('gridRows').value) || 1;
+                const c = parseInt(document.getElementById('gridCols').value) || 1;
+                const shape = document.getElementById('gridShape').value;
+                const cellW = 1080;
+                let cellH = cellW;
+                if (shape === 'portrait') cellH = cellW * (16/9);
+                if (shape === 'landscape') cellH = cellW * (9/16);
+                Canvas.width = cellW * c; Canvas.height = cellH * r;
+                Canvas.el.width = Canvas.width; Canvas.el.height = Canvas.height;
+                if(State.currIdx > -1) { const s = State.slides[State.currIdx]; s.rows = r; s.cols = c; s.shape = shape; }
+                this.autoFitPreview(); this.draw();
+            },
+
+            autoFitPreview() {
+                const container = document.getElementById('stageContainer');
+                const wrapper = document.getElementById('canvasWrapper');
+                const scale = Math.min((container.clientWidth-40)/Canvas.width, (container.clientHeight-40)/Canvas.height);
+                wrapper.style.transform = `scale(${scale})`; wrapper.style.width = `${Canvas.width}px`; wrapper.style.height = `${Canvas.height}px`;
+            },
+
+            setMode(m) { State.mode = m; document.getElementById('btn-mode-img').classList.toggle('active', m === 'image'); document.getElementById('btn-mode-grid').classList.toggle('active', m === 'grid'); this.draw(); this.toast(`MODE: ${m.toUpperCase()}`); },
+
+            addSlide() {
+                State.slides.push({
+                    rows: 3, cols: 3, shape: 'square',
+                    image: null, imgScale: 1, imgPan: {x:0, y:0},
+                    gridScale: 1, gridPan: {x:0, y:0},
+                    bubbles: [],
+                    caption: '', captionStyle: { x:50, y:50, w:500, h:100, color:'#ffffff', bgColor:'#000000', bgAlpha:0.7, fontSize:60, fontFamily:'Arial'}
+                });
+                this.selectSlide(State.slides.length - 1);
+            },
+
+            selectSlide(idx) {
+                State.currIdx = idx; State.selectedBubble = -1;
+                const s = State.slides[idx];
+                document.getElementById('gridRows').value = s.rows;
+                document.getElementById('gridCols').value = s.cols;
+                document.getElementById('gridShape').value = s.shape;
+                this.syncCaptionUI(s);
+                this.renderStrip(); this.updateGridLogic();
+            },
+
+            syncCaptionUI(s) {
+                document.getElementById('captionInput').value = s.caption;
+                document.getElementById('capFont').value = s.captionStyle.fontFamily;
+                document.getElementById('capSize').value = s.captionStyle.fontSize;
+                document.getElementById('capBgColor').value = s.captionStyle.bgColor;
+                document.getElementById('capTextColor').value = s.captionStyle.color;
+                document.getElementById('capBgAlpha').value = s.captionStyle.bgAlpha;
+                document.getElementById('capWidth').value = s.captionStyle.w;
+                document.getElementById('capHeight').value = s.captionStyle.h;
+            },
+
+            syncBubbleUI(b) {
+                document.getElementById('bubbleTextInput').value = b.text;
+                document.getElementById('bubbleFont').value = b.fontFamily;
+                document.getElementById('bubbleTextColor').value = b.color;
+                document.getElementById('bubbleBgColor').value = b.bgColor;
+                document.getElementById('bubbleShapeSizeRange').value = b.shapeSize;
+                document.getElementById('bubbleTextSizeRange').value = b.fontSize;
+            },
+
+            renderStrip() {
+                const list = document.getElementById('slidesList'); const addBtn = list.lastElementChild; list.innerHTML = '';
+                State.slides.forEach((slide, i) => {
+                    const el = document.createElement('div'); el.className = `slide-card ${i === State.currIdx ? 'active' : ''}`;
+                    if(slide.image) { const img = document.createElement('img'); img.src = slide.image.src; img.className = 'slide-thumb-img'; el.appendChild(img); } else el.innerHTML = `<span>${i+1}</span>`;
+                    el.onclick = () => this.selectSlide(i); list.appendChild(el);
+                });
+                list.appendChild(addBtn);
+            },
+
+            handleImageUpload(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            State.slides[State.currIdx].image = img; State.slides[State.currIdx].imgScale = Canvas.width / img.width;
+                            this.draw(); this.renderStrip();
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+                input.value = '';
+            },
+
+            draw(isExport = false) {
+                const ctx = Canvas.ctx; const slide = State.slides[State.currIdx];
+                ctx.fillStyle = '#000'; ctx.fillRect(0, 0, Canvas.width, Canvas.height);
+
+                if (slide.image) {
+                    ctx.save(); ctx.translate(Canvas.width/2 + slide.imgPan.x, Canvas.height/2 + slide.imgPan.y);
+                    ctx.scale(slide.imgScale, slide.imgScale); ctx.drawImage(slide.image, -slide.image.width/2, -slide.image.height/2);
+                    if(!isExport && State.mode === 'image') {
+                        const s = 40 / slide.imgScale; ctx.strokeStyle = '#00f5ff'; ctx.lineWidth = 3/slide.imgScale;
+                        ctx.strokeRect(slide.image.width/2-s, slide.image.height/2-s, s, s);
+                    }
+                    ctx.restore();
+                }
+
+                ctx.save(); ctx.translate(Canvas.width/2 + slide.gridPan.x, Canvas.height/2 + slide.gridPan.y); ctx.scale(slide.gridScale, slide.gridScale);
+                const drawW = Canvas.width; const drawH = Canvas.height; const startX = -drawW/2; const startY = -drawH/2;
+                if (!isExport) {
+                    ctx.strokeStyle = '#00f5ff'; ctx.lineWidth = 5 / slide.gridScale; ctx.strokeRect(startX, startY, drawW, drawH);
+                    ctx.beginPath();
+                    const cW = drawW / slide.cols; const cH = drawH / slide.rows;
+                    for(let r=1; r<slide.rows; r++) { ctx.moveTo(startX, startY + r*cH); ctx.lineTo(startX + drawW, startY + r*cH); }
+                    for(let c=1; c<slide.cols; c++) { ctx.moveTo(startX + c*cW, startY); ctx.lineTo(startX + c*cW, startY + drawH); }
+                    ctx.stroke();
+                    if(State.mode === 'grid') {
+                        const s = 40 / slide.gridScale; ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 3/slide.gridScale;
+                        ctx.strokeRect(startX+drawW-s, startY+drawH-s, s, s);
+                    }
+                }
+                ctx.restore();
+
+                if(slide.caption) {
+                    const s = slide.captionStyle; ctx.fillStyle = hexToRgba(s.bgColor, s.bgAlpha); ctx.fillRect(s.x, s.y, s.w, s.h);
+                    this.drawText(ctx, slide.caption, s.x+s.w/2, s.y+s.h/2, s.fontSize, s.fontFamily, s.color);
+                }
+
+                slide.bubbles.forEach((b, i) => {
+                    ctx.save(); ctx.translate(b.x, b.y);
+                    ctx.fillStyle = b.bgColor; ctx.lineWidth=3; ctx.strokeStyle = i===State.selectedBubble && !isExport ? '#00f5ff' : '#000';
+                    if(b.type === 'thought') {
+                        this.drawCloud(ctx, 0, 0, b.shapeSize);
+                    } else {
+                        // === COPY PASTE DARI KODE ORIGINAL ===
+                        ctx.beginPath();
+                        ctx.moveTo(0, b.shapeSize * 1.5);
+                        ctx.lineTo(-20, b.shapeSize * 1.5 + 40);
+                        ctx.lineTo(20, b.shapeSize * 1.5);
+                        ctx.fill(); ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, b.shapeSize * 2.5, b.shapeSize * 1.5, 0, 0, Math.PI * 2);
+                        ctx.fill(); ctx.stroke();
+                    }
+                    this.drawText(ctx, b.text, 0, 0, b.fontSize, b.fontFamily, b.color);
+                    ctx.restore();
+                });
+            },
+
+            initGestures() {
+                const c = Canvas.el;
+                const getPos = (e) => {
+                    const r = c.getBoundingClientRect(); const s = Canvas.width / r.width;
+                    return { x: ((e.clientX||e.touches[0].clientX)-r.left)*s, y: ((e.clientY||e.touches[0].clientY)-r.top)*(Canvas.height/r.height), rawX: (e.clientX||e.touches[0].clientX), rawY: (e.clientY||e.touches[0].clientY) };
+                };
+
+                const startDrag = (e) => {
+                    const p = getPos(e); State.dragStart = { x: p.rawX, y: p.rawY }; State.isResizing = false;
+                    const slide = State.slides[State.currIdx];
+
+                    // PC RESIZE
+                    if(State.mode === 'image' && slide.image) {
+                        const centerX = Canvas.width/2 + slide.imgPan.x; const centerY = Canvas.height/2 + slide.imgPan.y;
+                        const w = (slide.image.width * slide.imgScale)/2; const h = (slide.image.height * slide.imgScale)/2;
+                        if(p.x > centerX+w-50 && p.x < centerX+w+50 && p.y > centerY+h-50 && p.y < centerY+h+50) { State.isResizing = true; State.dragTarget = 'image'; return; }
+                    }
+                    if(State.mode === 'grid') {
+                        const centerX = Canvas.width/2 + slide.gridPan.x; const centerY = Canvas.height/2 + slide.gridPan.y;
+                        const w = (Canvas.width * slide.gridScale)/2; const h = (Canvas.height * slide.gridScale)/2;
+                        if(p.x > centerX+w-50 && p.x < centerX+w+50 && p.y > centerY+h-50 && p.y < centerY+h+50) { State.isResizing = true; State.dragTarget = 'grid'; return; }
+                    }
+
+                    // HIT TEST BUBBLE
+                    let hitB = -1;
+                    slide.bubbles.forEach((b,i) => { if(Math.hypot(p.x-b.x, p.y-b.y) < b.shapeSize * 1.5) hitB = i; });
+
+                    if(hitB > -1) {
+                        State.selectedBubble = hitB; State.dragTarget = 'bubble';
+                        this.syncBubbleUI(slide.bubbles[hitB]);
+                        App.openSettings('bubble');
+                    } else if(slide.caption && p.x > slide.captionStyle.x && p.x < slide.captionStyle.x+slide.captionStyle.w && p.y > slide.captionStyle.y && p.y < slide.captionStyle.y+slide.captionStyle.h) {
+                        State.dragTarget = 'caption'; App.openSettings('page');
+                    } else { State.dragTarget = State.mode; State.selectedBubble = -1; }
+                    this.draw();
+                };
+
+                const moveDrag = (e) => {
+                    if(!State.dragTarget) return; e.preventDefault();
+                    const p = getPos(e); const rawX = e.clientX || e.touches[0].clientX; const rawY = e.clientY || e.touches[0].clientY;
+                    const slide = State.slides[State.currIdx];
+
+                    if(State.isResizing) {
+                        const delta = (rawX - State.dragStart.x) + (rawY - State.dragStart.y);
+                        if(State.dragTarget === 'image') slide.imgScale = Math.max(0.1, slide.imgScale + delta * 0.001);
+                        if(State.dragTarget === 'grid') slide.gridScale = Math.max(0.1, slide.gridScale + delta * 0.001);
+                    } else {
+                        const mult = Canvas.width / c.clientWidth;
+                        const dx = (rawX - State.dragStart.x) * mult; const dy = (rawY - State.dragStart.y) * mult;
+                        if(State.dragTarget==='bubble') { slide.bubbles[State.selectedBubble].x+=dx; slide.bubbles[State.selectedBubble].y+=dy; }
+                        else if(State.dragTarget==='caption') { slide.captionStyle.x+=dx; slide.captionStyle.y+=dy; }
+                        else if(State.dragTarget==='image') { slide.imgPan.x+=dx; slide.imgPan.y+=dy; }
+                        else if(State.dragTarget==='grid') { slide.gridPan.x+=dx; slide.gridPan.y+=dy; }
+                    }
+                    State.dragStart = { x: rawX, y: rawY }; App.draw();
+                };
+
+                const endDrag = () => { State.dragTarget = null; State.isResizing = false; State.pinchDist = null; };
+                const handlePinch = (e) => { if(e.touches.length===2) { const dist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); if(State.pinchDist){ const delta=dist-State.pinchDist; const s=State.slides[State.currIdx]; if(State.mode==='grid')s.gridScale+=delta*0.005; else s.imgScale+=delta*0.005; App.draw(); } State.pinchDist=dist; } };
+
+                c.addEventListener('mousedown', startDrag); window.addEventListener('mousemove', moveDrag); window.addEventListener('mouseup', endDrag);
+                c.addEventListener('touchstart', (e) => { if(e.touches.length===2)State.pinchDist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX,e.touches[0].pageY-e.touches[1].pageY);else startDrag(e); });
+                c.addEventListener('touchmove', (e) => { if(e.touches.length===2)handlePinch(e);else moveDrag(e); }, {passive:false});
+                c.addEventListener('touchend', endDrag);
+            },
+
+            updateCaption(p,v) { const s=State.slides[State.currIdx].captionStyle; if(p==='text')State.slides[State.currIdx].caption=v; else if(p==='width')s.w=parseInt(v); else if(p==='height')s.h=parseInt(v); else s[p]=v; this.draw(); },
+
+            updateBubble(p,v) { if(State.selectedBubble>-1) { State.slides[State.currIdx].bubbles[State.selectedBubble][p]=v; this.draw(); } },
+
+            addBubble(type) {
+                const newB = { type: type, x:500,y:500, text:'Hi', color:'#000000', bgColor:'#ffffff', shapeSize:60, fontSize:30, fontFamily:'Arial' };
+                State.slides[State.currIdx].bubbles.push(newB);
+                State.selectedBubble = State.slides[State.currIdx].bubbles.length - 1;
+                this.syncBubbleUI(newB);
+                this.openSettings('bubble');
+                this.draw(); this.toast(type + " added");
+            },
+            deleteSelectedBubble() { if(State.selectedBubble>-1){State.slides[State.currIdx].bubbles.splice(State.selectedBubble,1); State.selectedBubble=-1; this.closeSettings(); this.draw();} },
+            deleteSlide() { if(State.slides.length>1 && confirm('Delete?')) { State.slides.splice(State.currIdx,1); this.selectSlide(0); } },
+            openSettings(t) { document.getElementById('settingsPanel').classList.add('open'); document.querySelectorAll('.control-section').forEach(e=>e.classList.remove('active')); document.getElementById(t==='bubble'?'section-bubble':'section-page').classList.add('active'); },
+            closeSettings() { document.getElementById('settingsPanel').classList.remove('open'); },
+            toast(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2000); },
+
+            async exportAllSlides() {
+                this.toast("Slicing..."); const zip = new JSZip(); const originalIdx = State.currIdx; State.selectedBubble = -1;
+                for(let i=0; i<State.slides.length; i++) {
+                    State.currIdx = i; this.updateGridLogic(); this.draw(true);
+                    const s = State.slides[i];
+                    const sW = Canvas.width / s.cols; const sH = Canvas.height / s.rows;
+                    for(let r=0; r<s.rows; r++) {
+                        for(let c=0; c<s.cols; c++) {
+                            const tCan = document.createElement('canvas'); tCan.width=sW; tCan.height=sH;
+                            tCan.getContext('2d').drawImage(Canvas.el, c*sW, r*sH, sW, sH, 0,0, sW, sH);
+                            const blob = await new Promise(res => tCan.toBlob(res));
+                            zip.file(`slide${i+1}_${r}_${c}.jpg`, blob);
+                        }
+                    }
+                }
+                State.currIdx = originalIdx; this.draw();
+                zip.generateAsync({type:"blob"}).then(b => saveAs(b, "comic_slices.zip"));
+                this.toast("Done!");
+            }
+        };
+
+        window.onload = () => App.init();
+
+        // === SCRIPT FOOTER LOAD ===
+        async function loadFooter() {
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+
+                let html = await response.text();
+                // Replace Tahun
+                const realYear = new Date().getFullYear();
+                html = html.replace('{YEAR}', realYear);
+
+                document.getElementById('global-footer').innerHTML = html;
+
+                // Re-init icon
+                if(window.lucide) window.lucide.createIcons();
+
+            } catch (e) {
+                console.warn("Footer load failed:", e);
+                const year = new Date().getFullYear();
+                document.getElementById('global-footer').innerHTML =
+                    `<div class="p-8 text-center text-gray-600 font-mono text-xs">© ${year} FLOWORK [OFFLINE]</div>`;
+            }
+        }
+        loadFooter();
+    </script>
+</body>
+</html>

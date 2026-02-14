@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CYBER VOICE | Protocol Module</title>
+
+    <script>
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const forcedTheme = params.get('theme');
+                const cachedTheme = localStorage.getItem('flowork_theme');
+                const finalTheme = forcedTheme || cachedTheme || 'cyber';
+                document.documentElement.setAttribute('data-theme', finalTheme);
+                if(!forcedTheme && cachedTheme) localStorage.setItem('flowork_theme', finalTheme);
+            } catch (e) {
+                console.error("Theme Init Error", e);
+                document.documentElement.setAttribute('data-theme', 'cyber');
+            }
+        })();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400&family=Oswald:wght@500;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        page: 'var(--bg-page)',
+                        surface: 'var(--bg-surface)',
+                        input: 'var(--bg-input)',
+                        main: 'var(--text-main)',
+                        muted: 'var(--text-muted)',
+                        brand: 'var(--brand-color)',
+                        border: 'var(--border-color)',
+                        accent: 'var(--accent-color)',
+                        glow: 'var(--glow-color)'
+                    },
+                    fontFamily: {
+                        sans: ['Rajdhani', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        oswald: ['Oswald', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 2. THEME DEFINITIONS */
+        :root {
+            --bg-page: #171925;
+            --bg-surface: rgba(30, 33, 48, 0.95);
+            --bg-input: rgba(10, 10, 10, 0.6);
+            --text-main: #e0f0ff;
+            --text-muted: #64748b;
+            --brand-color: #54d7f6;
+            --border-color: rgba(84, 215, 246, 0.2);
+            --accent-color: #706bf3;
+            --glow-color: rgba(84, 215, 246, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-page: #f0f2f5;
+            --bg-surface: rgba(255, 255, 255, 0.9);
+            --bg-input: #e4e6eb;
+            --text-main: #1c1e21;
+            --text-muted: #65676b;
+            --brand-color: #0084ff;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #fa3e3e;
+            --glow-color: rgba(0, 132, 255, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-page: #18191a;
+            --bg-surface: rgba(36, 37, 38, 0.9);
+            --bg-input: #3a3b3c;
+            --text-main: #e4e6eb;
+            --text-muted: #b0b3b8;
+            --brand-color: #2d88ff;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-color: #f02849;
+            --glow-color: rgba(45, 136, 255, 0.1);
+        }
+
+        [data-theme="hacker"] {
+            --bg-page: #000000;
+            --bg-surface: rgba(0, 20, 0, 0.95);
+            --bg-input: #001a00;
+            --text-main: #00ff00;
+            --text-muted: #008800;
+            --brand-color: #00ff00;
+            --border-color: #004400;
+            --accent-color: #33ff33;
+            --glow-color: rgba(0, 255, 0, 0.3);
+        }
+
+        /* UTILS */
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background-color: var(--bg-page);
+            background-image:
+                linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)),
+                radial-gradient(at 0% 0%, var(--accent-color) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, var(--brand-color) 0px, transparent 50%);
+            transition: background-color 0.3s ease, background-image 0.3s ease;
+            opacity: 0.6;
+        }
+        body { -webkit-tap-highlight-color: transparent; user-select: none; overscroll-behavior: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .snap-x-mandatory { scroll-snap-type: x mandatory; }
+        .snap-center { scroll-snap-align: center; }
+        * { transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease; }
+
+        .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 60px; scroll-snap-align: center; cursor: pointer; }
+        .tool-icon { width: 48px; height: 48px; border-radius: 14px; background-color: var(--bg-input); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: all 0.1s; position: relative; overflow: hidden; }
+        .tool-btn:active .tool-icon, .tool-btn.active .tool-icon { transform: scale(0.9); border-color: var(--brand-color); color: var(--brand-color); background-color: var(--bg-surface); box-shadow: 0 0 15px var(--glow-color); }
+        .tool-label { font-size: 10px; font-weight: 600; color: var(--text-muted); font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+        .tool-btn.active .tool-label { color: var(--brand-color); }
+
+        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--brand-color); margin-top: -6px; box-shadow: 0 0 10px var(--brand-color); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--bg-input); border-radius: 2px; border: 1px solid var(--border-color); }
+
+        /* --- AGGRESSIVE WATERMARK HIDER --- */
+        /* Targets any ID or Class containing "watermark" or "credit" when body has .hide-watermark */
+        body.hide-watermark [class*="watermark"],
+        body.hide-watermark [id*="watermark"],
+        body.hide-watermark [class*="credit"],
+        body.hide-watermark [id*="credit"],
+        body.hide-watermark #copyright,
+        body.hide-watermark .brand-overlay {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: -9999 !important;
+        }
+
+        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-fade-in { animation: fade-in 0.2s ease-out; }
+
+        #main-canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .hidden-view { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+    </style>
+</head>
+<body class="bg-page text-main font-sans h-screen w-screen flex flex-col overflow-hidden relative">
+
+    <div id="app" class="h-full flex flex-col">
+        <div class="mesh-bg"></div>
+
+        <div class="absolute top-0 left-0 w-full z-50 pt-[calc(env(safe-area-inset-top)+10px)] px-4 pointer-events-none flex justify-center">
+            <div class="w-full max-w-md flex justify-between items-center">
+                <button @click="closeApp" class="pointer-events-auto w-9 h-9 rounded-full bg-surface/60 backdrop-blur-md border border-border flex items-center justify-center text-main active:scale-90 transition-transform">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="pointer-events-auto bg-black/40 backdrop-blur px-4 py-1 rounded-full border border-brand/30 shadow-[0_0_10px_var(--glow-color)]">
+                    <span class="text-xs font-bold text-brand tracking-widest font-oswald">CYBER<span class="text-accent">VOICE</span></span>
+                </div>
+                <button @click="toggleAppTheme" class="pointer-events-auto w-9 h-9 rounded-full bg-surface/60 backdrop-blur-md border border-border flex items-center justify-center text-main active:scale-90 transition-transform hover:bg-brand/10">
+                    <i data-lucide="palette" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <main class="flex-1 relative w-full flex flex-col items-center justify-center overflow-hidden bg-transparent cursor-grab active:cursor-grabbing"
+            @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd"
+            @mousedown="handleMouseDown" @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseUp" @wheel.prevent="handleWheel">
+
+            <div id="canvas-stage" class="absolute origin-center transition-transform duration-75 ease-out flex items-center justify-center shadow-2xl" :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})` }">
+
+                <div id="canvas-wrapper" class="relative w-[85vw] aspect-video sm:w-[600px] sm:h-[340px] flex items-center justify-center bg-[#050505] border border-border rounded-lg shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div id="canvas-placeholder" class="text-gray-600 font-mono text-xs flex flex-col items-center animate-pulse absolute pointer-events-none">
+                        <i data-lucide="monitor" class="w-12 h-12 mb-2 opacity-50"></i>
+                        <span>SYSTEM STANDBY...</span>
+                    </div>
+                    <canvas id="main-canvas" class="z-10 relative"></canvas>
+
+                    <div id="monitor-status" class="absolute top-4 left-4 flex items-center gap-2 opacity-0 transition-opacity duration-300 pointer-events-none z-20">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+                        <span class="text-[#0f0] font-mono text-[10px] font-bold tracking-widest shadow-black drop-shadow-md">LIVE</span>
+                    </div>
+                    <div id="res-badge" class="absolute top-4 right-4 bg-surface/80 border border-brand text-brand px-2 py-0.5 rounded text-[8px] font-bold font-mono tracking-widest hidden">HD 720p</div>
+                    <div id="render-progress" class="absolute bottom-4 left-4 right-4 z-30 hidden">
+                        <div class="flex justify-between text-[10px] font-mono font-bold text-brand mb-1"><span class="animate-pulse">RENDERING...</span><span id="progress-text">0%</span></div>
+                        <div class="w-full h-1 bg-input border border-border rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-brand shadow-[0_0_10px_var(--brand-color)] w-0 transition-all duration-300 ease-out"></div></div>
+                    </div>
+                    <div id="recording-timer" class="hidden"></div>
+                </div>
+
+            </div>
+
+            <div class="absolute bottom-[140px] right-4 flex flex-col gap-2 z-40">
+                <button @click="resetView" class="w-10 h-10 rounded-full bg-brand/20 backdrop-blur border border-brand/50 flex items-center justify-center text-brand active:scale-90 transition shadow-lg mb-2"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                <div class="bg-surface/90 backdrop-blur text-main text-[10px] py-1 rounded-md text-center font-mono border border-border">{{ Math.round(zoomLevel * 100) }}%</div>
+            </div>
+        </main>
+
+        <footer class="bg-surface/95 backdrop-blur-xl border-t border-border z-50 fixed bottom-0 w-full pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+            <div class="w-full max-w-md mx-auto relative">
+                <div class="w-full flex justify-center py-2 cursor-pointer" @click="resetView"><div class="w-12 h-1 bg-muted/20 rounded-full hover:bg-brand/50 transition-colors"></div></div>
+
+                <div class="flex items-center w-full px-2 gap-1">
+                    <button @click="scrollMenu('left')" class="w-8 h-full flex items-center justify-center text-muted active:text-brand transition-colors shrink-0 z-10"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+
+                    <div id="tool-menu" class="flex-1 flex overflow-x-auto hide-scroll gap-3 snap-x-mandatory items-center px-1 pb-2">
+
+                        <button @click="openModal('inject')" class="tool-btn group" :class="{ 'active': activeModal === 'inject' }">
+                            <div class="tool-icon"><i data-lucide="folder-input" class="w-5 h-5"></i></div>
+                            <span class="tool-label">INJECT</span>
+                        </button>
+
+                        <button @click="openModal('tuner')" class="tool-btn group" :class="{ 'active': activeModal === 'tuner' }">
+                            <div class="tool-icon"><i data-lucide="sliders" class="w-5 h-5"></i></div>
+                            <span class="tool-label">TUNER</span>
+                        </button>
+
+                        <button @click="openModal('visual')" class="tool-btn group" :class="{ 'active': activeModal === 'visual' }">
+                            <div class="tool-icon"><i data-lucide="move" class="w-5 h-5"></i></div>
+                            <span class="tool-label">VISUAL</span>
+                        </button>
+
+                        <button @click="openModal('format')" class="tool-btn group" :class="{ 'active': activeModal === 'format' }">
+                            <div class="tool-icon"><i data-lucide="monitor-smartphone" class="w-5 h-5"></i></div>
+                            <span class="tool-label">FMT</span>
+                        </button>
+
+                        <div class="w-[1px] h-8 bg-border shrink-0"></div>
+
+                        <button id="btn-preview-trigger" @click="triggerExternalClick('btn-preview')" class="tool-btn group">
+                            <div class="tool-icon text-brand border-brand/30"><i data-lucide="eye" class="w-5 h-5"></i></div>
+                            <span class="tool-label text-brand">TEST</span>
+                        </button>
+
+                        <button id="btn-render-trigger" @click="triggerExternalClick('btn-render')" class="tool-btn group">
+                            <div class="tool-icon bg-gradient-to-br from-brand/20 to-accent/20 border-accent/50 text-accent"><i data-lucide="aperture" class="w-5 h-5"></i></div>
+                            <span class="tool-label text-accent">RENDER</span>
+                        </button>
+
+                        <div class="w-2 shrink-0"></div>
+                    </div>
+
+                    <button @click="scrollMenu('right')" class="w-8 h-full flex items-center justify-center text-muted active:text-brand transition-colors shrink-0 z-10"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+                </div>
+            </div>
+        </footer>
+
+        <div v-if="activeModal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" @click.self="closeModal">
+
+            <div v-if="activeModal === 'inject'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center mb-4 border-b border-border pb-2">
+                    <h3 class="text-brand font-bold font-tech text-lg flex items-center gap-2"><i data-lucide="folder-input" class="w-5 h-5"></i> INJECT</h3>
+                    <button @click="closeModal" class="w-8 h-8 rounded-full hover:bg-red-500/20 hover:text-red-500 text-muted flex items-center justify-center transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="bg-input p-3 rounded-xl border border-border relative overflow-hidden group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded bg-brand/20 flex items-center justify-center text-brand"><i data-lucide="music" class="w-5 h-5"></i></div>
+                            <div class="flex-1 overflow-hidden">
+                                <div class="text-[10px] text-muted font-mono tracking-widest">AUDIO SOURCE</div>
+                                <div id="label-audio-display" class="text-sm font-bold truncate">Select File...</div>
+                            </div>
+                        </div>
+                        <input type="file" accept="audio/*" onchange="handleFileSelect(this, 'audio')" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                    </div>
+                    <button id="btn-mic" onclick="AudioEngine.toggleMic()" class="w-full bg-input border border-border p-3 rounded-xl flex items-center justify-center gap-2 hover:border-red-500 hover:text-red-500 transition-colors group">
+                        <i data-lucide="mic" class="w-4 h-4 group-hover:animate-pulse"></i>
+                        <span id="mic-text" class="font-bold font-mono text-sm">ACTIVATE MICROPHONE</span>
+                    </button>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <div class="bg-input p-2 rounded-xl border border-border relative overflow-hidden text-center hover:border-accent transition-colors">
+                            <i data-lucide="user" class="w-6 h-6 mx-auto mb-1 text-accent"></i>
+                            <div class="text-[10px] font-mono">MASK IMAGE</div>
+                            <input type="file" accept="image/*" onchange="handleFileSelect(this, 'image')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        </div>
+                        <div class="bg-input p-2 rounded-xl border border-border relative overflow-hidden text-center hover:border-green-400 transition-colors">
+                            <i data-lucide="film" class="w-6 h-6 mx-auto mb-1 text-green-400"></i>
+                            <div class="text-[10px] font-mono">BACKGROUND</div>
+                            <input type="file" accept="image/*,video/*" onchange="handleFileSelect(this, 'bg')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'tuner'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center mb-4 border-b border-border pb-2">
+                    <h3 class="text-accent font-bold font-tech text-lg flex items-center gap-2"><i data-lucide="sliders" class="w-5 h-5"></i> TUNER</h3>
+                    <button @click="closeModal" class="w-8 h-8 rounded-full hover:bg-red-500/20 hover:text-red-500 text-muted flex items-center justify-center transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="space-y-6 bg-black/20 p-4 rounded-xl border border-border">
+                    <div>
+                        <div class="flex justify-between text-[10px] font-mono mb-2 text-brand"><span>PITCH</span><span>{{ presets.pitch }}</span></div>
+                        <input type="range" min="0.5" max="0.9" step="0.01" :value="presets.pitch" @input="updatePreset('set-pitch', $event.target.value)" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[10px] font-mono mb-2 text-accent"><span>BASS</span><span>{{ presets.bass }}</span></div>
+                        <input type="range" min="0" max="40" step="1" :value="presets.bass" @input="updatePreset('set-bass', $event.target.value)" class="w-full accent-purple-500">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[10px] font-mono mb-2 text-yellow-400"><span>ROBOT</span><span>{{ presets.robot }}</span></div>
+                        <input type="range" min="0" max="0.95" step="0.01" :value="presets.robot" @input="updatePreset('set-robot', $event.target.value)" class="w-full accent-yellow-400">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[10px] font-mono mb-2 text-red-500"><span>NOISE</span><span>{{ presets.noise }}</span></div>
+                        <input type="range" min="0" max="0.2" step="0.01" :value="presets.noise" @input="updatePreset('set-noise', $event.target.value)" class="w-full accent-red-500">
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'visual'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center mb-4 border-b border-border pb-2">
+                    <h3 class="text-brand font-bold font-tech text-lg flex items-center gap-2"><i data-lucide="move" class="w-5 h-5"></i> VISUAL</h3>
+                    <button @click="closeModal" class="w-8 h-8 rounded-full hover:bg-red-500/20 hover:text-red-500 text-muted flex items-center justify-center transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="flex gap-3">
+                         <div class="flex-1">
+                            <label class="text-[10px] font-mono text-muted block tracking-widest mb-2">THEME</label>
+                            <select v-model="selectedTheme" @change="updateVisualTheme" class="w-full bg-input border border-border text-brand font-mono text-xs p-3 rounded-xl outline-none focus:border-brand uppercase">
+                                <option v-for="opt in themeOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
+                            </select>
+                        </div>
+                        <div class="w-1/3">
+                            <label class="text-[10px] font-mono text-muted block tracking-widest mb-2">WATERMARK</label>
+                            <button @click="toggleWatermark" class="w-full p-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1"
+                                :class="presets.watermark ? 'bg-green-500/10 border-green-500 text-green-500' : 'bg-input border-border text-muted'">
+                                {{ presets.watermark ? 'ON' : 'OFF' }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-input rounded-xl border border-border space-y-4">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono mb-1 text-main"><span>SCALE / SIZE</span><span>{{ presets.scale }}x</span></div>
+                            <input type="range" min="0.1" max="3.0" step="0.1" :value="presets.scale" @input="updatePreset('set-scale', $event.target.value)" class="w-full accent-brand">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <div class="flex justify-between text-[10px] font-mono mb-1 text-main"><span>POS X</span><span>{{ presets.posX }}</span></div>
+                                <input type="range" min="-500" max="500" step="10" :value="presets.posX" @input="updatePreset('set-pos-x', $event.target.value)" class="w-full accent-accent">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-[10px] font-mono mb-1 text-main"><span>POS Y</span><span>{{ presets.posY }}</span></div>
+                                <input type="range" min="-500" max="500" step="10" :value="presets.posY" @input="updatePreset('set-pos-y', $event.target.value)" class="w-full accent-accent">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-input rounded-xl border border-border">
+                        <div class="flex justify-between text-[10px] font-mono mb-1 text-green-400"><span>ANIMATION SPEED</span><span>{{ presets.speed }}x</span></div>
+                        <input type="range" min="0" max="5.0" step="0.1" :value="presets.speed" @input="updatePreset('set-speed', $event.target.value)" class="w-full accent-green-400">
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'format'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center mb-4 border-b border-border pb-2">
+                    <h3 class="text-main font-bold font-tech text-lg flex items-center gap-2"><i data-lucide="monitor-smartphone" class="w-5 h-5"></i> FORMAT</h3>
+                    <button @click="closeModal" class="w-8 h-8 rounded-full hover:bg-red-500/20 hover:text-red-500 text-muted flex items-center justify-center transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="text-[10px] font-mono text-muted block tracking-widest">ASPECT RATIO</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="AudioEngine.setFormat('tiktok')" class="py-3 text-xs font-bold rounded-xl bg-input border border-border text-muted hover:border-brand hover:text-brand transition flex flex-col items-center gap-1"><i data-lucide="smartphone" class="w-4 h-4"></i> TIKTOK</button>
+                        <button onclick="AudioEngine.setFormat('youtube')" class="py-3 text-xs font-bold rounded-xl bg-input border border-border text-muted hover:border-brand hover:text-brand transition flex flex-col items-center gap-1"><i data-lucide="monitor" class="w-4 h-4"></i> YOUTUBE</button>
+                    </div>
+                    <label class="text-[10px] font-mono text-muted block tracking-widest mt-4">RESOLUTION</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="AudioEngine.setResolution(1)" class="py-2 text-[10px] font-bold rounded border border-brand bg-brand/10 text-brand">720p</button>
+                        <button onclick="AudioEngine.setResolution(1.5)" class="py-2 text-[10px] font-bold rounded border border-border bg-input text-muted">1080p</button>
+                        <button onclick="AudioEngine.setResolution(3)" class="py-2 text-[10px] font-bold rounded border border-border bg-input text-muted">4K</button>
+                    </div>
+                </div>
+            </div>
+
+             <div v-if="activeModal === 'info'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center mb-4 border-b border-border pb-2">
+                    <h3 class="text-main font-bold font-tech text-lg">ABOUT</h3>
+                    <button @click="closeModal" class="w-8 h-8 rounded-full hover:bg-red-500/20 hover:text-red-500 text-muted flex items-center justify-center transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="text-xs text-muted leading-relaxed font-mono space-y-2">
+                    <p>Cyber Voice Protocol V2.9 (Watermark Fix)</p>
+                    <p class="p-2 bg-input rounded border border-border">Status: <strong>Stable</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="hidden-view">
+            <button id="btn-preview" onclick="AudioEngine.togglePreview()"></button>
+            <button id="btn-render" onclick="AudioEngine.startRender()"></button>
+            <button id="tab-app"></button>
+
+            <select id="theme-select"></select>
+            <input id="set-pitch" type="range" min="0.5" max="0.9" step="0.01" value="0.75" oninput="AudioEngine.updateParams()">
+            <input id="set-bass" type="range" min="0" max="40" step="1" value="10" oninput="AudioEngine.updateParams()">
+            <input id="set-robot" type="range" min="0" max="0.95" step="0.01" value="0.79" oninput="AudioEngine.updateParams()">
+            <input id="set-noise" type="range" min="0" max="0.2" step="0.01" value="0" oninput="AudioEngine.updateParams()">
+
+            <input id="set-scale" type="range" min="0.1" max="3.0" step="0.1" value="1.0">
+            <input id="set-pos-x" type="range" min="-500" max="500" step="10" value="0">
+            <input id="set-pos-y" type="range" min="-500" max="500" step="10" value="0">
+            <input id="set-speed" type="range" min="0" max="5.0" step="0.1" value="1.0">
+
+            <input type="checkbox" id="set-watermark" checked>
+
+            <input type="file" id="real-input-audio" onchange="AudioEngine.handleAudio(this)">
+            <input type="file" id="real-input-image" onchange="AudioEngine.handleImage(this)">
+            <input type="file" id="real-input-bg" onchange="AudioEngine.handleBg(this)">
+
+            <span id="label-audio"></span>
+            <span id="label-image"></span>
+            <span id="label-bg"></span>
+            <button id="res-720"></button>
+            <button id="res-1080"></button>
+            <button id="res-4k"></button>
+            <button id="btn-tiktok"></button>
+            <button id="btn-youtube"></button>
+        </div>
+
+        <div v-if="alertData.show" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md px-4 animate-fade-in" @click.self="closeAlert">
+            <div class="w-full max-w-xs bg-surface border border-brand rounded-2xl p-6 shadow-[0_0_30px_var(--glow-color)] text-center relative overflow-hidden">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand/20 mb-4 text-brand"><i :data-lucide="alertData.icon" class="w-6 h-6"></i></div>
+                <h3 class="text-lg font-bold text-brand mb-2 font-tech">{{ alertData.title }}</h3>
+                <p class="text-sm text-muted mb-6 font-mono">{{ alertData.message }}</p>
+                <button @click="closeAlert" class="w-full rounded-xl bg-brand py-3 text-sm font-bold text-bg-page shadow-lg active:scale-95 transition-transform hover:brightness-110">ACKNOWLEDGED</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme-manager.js"></script>
+    <script src="js/themes/theme-hacker.js"></script>
+    <script src="js/themes/theme-coding.js"></script>
+    <script src="js/themes/theme-jarvis.js"></script>
+    <script src="js/themes/theme-reactor.js"></script>
+    <script src="js/themes/theme-retro.js"></script>
+    <script src="js/themes/theme-glitch.js"></script>
+    <script src="js/themes/theme-illuminati.js"></script>
+    <script src="js/themes/theme-sonar.js"></script>
+    <script src="js/themes/theme-neon.js"></script>
+    <script src="js/themes/theme-spectrum.js"></script>
+    <script src="js/themes/theme-warp.js"></script>
+    <script src="js/themes/theme-tesla.js"></script>
+    <script src="js/themes/theme-vortex.js"></script>
+    <script src="js/core.js"></script>
+
+    <script>
+        const BlobStore = {
+            dbName: 'CyberVoiceAssets', version: 1, db: null,
+            init() {
+                return new Promise((resolve) => {
+                    const req = indexedDB.open(this.dbName, this.version);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('files')) db.createObjectStore('files');
+                    };
+                    req.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+                    req.onerror = () => resolve();
+                });
+            },
+            save(key, file) {
+                if(!this.db) return;
+                const tx = this.db.transaction('files', 'readwrite');
+                tx.objectStore('files').put(file, key);
+            },
+            get(key) {
+                return new Promise((resolve) => {
+                    if(!this.db) return resolve(null);
+                    const tx = this.db.transaction('files', 'readonly');
+                    const req = tx.objectStore('files').get(key);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => resolve(null);
+                });
+            }
+        };
+    </script>
+
+    <script>
+        const { createApp, ref, onMounted, nextTick, reactive, watch } = Vue;
+
+        createApp({
+            setup() {
+                const activeModal = ref(null);
+                const alertData = ref({ show: false, title: "", message: "", icon: "info" });
+                const zoomLevel = ref(1.0);
+                const pan = ref({ x: 0, y: 0 });
+                const themeOptions = ref([]);
+                const selectedTheme = ref('hacker');
+                const appThemes = ['cyber', 'dark', 'light', 'hacker'];
+
+                const presets = reactive({
+                    pitch: 0.75, bass: 10, robot: 0.79,
+                    noise: 0,
+                    scale: 1.0, posX: 0, posY: 0, speed: 1.0,
+                    watermark: true // Default Enabled
+                });
+
+                const toggleAppTheme = () => {
+                    const current = document.documentElement.getAttribute('data-theme') || 'cyber';
+                    const nextTheme = appThemes[(appThemes.indexOf(current) + 1) % appThemes.length];
+                    document.documentElement.setAttribute('data-theme', nextTheme);
+                    localStorage.setItem('flowork_theme', nextTheme);
+                    const url = new URL(window.location);
+                    url.searchParams.set('theme', nextTheme);
+                    window.history.pushState({}, '', url);
+                    showAlert("System Skin", `Switched to: ${nextTheme.toUpperCase()}`, "palette");
+                };
+
+                const toggleWatermark = () => {
+                    presets.watermark = !presets.watermark;
+                    // Update DOM (Check/Uncheck hidden input)
+                    const el = document.getElementById('set-watermark');
+                    if(el) {
+                        el.checked = presets.watermark;
+                        el.dispatchEvent(new Event('change'));
+                    }
+                    // Update Global Class (AGRESIF)
+                    document.body.classList.toggle('hide-watermark', !presets.watermark);
+                    localStorage.setItem('cyber_presets_v2', JSON.stringify(presets));
+                };
+
+                // --- AGGRESSIVE WATERMARK HUNTER ---
+                const startWatermarkHunter = () => {
+                    setInterval(() => {
+                        if(!presets.watermark) {
+                             document.body.classList.add('hide-watermark');
+                        }
+                    }, 1000);
+                };
+
+                // --- FILE HANDLING SYSTEM ---
+                window.handleFileSelect = async (input, type) => {
+                    if (input.files && input.files[0]) {
+                        const file = input.files[0];
+                        await BlobStore.save(type, file);
+
+                        const realInputId = `real-input-${type}`;
+                        const realInput = document.getElementById(realInputId);
+                        if(realInput) {
+                            const dt = new DataTransfer();
+                            dt.items.add(file);
+                            realInput.files = dt.files;
+
+                            if(window.AudioEngine) {
+                                if(type === 'audio') window.AudioEngine.handleAudio(realInput);
+                                if(type === 'image') window.AudioEngine.handleImage(realInput);
+                                if(type === 'bg') window.AudioEngine.handleBg(realInput);
+                            } else {
+                                realInput.dispatchEvent(new Event('change'));
+                            }
+                        }
+                        if(type === 'audio') document.getElementById('label-audio-display').innerText = file.name;
+                    }
+                };
+
+                const restoreFiles = async () => {
+                    await BlobStore.init();
+                    const types = ['audio', 'image', 'bg'];
+                    let restored = 0;
+
+                    for (const type of types) {
+                        const file = await BlobStore.get(type);
+                        if (file) {
+                            const realInputId = `real-input-${type}`;
+                            const realInput = document.getElementById(realInputId);
+                            if(realInput) {
+                                const dt = new DataTransfer();
+                                dt.items.add(file);
+                                realInput.files = dt.files;
+
+                                if(window.AudioEngine) {
+                                    if(type === 'audio') window.AudioEngine.handleAudio(realInput);
+                                    if(type === 'image') window.AudioEngine.handleImage(realInput);
+                                    if(type === 'bg') window.AudioEngine.handleBg(realInput);
+                                } else {
+                                    realInput.dispatchEvent(new Event('change'));
+                                }
+
+                                restored++;
+                                if(type === 'audio') document.getElementById('label-audio-display').innerText = file.name;
+                            }
+                        }
+                    }
+                    if(restored > 0) console.log(`[AutoRestore] ${restored} files loaded.`);
+                };
+
+                const initAutoSave = () => {
+                    const saved = localStorage.getItem('cyber_presets_v2');
+                    if (saved) {
+                        try {
+                            const p = JSON.parse(saved);
+                            Object.assign(presets, p);
+                        } catch(e) {}
+                    }
+
+                    const applyToDom = () => {
+                        // Sliders
+                        ['set-pitch', 'set-bass', 'set-robot', 'set-noise', 'set-scale', 'set-pos-x', 'set-pos-y', 'set-speed'].forEach(id => {
+                            const el = document.getElementById(id);
+                            let key = id.replace('set-', '');
+                            if(key === 'pos-x') key = 'posX';
+                            if(key === 'pos-y') key = 'posY';
+
+                            if(el && presets[key] !== undefined) {
+                                el.value = presets[key];
+                                el.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                        });
+
+                        // Watermark Check
+                        const wmEl = document.getElementById('set-watermark');
+                        if(wmEl) {
+                            wmEl.checked = presets.watermark;
+                            document.body.classList.toggle('hide-watermark', !presets.watermark);
+                        }
+                    };
+
+                    nextTick(applyToDom);
+                    setTimeout(applyToDom, 800);
+                };
+
+                const updatePreset = (targetId, value) => {
+                    let key = targetId.replace('set-', '');
+                    if(key === 'pos-x') key = 'posX';
+                    if(key === 'pos-y') key = 'posY';
+                    presets[key] = value;
+
+                    const el = document.getElementById(targetId);
+                    if(el) { el.value = value; el.dispatchEvent(new Event('input')); }
+                    localStorage.setItem('cyber_presets_v2', JSON.stringify(presets));
+                };
+
+                const syncThemes = () => {
+                    const realSelect = document.getElementById('theme-select');
+                    if(realSelect && realSelect.options.length > 0) {
+                        themeOptions.value = Array.from(realSelect.options).map(opt => ({
+                            value: opt.value, text: opt.innerText
+                        }));
+                        selectedTheme.value = realSelect.value;
+                    }
+                };
+
+                const updateVisualTheme = () => {
+                    const realSelect = document.getElementById('theme-select');
+                    if(realSelect) {
+                        realSelect.value = selectedTheme.value;
+                        realSelect.dispatchEvent(new Event('change'));
+                    }
+                };
+
+                watch(activeModal, (newVal) => {
+                    if(newVal === 'visual') setTimeout(syncThemes, 100);
+                });
+
+                // Canvas Controls
+                let lastDist = 0, isDragging = false, startPan = {x:0, y:0};
+                const adjustZoom = (d) => zoomLevel.value = Math.min(Math.max(zoomLevel.value + d, 0.5), 3.0);
+                const resetView = () => { zoomLevel.value = 1.0; pan.value = { x: 0, y: 0 }; };
+                const handleTouchStart = (e) => {
+                    if (e.touches.length === 2) lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    else if (e.touches.length === 1) { isDragging = true; startPan = { x: e.touches[0].clientX - pan.value.x, y: e.touches[0].clientY - pan.value.y }; }
+                };
+                const handleTouchMove = (e) => {
+                    if (e.touches.length === 2) { const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); adjustZoom((dist - lastDist) * 0.005); lastDist = dist; }
+                    else if (isDragging) { pan.value = { x: e.touches[0].clientX - startPan.x, y: e.touches[0].clientY - startPan.y }; }
+                };
+                const handleTouchEnd = () => isDragging = false;
+                const handleMouseDown = (e) => { isDragging = true; startPan = { x: e.clientX - pan.value.x, y: e.clientY - pan.value.y }; };
+                const handleMouseMove = (e) => { if(isDragging) { e.preventDefault(); pan.value = { x: e.clientX - startPan.x, y: e.clientY - startPan.y }; } };
+                const handleMouseUp = () => isDragging = false;
+                const handleWheel = (e) => adjustZoom(e.deltaY * -0.001);
+
+                const showAlert = (title, message, icon) => { alertData.value = { show: true, title, message, icon }; nextTick(lucide.createIcons); };
+                const closeAlert = () => alertData.value.show = false;
+                const openModal = (type) => { activeModal.value = type; nextTick(lucide.createIcons); };
+                const closeModal = () => activeModal.value = null;
+                const scrollMenu = (d) => document.getElementById('tool-menu').scrollBy({ left: d === 'left' ? -100 : 100, behavior: 'smooth' });
+                const closeApp = () => window.parent.postMessage({ type: 'CLOSE_APP' }, '*');
+                const triggerExternalClick = (id) => {
+                    const el = document.getElementById(id);
+                    if(el) { el.click(); if(id.includes('render')) showAlert("Rendering", "Processing video...", "aperture"); }
+                };
+
+                onMounted(async () => {
+                    lucide.createIcons();
+                    initAutoSave();
+                    startWatermarkHunter();
+
+                    // FORCE RESTORE FILES WITH DELAY TO WAIT FOR CORE.JS
+                    setTimeout(async () => {
+                        await restoreFiles();
+                    }, 1500); // Tunggu core.js load
+
+                    setTimeout(syncThemes, 1000);
+                });
+
+                return {
+                    activeModal, alertData, zoomLevel, pan, presets, themeOptions, selectedTheme,
+                    openModal, closeModal, scrollMenu, closeApp, showAlert, closeAlert,
+                    triggerExternalClick, updatePreset, updateVisualTheme, toggleAppTheme, toggleWatermark,
+                    adjustZoom, resetView, handleTouchStart, handleTouchMove, handleTouchEnd, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>SCREEN INTEL // STUDIO</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* FONTS */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700;900&display=swap');
+
+        :root {
+            --bg-dark: #050505;
+            --accent-cyan: #54d7f6;
+            --accent-purple: #706bf3;
+            --accent-gold: #ffd700;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e0f0ff;
+            font-family: 'JetBrains Mono', monospace;
+            overflow-x: hidden;
+        }
+
+        /* FONT UTILS */
+        .font-hud { font-family: 'Orbitron', sans-serif; }
+
+        /* BACKGROUND BLOBS (CANVA STYLE) */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
+        }
+        .blob {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.4;
+            animation: float 10s infinite alternate;
+        }
+        .blob-blue {
+            top: -10%; left: -10%; width: 70vw; height: 70vw;
+            background: radial-gradient(circle, var(--accent-cyan) 0%, transparent 70%);
+        }
+        .blob-gold {
+            bottom: -10%; right: -10%; width: 80vw; height: 80vw;
+            background: radial-gradient(circle, var(--accent-gold) 0%, transparent 70%);
+            animation-delay: -5s;
+        }
+        @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(20px, 40px); } }
+
+        /* SOP GRID SYSTEM */
+        .desktop-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            min-height: 80vh;
+            align-items: start; /* Align Top */
+            padding-top: 2rem;
+        }
+        @media (min-width: 1024px) {
+            .desktop-grid { grid-template-columns: 1fr 1fr; gap: 4rem; }
+        }
+
+        /* GLASS COMPONENTS */
+        .glass-panel {
+            background: rgba(15, 16, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* UTILS */
+        .hidden-view { display: none !important; }
+        .animate-enter { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg">
+        <div class="blob blob-blue"></div>
+        <div class="blob blob-gold"></div>
+    </div>
+
+    <div id="global-header" class="fixed top-0 w-full z-50 transition-all duration-300"></div>
+
+    <main class="w-full min-h-screen relative pt-20 pb-20">
+
+        <div id="view-lander" class="w-full max-w-7xl mx-auto px-6">
+
+            <div class="desktop-grid">
+
+                <div class="relative z-10 flex flex-col justify-center animate-enter">
+
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-panel border-cyan-500/30 bg-cyan-900/20 w-fit mb-6">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                        </span>
+                        <span class="text-[10px] font-bold text-cyan-400 tracking-[0.2em] uppercase font-hud">STUDIO EDITION</span>
+                    </div>
+
+                    <h1 class="text-4xl lg:text-6xl font-black text-white leading-[0.95] mb-6 font-hud tracking-tighter drop-shadow-2xl">
+                        REKAM LAYAR
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 animate-pulse">LAPTOP</span>
+                        <br>
+                        TANPA INSTALL.
+                    </h1>
+
+                    <div class="glass-panel p-5 rounded-xl border-l-4 border-cyan-500 bg-black/20">
+                        <p class="text-sm lg:text-base text-gray-300 font-mono leading-relaxed">
+                            <span class="text-cyan-400 font-bold">Masalah:</span> OBS itu berat, settingannya ribet, dan bikin laptop kentang nge-lag pas recording.
+                            <br><br>
+                            <span class="text-white font-bold italic">Solusi:</span> Screen Intel Studio. Rekam layar + webcam + mic langsung dari browser. Ringan & Gratis.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="relative z-10 flex flex-col gap-6 animate-enter" style="animation-delay: 0.1s;">
+
+                    <div class="glass-panel p-6 rounded-2xl border border-white/10 bg-black/20">
+                        <h3 class="font-bold text-sm text-white mb-4 flex items-center gap-2 font-hud tracking-widest">
+                            <i data-lucide="play-circle" class="w-4 h-4 text-cyan-400"></i> CARA PAKAI
+                        </h3>
+
+                        <div class="space-y-4">
+                            <div class="flex gap-4 items-start">
+                                <div class="w-6 h-6 rounded bg-cyan-900/30 border border-cyan-500/30 flex items-center justify-center shrink-0 text-cyan-400 text-[10px] font-bold">1</div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-white mb-1">Set Source</h4>
+                                    <p class="text-[10px] text-gray-400 font-mono leading-relaxed">Pilih layar mana yang mau direkam (Whole Screen / Window).</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-6 h-6 rounded bg-purple-900/30 border border-purple-500/30 flex items-center justify-center shrink-0 text-purple-400 text-[10px] font-bold">2</div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-white mb-1">Add Audio</h4>
+                                    <p class="text-[10px] text-gray-400 font-mono leading-relaxed">Nyalakan Mic untuk voice over, atau System Audio untuk rekam suara game/zoom.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-6 h-6 rounded bg-white/10 border border-white/20 flex items-center justify-center shrink-0 text-white text-[10px] font-bold">3</div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-white mb-1">Record & Save</h4>
+                                    <p class="text-[10px] text-gray-400 font-mono leading-relaxed">Klik Record. Hasil video langsung tersimpan di folder Download laptop lo.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl border border-white/10 bg-black/20">
+                        <h3 class="font-bold text-sm text-white mb-4 flex items-center gap-2 font-hud tracking-widest">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-purple-400"></i> KENAPA HARUS INI?
+                        </h3>
+                        <p class="text-[10px] text-gray-300 font-mono leading-relaxed mb-4">
+                            Buat lo yang cuma mau bikin tutorial singkat, presentasi, atau report bug, buka OBS itu <span class="text-red-400">Overkill</span>. Aplikasi ini jalan instan, gak makan RAM, dan hasil videonya tajam (WebM/MP4).
+                        </p>
+                        <div class="flex gap-2">
+                            <div class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px] text-gray-400 font-bold">CONTENT CREATOR</div>
+                            <div class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px] text-gray-400 font-bold">STUDENTS</div>
+                            <div class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[9px] text-gray-400 font-bold">QA TESTER</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl border border-white/5 bg-black/40 flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-black border border-cyan-500 flex items-center justify-center shrink-0">
+                            <i data-lucide="cpu" class="w-5 h-5 text-cyan-500"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-white font-hud">BROWSER NATIVE API</div>
+                            <div class="text-[9px] text-gray-500 font-mono">
+                                Menggunakan teknologi <span class="text-cyan-400">MediaDevices</span> & <span class="text-cyan-400">MediaRecorder</span>. 0% data diupload ke server. Privasi 100% aman di local storage.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="view-app" class="hidden-view w-full max-w-7xl mx-auto px-6 h-full flex items-center justify-center min-h-[500px]">
+            <div class="text-center glass-panel p-10 rounded-2xl">
+                <i data-lucide="monitor" class="w-16 h-16 text-cyan-400 mx-auto mb-4 animate-pulse"></i>
+                <h2 class="text-2xl font-bold text-white font-hud">STUDIO MODE ACTIVE</h2>
+                <p class="text-gray-400 font-mono text-sm mt-2 mb-6">Camera & Mic Initialization...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer id="global-footer" class="border-t border-white/5 bg-black/40 backdrop-blur text-center w-full py-6 relative z-20"></footer>
+
+    <script>
+        // Init Icons
+        if(window.lucide) lucide.createIcons();
+
+        // APP CORE LOGIC (Minimal)
+        window.AppCore = {
+            switchView: (viewName) => {
+                const lander = document.getElementById('view-lander');
+                const app = document.getElementById('view-app');
+
+                if(viewName === 'app') {
+                    lander.classList.add('hidden-view');
+                    app.classList.remove('hidden-view');
+                    app.classList.add('animate-enter');
+                } else {
+                    app.classList.add('hidden-view');
+                    lander.classList.remove('hidden-view');
+                }
+                window.scrollTo(0,0);
+            }
+        };
+
+        // IMPORT HEADER
+        async function loadHeader() {
+            const container = document.getElementById('global-header');
+            try {
+                const response = await fetch('/assets/lander/header.html');
+                if (!response.ok) throw new Error('Header not found');
+                container.innerHTML = await response.text();
+            } catch (e) {
+                // FALLBACK HEADER
+                container.innerHTML = `
+                    <div class="glass-panel border-b border-white/10 px-6 h-16 flex items-center justify-between bg-[#050505]/80 backdrop-blur-xl">
+                        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.reload()">
+                            <i data-lucide="zap" class="w-5 h-5 text-[#54d7f6]"></i>
+                            <span class="font-bold text-sm tracking-[0.2em] font-hud text-white">FLOWORK</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-[10px] font-mono text-gray-500 hidden md:block">V4.0 STUDIO</span>
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            if(window.lucide) lucide.createIcons();
+        }
+
+        // IMPORT FOOTER
+        async function loadFooter() {
+            const container = document.getElementById('global-footer');
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+                let html = await response.text();
+                html = html.replace('{YEAR}', new Date().getFullYear());
+                container.innerHTML = html;
+            } catch (e) {
+                // FALLBACK FOOTER
+                container.innerHTML = `
+                    <div class="w-full px-4 py-4">
+                        <div class="space-y-4 w-full text-left">
+                            <div>
+                                <h2 class="font-hud text-2xl font-black tracking-[0.2em] leading-none text-white">
+                                    FLOWORK
+                                </h2>
+                                <p class="font-mono text-[10px] tracking-[0.4em] mt-1 opacity-50 uppercase text-[#54d7f6]">
+                                    Cyber Defense Unit
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            if(window.lucide) lucide.createIcons();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHeader();
+            loadFooter();
+        });
+    </script>
+</body>
+</html>

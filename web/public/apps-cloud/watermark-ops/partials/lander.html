@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+</head>
+<body class="hide-scrollbar">
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-cyan-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="shield-check" class="w-3 h-3"></i> PRIVACY V1.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    ASSET GUARD. <br>
+                    <span class="gradient-text">ANTI MALING.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Jangan biarkan kompetitor mencuri jerih payahmu. Berikan watermark pada <b>100+ foto produk sekaligus</b> dalam hitungan detik. Cepat, aman, dan tanpa upload.
+                </p>
+
+                <div class="mt-8 hidden lg:flex gap-4">
+                    <div class="glass-panel p-3 rounded-xl border-l-2" style="border-left-color: var(--primary);">
+                        <div class="text-xs font-bold">Local Processing</div>
+                        <div class="text-[10px] opacity-70">100% Aman di Browser</div>
+                    </div>
+                    <div class="glass-panel p-3 rounded-xl border-l-2" style="border-left-color: var(--primary);">
+                        <div class="text-xs font-bold">Bulk Action</div>
+                        <div class="text-[10px] opacity-70">Sekali Klik Beres</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Cara Menggunakan</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Pilih Foto</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Drag & drop ribuan foto produk kamu.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Pasang Tanda</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Atur posisi dan transparansi watermark.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Simpan Masal</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Download semua hasil dalam format ZIP.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="help-circle" class="w-5 h-5 mb-2 text-cyan-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Kenapa Pake Ini?</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Edit manual di Photoshop butuh berjam-jam. Tool ini menyelesaikan tugas watermark ribuan foto hanya dalam hitungan detik.
+                        </p>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="users" class="w-5 h-5 mb-2 text-purple-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Cocok Buat Siapa?</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                             Online Seller, Dropshipper, dan Fotografer yang ingin melindungi aset digital.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Privacy & Security</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Menggunakan teknologi <b>Client-Side Rendering</b>. Foto anda diproses di RAM perangkat sendiri, tidak pernah diunggah ke server kami.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50">
+                        "Automation is the key to scale."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>

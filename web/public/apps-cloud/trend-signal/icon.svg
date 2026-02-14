@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="#050a0f" rx="100"/>
+
+  <path d="M60 128h392 M60 256h392 M60 384h392 M128 60v392 M256 60v392 M384 60v392" stroke="#1e293b" stroke-width="2"/>
+
+  <path d="M60 400 L160 300 L240 340 L340 180 L452 100 V400 H60 Z" fill="#00ff9d" opacity="0.1"/>
+
+  <path d="M60 400 L160 300 L240 340 L340 180 L452 100" fill="none" stroke="#00ff9d" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+  <circle cx="160" cy="300" r="8" fill="#fff"/>
+  <circle cx="240" cy="340" r="8" fill="#fff"/>
+  <circle cx="340" cy="180" r="8" fill="#fff"/>
+  <circle cx="452" cy="100" r="12" fill="#fff" stroke="#00ff9d" stroke-width="4"/>
+
+  <circle cx="452" cy="100" r="30" fill="none" stroke="#00ff9d" stroke-width="2" opacity="0.5">
+    <animate attributeName="r" from="10" to="50" dur="1.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" from="0.8" to="0" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

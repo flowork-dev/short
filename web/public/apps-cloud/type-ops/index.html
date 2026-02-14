@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Type Ops | Tactical Encoder</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-core: #171925;
+            --surface-1: #1f2233;
+            --primary: #bc13fe;
+            --accent: #54d7f6;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: #e0f0ff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden; /* Lock Body */
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* CUSTOM SCROLLBAR */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Glass Header */
+        .glass-header {
+            background: rgba(23, 25, 37, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        textarea { resize: none !important; }
+    </style>
+</head>
+<body class="h-screen flex flex-col bg-[#171925]">
+
+    <div id="vue-root" class="h-full flex flex-col">
+        <v-app theme="dark" style="background: transparent;">
+
+            <div class="glass-header h-16 shrink-0 flex items-center justify-between px-4 z-50">
+                <div class="flex items-center gap-3">
+                    <div class="bg-purple-900/20 p-1.5 rounded border border-purple-500/30">
+                        <v-icon icon="mdi-format-letter-case" color="purple-accent-2" size="24"></v-icon>
+                    </div>
+                    <div>
+                        <h1 class="orbitron text-lg font-bold leading-none tracking-widest text-white">
+                            TYPE <span class="text-purple-400">OPS</span>
+                        </h1>
+                        <div class="text-[9px] font-bold text-gray-500 tracking-[0.3em] mt-0.5">V3.5 PRO</div>
+                    </div>
+                </div>
+                <div class="flex bg-black/50 rounded-lg border border-gray-700 p-1">
+                    <button @click="mode = 'styles'" :class="mode === 'styles' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'" class="px-3 py-1.5 rounded-md text-[10px] font-bold transition-all flex items-center gap-1">
+                        <v-icon icon="mdi-format-font" size="x-small"></v-icon> <span class="hidden md:inline">STYLES</span>
+                    </button>
+                    <button @click="mode = 'repeater'" :class="mode === 'repeater' ? 'bg-cyan-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'" class="px-3 py-1.5 rounded-md text-[10px] font-bold transition-all flex items-center gap-1">
+                        <v-icon icon="mdi-repeat" size="x-small"></v-icon> <span class="hidden md:inline">REPEATER</span>
+                    </button>
+                </div>
+            </div>
+
+            <v-main class="flex-1 flex flex-col overflow-hidden bg-[#171925]">
+
+                <div class="shrink-0 z-30 bg-[#171925] p-4 pb-2 shadow-xl border-b border-gray-800">
+                    <div class="max-w-5xl mx-auto w-full bg-[#12141d] rounded-xl border border-gray-800 flex flex-col relative overflow-hidden group">
+                        <div class="p-2 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a]">
+                            <span class="text-[10px] text-gray-500 font-bold tracking-wider orbitron flex items-center gap-2 pl-2">
+                                <v-icon icon="mdi-console-line" size="small" color="purple"></v-icon> INPUT STREAM
+                            </span>
+                            <button @click="inputText = ''" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-red-900/20 transition">
+                                <v-icon icon="mdi-trash-can-outline" size="x-small"></v-icon> CLEAR
+                            </button>
+                        </div>
+
+                        <div class="p-0 bg-[#0f111a]">
+                            <textarea v-model="inputText"
+                                class="w-full h-24 bg-transparent p-3 text-sm text-white focus:outline-none font-mono placeholder-gray-700 leading-relaxed"
+                                placeholder="Type message here..."
+                                enterkeyhint="done"></textarea>
+                        </div>
+
+                        <div class="px-2 py-1.5 border-t border-gray-800 flex gap-2 bg-[#0f111a] overflow-x-auto">
+                            <button @click="addSpacer" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded text-[10px] font-bold border border-gray-600 flex items-center gap-1 shrink-0 active:scale-95 transition-transform">
+                                <v-icon icon="mdi-keyboard-space" size="x-small"></v-icon> SPACER
+                            </button>
+                            <button @click="copyInput" class="bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 px-3 py-1.5 rounded text-[10px] font-bold border border-purple-500/50 flex items-center gap-1 shrink-0 ml-auto active:scale-95 transition-transform">
+                                <v-icon icon="mdi-content-copy" size="x-small"></v-icon> RAW
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scroll p-4 pt-2 pb-40">
+                    <div class="max-w-5xl mx-auto flex flex-col gap-4">
+
+                        <div v-if="mode === 'styles'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div v-if="!inputText" class="col-span-full py-12 text-center opacity-30 select-none flex flex-col items-center">
+                                <v-icon icon="mdi-broadcast" size="48" class="mb-4 animate-pulse text-purple-500"></v-icon>
+                                <div class="text-xs orbitron tracking-[0.3em] text-gray-400">WAITING FOR INPUT...</div>
+                            </div>
+
+                            <div v-else v-for="(style, key) in styles" :key="key"
+                                 @click="copyText(transform(inputText, key))"
+                                 class="group bg-[#1a1d2d] border border-gray-800 hover:border-purple-500 rounded-xl p-4 cursor-pointer transition-all duration-200 active:scale-95 shadow-sm hover:shadow-purple-500/10 relative overflow-hidden">
+
+                                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-purple-600/20 p-1 rounded">
+                                    <v-icon icon="mdi-content-copy" color="purple-accent-2" size="x-small"></v-icon>
+                                </div>
+
+                                <div class="text-[9px] text-gray-500 font-bold tracking-widest mb-1 uppercase flex items-center gap-2">
+                                    <span class="w-1 h-1 bg-purple-500 rounded-full"></span>
+                                    {{ style.name }}
+                                </div>
+                                <div class="text-sm text-white font-medium break-words leading-relaxed min-h-[1.5rem]">
+                                    {{ transform(inputText, key) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="mode === 'repeater'" class="flex flex-col gap-4">
+                            <div class="bg-[#12141d] p-4 rounded-xl border border-gray-800 flex flex-col gap-4">
+                                <div class="w-full">
+                                    <label class="text-[9px] text-gray-500 font-bold tracking-widest block mb-2">REPETITION COUNT</label>
+                                    <div class="flex items-center gap-2">
+                                        <input v-model="repeatCount" type="number" class="bg-black/50 border border-gray-700 rounded px-3 py-2 w-full text-cyan-400 font-mono focus:border-cyan-500 outline-none text-sm" min="1" max="1000">
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="flex-1 flex items-center gap-2 bg-black/30 px-3 py-2 rounded border border-gray-800 cursor-pointer hover:bg-black/50" @click="repeatNewLine = !repeatNewLine">
+                                        <div class="w-4 h-4 rounded border flex items-center justify-center transition-colors" :class="repeatNewLine ? 'bg-cyan-500 border-cyan-500' : 'border-gray-600'">
+                                            <v-icon v-if="repeatNewLine" icon="mdi-check" size="10" color="black"></v-icon>
+                                        </div>
+                                        <span class="text-[10px] text-gray-300 font-bold">NEW LINE</span>
+                                    </div>
+                                    <button @click="copyRepeated" class="flex-1 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white px-4 py-2 rounded font-black text-[10px] tracking-widest shadow-lg shadow-cyan-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                        <v-icon icon="mdi-content-copy" size="small"></v-icon> COPY
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-black/40 border border-gray-800 rounded-xl flex flex-col overflow-hidden h-[300px]">
+                                <div class="px-4 py-2 bg-gray-900/50 border-b border-gray-800 flex justify-between items-center shrink-0">
+                                    <span class="text-[9px] text-gray-500 font-bold tracking-widest">PREVIEW</span>
+                                    <span class="text-[9px] text-gray-600 mono">{{ repeatedText.length }} CHARS</span>
+                                </div>
+                                <div class="flex-1 p-4 overflow-y-auto custom-scroll font-mono text-xs text-gray-400 break-words whitespace-pre-wrap leading-relaxed select-text">
+                                    {{ repeatedText }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="global-footer" class="mt-8 opacity-80 pb-20"></div>
+
+                    </div>
+                </div>
+
+                <v-snackbar v-model="snackbar" :timeout="1500" color="#1f2233" class="mb-12" location="bottom center">
+                    <div class="flex items-center gap-3 justify-center w-full">
+                        <v-icon icon="mdi-check-circle" color="purple-accent-2" size="small"></v-icon>
+                        <span class="text-white font-bold text-[10px] tracking-widest orbitron">COPIED TO CLIPBOARD</span>
+                    </div>
+                </v-snackbar>
+
+            </v-main>
+        </v-app>
+    </div>
+
+    <script>
+        // 1. FOOTER INJECTOR
+        async function loadFooter() {
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+                let html = await response.text();
+                const realYear = new Date().getFullYear();
+                html = html.replace('{YEAR}', realYear);
+                document.getElementById('global-footer').innerHTML = html;
+                if(window.lucide) window.lucide.createIcons();
+            } catch (e) {
+                console.warn("Footer fallback");
+                document.getElementById('global-footer').innerHTML =
+                    `<div class="p-8 text-center text-gray-600 font-mono text-xs">© ${new Date().getFullYear()} FLOWORK</div>`;
+            }
+        }
+        loadFooter();
+
+        // 2. VUE LOGIC
+        const { createApp, ref, computed } = Vue;
+        const { createVuetify } = Vuetify;
+        const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+        createApp({
+            setup() {
+                const mode = ref('styles');
+                const inputText = ref('');
+                const repeatCount = ref(50);
+                const repeatNewLine = ref(true);
+                const snackbar = ref(false);
+
+                // --- EXTENDED FONTS MAPS ---
+                const maps = {
+                    // 1. Standards
+                    bold: "𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗",
+                    boldSans: "𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵",
+                    italic: "𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧0123456789",
+                    boldItalic: "𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛0123456789",
+
+                    // 2. Scripts & Gothics
+                    script: "𝒜𝐵𝒞𝒟𝐸𝐹𝒢𝐻𝐼𝒥𝒦𝐿𝑀𝒩𝒪𝒫𝒬𝑅𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏0123456789",
+                    boldScript: "𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃0123456789",
+                    fraktur: "𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷0123456789",
+                    boldFraktur: "𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖛𝖜𝖝𝖞𝖟0123456789",
+
+                    // 3. Shapes
+                    circles: "ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ0①②③④⑤⑥⑦⑧⑨",
+                    circlesDark: "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩⓿❶❷❸❹❺❻❼❽❾",
+                    squares: "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉0123456789",
+                    squaresDark: "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉0123456789",
+
+                    // 4. Decorations
+                    double: "𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡",
+                    mono: "𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣𝟶𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿",
+                    wide: "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ０１２３４５６７８９",
+                    smallCaps: "ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ0123456789",
+
+                    // 5. Weird & Crazy
+                    parentheses: "⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵0⑴⑵⑶⑷⑸⑹⑺⑻⑼",
+                    currency: "₳฿₵ĐɆ₣₲ⱧłJ₭Ⱡ₥₦Ø₱QⱤ₴₮ɄV₩ӾɎⱫ₳฿₵ĐɆ₣₲ⱧłJ₭Ⱡ₥₦Ø₱QⱤ₴₮ɄV₩ӾɎⱫ0123456789",
+                    magic: "卂乃匚刀乇下厶卄工丁长乚爪𠘨口尸㔿尺丂丅凵リ山乂丫乙卂乃匚刀乇下厶卄工丁长乚爪𠘨口尸㔿尺丂丅凵リ山乂丫乙0123456789",
+                    sorcerer: "ꋬꃳꉔ꒯ꏂꄟꍌꁝ꒐꒻ꀘ꒒ꂵꋊꄲꉣꆰꋪꇙ꓄ꒄ꒦ꅐꇓꌦ꒓ꋬꃳꉔ꒯ꏂꄟꍌꁝ꒐꒻ꀘ꒒ꂵꋊꄲꉣꆰꋪꇙ꓄ꒄ꒦ꅐꇓꌦ꒓0123456789",
+                    rusify: "ДБϾDΞFGHIJҜLMИФPǪЯSΓЦVЩXYZДБϾDΞFGHIJҜLMИФPǪЯSΓЦVЩXYZ0123456789",
+                    sky: "ꁲꃼꏸ꒯ꍟꄘꁅꃬꀤ꒻ꀗ꒒ꁒꁹꆪꉣꆰꋪꌚ꓅ꐇꏳꅐꇼꂑꁴꁲꃼꏸ꒯ꍟꄘꁅꃬꀤ꒻ꀗ꒒ꁒꁹꆪꉣꆰꋪꌚ꓅ꐇꏳꅐꇼꂑꁴ0123456789",
+                    blocks: "▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄",
+                    dirty: "ᗪ丨尺ㄒㄚᗪ丨尺ㄒㄚ0123456789",
+                    fairy: "᠘ᑌᓍᖘᗅSᗫᖴᘜHᒙKᒪZ᙭ᑢᐯᗷᘉᙢ᠘ᑌᓍᖘᗅSᗫᖴᘜHᒙKᒪZ᙭ᑢᐯᗷᘉᙢ0123456789",
+                };
+                const normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+                const styles = {
+                    bold: { name: "Bold Serif" },
+                    boldSans: { name: "Bold Sans" },
+                    italic: { name: "Italic" },
+                    boldItalic: { name: "Bold Italic" },
+                    script: { name: "Script" },
+                    boldScript: { name: "Bold Script" },
+                    fraktur: { name: "Gothic" },
+                    boldFraktur: { name: "Bold Gothic" },
+                    double: { name: "Double Struck" },
+                    mono: { name: "Monospace" },
+                    wide: { name: "Wide Text" },
+                    smallCaps: { name: "Small Caps" },
+                    circles: { name: "Circles" },
+                    circlesDark: { name: "Black Circles" },
+                    squares: { name: "Squares" },
+                    squaresDark: { name: "Black Squares" },
+                    parentheses: { name: "Parentheses" },
+                    currency: { name: "Currency" },
+                    magic: { name: "Magic" },
+                    sorcerer: { name: "Sorcerer" },
+                    rusify: { name: "Rusify" },
+                    sky: { name: "Skyline" },
+                    fairy: { name: "Fairy" },
+                    dirty: { name: "Dirty" },
+                    flip: { name: "Upside Down" }
+                };
+
+                const transform = (text, type) => {
+                    if (!text) return "";
+
+                    // Special Logic for Flip
+                    if (type === 'flip') {
+                        const map = {'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ','i':'ᴉ','j':'ɾ','k':'ʞ','l':'l','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ','s':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z','A':'∀','B':'q','C':'Ɔ','D':'p','E':'Ǝ','F':'Ⅎ','G':'פ','H':'H','I':'I','J':'ſ','K':'ʞ','L':'˥','M':'W','N':'N','O':'O','P':'Ԁ','Q':'Ò','R':'ᴚ','S':'S','T':'⊥','U':'∩','V':'Λ','W':'M','X':'X','Y':'⅄','Z':'Z','1':'Ɩ','2':'ᄅ','3':'Ɛ','4':'ㄣ','5':'ϛ','6':'9','7':'ㄥ','8':'8','9':'6','0':'0','.':'˙',',':'\'','?':'¿','!':'¡','"':',,'};
+                        return text.split('').reverse().map(c => map[c] || c).join('');
+                    }
+
+                    // Standard Logic
+                    const targetMap = maps[type];
+                    if (!targetMap) return text;
+                    return text.split('').map(char => {
+                        const index = normal.indexOf(char);
+                        if (index === -1) return char;
+                        const mapArray = Array.from(targetMap);
+                        return mapArray[index] || char;
+                    }).join('');
+                };
+
+                const repeatedText = computed(() => {
+                    if (!inputText.value) return "Waiting for input signal...";
+                    const count = Math.min(Math.max(parseInt(repeatCount.value) || 1, 1), 1000);
+                    const sep = repeatNewLine.value ? '\n' : ' ';
+                    return Array(count).fill(inputText.value).join(sep);
+                });
+
+                const copyText = (txt) => {
+                    if(!txt) return;
+                    navigator.clipboard.writeText(txt).then(() => {
+                        snackbar.value = true;
+                    });
+                };
+
+                const copyInput = () => copyText(inputText.value);
+                const copyRepeated = () => copyText(repeatedText.value);
+
+                const addSpacer = () => {
+                    inputText.value += "\n⠀\n";
+                };
+
+                return {
+                    mode, inputText, styles, transform, copyText,
+                    repeatCount, repeatNewLine, repeatedText, copyRepeated, copyInput, addSpacer,
+                    snackbar
+                };
+            }
+        }).use(vuetify).mount('#vue-root');
+    </script>
+</body>
+</html>

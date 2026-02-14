@@ -1,0 +1,89 @@
+<div class="relative min-h-full flex flex-col items-center justify-center p-4 pb-24 md:p-8">
+
+    <div id="toast-container" class="fixed top-20 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <div class="relative w-full max-w-6xl bg-[#13151f] border border-[#3a3962] rounded-xl shadow-[0_0_40px_rgba(0,0,0,0.6)] overflow-hidden">
+
+        <div class="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-b border-[#3a3962] bg-[#1a1d2b] gap-4">
+            <div class="flex items-center gap-3">
+                <i data-lucide="scissors" class="text-[#54d7f6] w-5 h-5"></i>
+                <h2 class="text-sm font-mono tracking-[0.2em] text-white">SMART_STITCHER v5.0</h2>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <select id="mixMode" onchange="window.appCore.toggleMode()" class="w-full md:w-auto bg-[#54d7f6] text-black font-black text-xs uppercase tracking-wider rounded px-4 py-3 outline-none hover:bg-[#4bc3e0] transition-colors cursor-pointer text-center">
+                    <option value="audio_master">🎵 MASTER AUDIO (JAHIT VIDEO BIAR PAS LAGU)</option>
+                    <option value="video_master">🎬 MASTER VIDEO (JAHIT LAGU BIAR PAS VIDEO)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-[#54d7f6]/10 border-b border-[#54d7f6]/20 p-4 text-center">
+            <p id="mode-desc" class="text-[#54d7f6] text-xs md:text-sm font-bold italic">
+                "Punya lagu 1 jam? Sistem bakal ambil ratusan video pendek lo secara acak, dijahit sambung-menyambung sampai durasi pas 1 jam."
+            </p>
+        </div>
+
+        <div class="p-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+                <div class="relative group">
+                    <label id="label-left" class="block text-xs font-bold text-[#54d7f6] mb-2 font-mono flex justify-between">
+                        <span>KOLAM A: VIDEO</span>
+                        <span id="count-left" class="text-gray-500">0 FILES</span>
+                    </label>
+                    <input type="file" id="inputLeft" webkitdirectory directory multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                        onchange="window.appCore.handleInput(this, 'left')">
+                    <div id="zone-left" class="h-48 bg-[#0f111a] rounded-lg border-2 border-dashed border-[#3a3962] group-hover:border-[#54d7f6] flex flex-col items-center justify-center transition-all p-4 text-center">
+                        <i id="icon-left" data-lucide="film" class="text-gray-600 w-10 h-10 mb-2 group-hover:text-[#54d7f6]"></i>
+                        <p id="text-left" class="text-xs text-gray-400 font-bold">DROP FOLDER VIDEO</p>
+                        <p id="dur-left" class="text-[9px] text-[#54d7f6] mt-2 opacity-0">SCANNING DURATION...</p>
+                    </div>
+                </div>
+
+                <div class="relative group">
+                    <label id="label-right" class="block text-xs font-bold text-[#706bf3] mb-2 font-mono flex justify-between">
+                        <span>KOLAM B: AUDIO</span>
+                        <span id="count-right" class="text-gray-500">0 FILES</span>
+                    </label>
+                    <input type="file" id="inputRight" webkitdirectory directory multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                        onchange="window.appCore.handleInput(this, 'right')">
+                    <div id="zone-right" class="h-48 bg-[#0f111a] rounded-lg border-2 border-dashed border-[#3a3962] group-hover:border-[#706bf3] flex flex-col items-center justify-center transition-all p-4 text-center">
+                        <i id="icon-right" data-lucide="music" class="text-gray-600 w-10 h-10 mb-2 group-hover:text-[#706bf3]"></i>
+                        <p id="text-right" class="text-xs text-gray-400 font-bold">DROP FOLDER AUDIO</p>
+                        <p id="dur-right" class="text-[9px] text-[#706bf3] mt-2 opacity-0">SCANNING DURATION...</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <button id="btn-start" onclick="window.appCore.startSmartMixing()" class="w-full py-5 bg-gradient-to-r from-[#54d7f6] to-[#706bf3] hover:brightness-110 text-black font-black text-xl tracking-widest rounded shadow-[0_0_30px_rgba(84,215,246,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99]">
+                    JAHIT & MIXING SEKARANG! 🧵
+                </button>
+
+                <div class="bg-black border border-[#3a3962] rounded p-4 h-40 overflow-y-auto font-mono text-[10px] custom-scrollbar">
+                    <div id="terminal-logs" class="space-y-1">
+                        <div class="text-gray-600">> WAITING FOR RESOURCES...</div>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <div class="flex justify-between text-[9px] text-gray-500 font-mono mb-1">
+                        <span id="prog-text">IDLE</span>
+                        <span id="prog-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-[#0f111a] h-3 rounded-full overflow-hidden">
+                        <div id="prog-bar" class="h-full bg-[#54d7f6] w-0 transition-all duration-300 relative">
+                            <div class="absolute inset-0 bg-white/30 w-full h-full animate-[shimmer_1s_infinite]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }</style>

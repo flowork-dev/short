@@ -1,0 +1,104 @@
+<!DOCTYPE  html >
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>APP INFO</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/assets/lander/main.js"></script>
+<link rel="stylesheet" href="/assets/lander/style.css">
+</head>
+<body class="hide-scrollbar">
+<div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+    <div class="desktop-grid">
+
+        <div class="relative z-10 animate-fade-in">
+            <div class="px-3 py-1 bg-violet-500/10 border border-violet-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                <span class="text-[10px] text-violet-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                    <i data-lucide="box-select" class="w-3 h-3"></i> MOCKUP ENGINE V18
+                </span>
+            </div>
+
+            <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                LOGO DATAR? <br> <span class="gradient-text">JADI REALISTIS.</span>
+            </h1>
+
+            <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                Ubah desain mentah menjadi produk profesional. Simulasikan logo kamu di atas kertas, dinding, atau kain dengan pencahayaan nyata (Ray Tracing Logic).
+            </p>
+
+
+        </div>
+
+        <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+            <div class="glass-panel p-5 rounded-2xl">
+                <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                    <div class="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-500">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="text-sm font-bold">Cara Kerja</h3>
+                </div>
+
+                <ul class="space-y-4">
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Upload Raw Logo</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Gunakan file PNG transparan atau SVG untuk hasil terbaik.</span>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Select Texture</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Pilih media: Emboss Kertas, Neon Sign, atau Jahitan Baju.</span>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Auto Render</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Engine akan menghitung pencahayaan dan bayangan secara otomatis.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="glass-panel p-4 rounded-xl">
+                    <i data-lucide="wand-2" class="w-5 h-5 mb-2 text-pink-500"></i>
+                    <h4 class="text-xs font-bold mb-1">Instant Pro</h4>
+                    <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                        Klien lebih mudah "ACC" desain kalau melihat preview barang jadinya, bukan cuma gambar gepeng.
+                    </p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl">
+                    <i data-lucide="layers" class="w-5 h-5 mb-2 text-violet-500"></i>
+                    <h4 class="text-xs font-bold mb-1">Smart Depth</h4>
+                    <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                        Otomatis mendeteksi layer logo untuk memberikan efek timbul (emboss) yang akurat.
+                    </p>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                <h3 class="text-xs font-bold mb-1">Browser-Based Rendering</h3>
+                <p class="text-[10px]" style="color: var(--text-muted);">
+                    Tidak perlu install Photoshop atau plugin berat. Semua proses rendering dilakukan ringan di browser.
+                </p>
+            </div>
+
+            <div class="text-center mt-2 px-4 lg:hidden">
+                <p class="text-[10px] italic opacity-50">
+                    "Make it pop, make it sell."
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

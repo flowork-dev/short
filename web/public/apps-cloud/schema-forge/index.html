@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Schema Forge | SEO Markup Generator</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --bg-core: #0a0a0f;
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --input-bg: #1a1a24;
+            --schema-green: #0aff60;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden; /* App mode */
+            height: 100dvh; /* Mobile Friendly Height */
+            font-size: 16px; /* Prevent iOS zoom on input focus */
+        }
+
+        /* GRID BACKGROUND */
+        .cyber-grid {
+            position: fixed; inset: 0; z-index: -1;
+            background-image:
+                linear-gradient(rgba(10, 10, 15, 0.95), rgba(10, 10, 15, 0.95)),
+                linear-gradient(0deg, transparent 24%, rgba(0, 243, 255, 0.05) 25%, rgba(0, 243, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 243, 255, 0.05) 75%, rgba(0, 243, 255, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 243, 255, 0.05) 25%, rgba(0, 243, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 243, 255, 0.05) 75%, rgba(0, 243, 255, 0.05) 76%, transparent 77%, transparent);
+            background-size: 60px 60px;
+        }
+
+        /* UTILS */
+        .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .hidden-view { display: none !important; }
+
+        /* SCROLLBAR */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #000; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; border: 1px solid #000; }
+
+        /* Mobile Safe Area */
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body>
+
+    <div class="cyber-grid"></div>
+
+    <main class="w-full h-full relative flex flex-col">
+        <div id="view-app" class="w-full h-full"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            userIdentity: null,
+            vueInstance: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+                this.initVue();
+
+                window.addEventListener('message', (e) => {
+                    if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                        this.setIdentity(e.data.userAddress);
+                    }
+                });
+
+                console.log("SYSTEM: SCHEMA FORGE RELOADED");
+            },
+
+            async loadPartial(id, url) {
+                const res = await fetch(url);
+                document.getElementById(id).innerHTML = await res.text();
+            },
+
+            // switchTab function removed
+
+            setIdentity(address) {
+                this.userIdentity = address;
+                const tutorial = document.getElementById('api-tutorial');
+                if(tutorial) address ? tutorial.style.display = 'block' : tutorial.style.display = 'none';
+            },
+
+            openSettings() {
+                window.parent.postMessage({ type: 'OPEN_SETTINGS', tab: 'variables' }, '*');
+            },
+
+            initVue() {
+                const { createApp, ref, computed, reactive } = Vue;
+                const { createVuetify } = Vuetify;
+                const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+                const app = createApp({
+                    setup() {
+                        const type = ref('local');
+                        const local = reactive({ name: '', image: '', address: '', phone: '', priceRange: '$$' });
+                        const product = reactive({ name: '', image: '', desc: '', brand: '', price: '', currency: 'IDR' });
+                        const faq = ref([{ q: '', a: '' }]);
+
+                        const setType = (t) => type.value = t;
+                        const addFaq = () => faq.value.push({ q: '', a: '' });
+                        const removeFaq = (i) => faq.value.splice(i, 1);
+
+                        const generatedObject = computed(() => {
+                            let schema = {};
+                            if (type.value === 'local') {
+                                schema = {
+                                    "@context": "https://schema.org",
+                                    "@type": "LocalBusiness",
+                                    "name": local.name,
+                                    "image": local.image,
+                                    "address": { "@type": "PostalAddress", "streetAddress": local.address },
+                                    "telephone": local.phone,
+                                    "priceRange": local.priceRange
+                                };
+                            } else if (type.value === 'product') {
+                                schema = {
+                                    "@context": "https://schema.org",
+                                    "@type": "Product",
+                                    "name": product.name,
+                                    "image": [product.image],
+                                    "description": product.desc,
+                                    "brand": { "@type": "Brand", "name": product.brand },
+                                    "offers": { "@type": "Offer", "url": "", "priceCurrency": product.currency, "price": product.price, "availability": "https://schema.org/InStock" }
+                                };
+                            } else if (type.value === 'faq') {
+                                schema = {
+                                    "@context": "https://schema.org",
+                                    "@type": "FAQPage",
+                                    "mainEntity": faq.value.map(f => ({
+                                        "@type": "Question",
+                                        "name": f.q,
+                                        "acceptedAnswer": { "@type": "Answer", "text": f.a }
+                                    }))
+                                };
+                            }
+                            return schema;
+                        });
+
+                        const generatedCodeString = computed(() => JSON.stringify(generatedObject.value, null, 2));
+
+                        // High Contrast Syntax Highlighting
+                        const highlightedCode = computed(() => {
+                            let json = generatedCodeString.value;
+                            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                                let cls = 'text-green-300';
+                                if (/^"/.test(match)) {
+                                    if (/:$/.test(match)) cls = 'text-cyan-400 font-bold';
+                                    else cls = 'text-yellow-200';
+                                } else if (/true|false/.test(match)) cls = 'text-purple-400 font-bold';
+                                else if (/null/.test(match)) cls = 'text-red-400 font-bold';
+                                return '<span class="' + cls + '">' + match + '</span>';
+                            });
+                        });
+
+                        const copyCode = () => {
+                            const code = `<script type="application/ld+json">\n${generatedCodeString.value}\n<\/script>`;
+                            navigator.clipboard.writeText(code);
+                            alert("JSON-LD Copied to Clipboard!"); // Mobile friendly feedback
+                        };
+
+                        return {
+                            type, local, product, faq,
+                            setType, addFaq, removeFaq, highlightedCode, copyCode
+                        };
+                    }
+                });
+
+                app.use(vuetify).mount('#vue-root');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

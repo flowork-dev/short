@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palette Thief | Flowork OS</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        flowork: { bg: '#050505', cyan: '#00f5ff', pink: '#ff4081', surface: '#121218' }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif'],
+                        mono: ['Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #050505; color: #e0e0e0; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
+        .cyber-input { background: rgba(10, 10, 15, 0.9); border: 1px solid #333; color: white; transition: all 0.3s; }
+        .cyber-input:focus { border-color: #ff4081; outline: none; box-shadow: 0 0 15px rgba(255, 64, 129, 0.2); }
+        .tab-active { border-bottom: 2px solid #ff4081; color: #ff4081; text-shadow: 0 0 10px rgba(255, 64, 129, 0.5); }
+        .tab-inactive { color: #666; border-bottom: 2px solid transparent; }
+        .clip-path-btn { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+
+        /* COLOR SWATCH */
+        .swatch-card { transition: all 0.2s; cursor: pointer; }
+        .swatch-card:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .swatch-card:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="bg-flowork-bg min-h-screen flex flex-col">
+
+    <div id="toast" class="fixed top-20 right-5 z-[100] transform translate-x-full transition-transform duration-300 bg-gray-900 border border-flowork-cyan px-4 py-3 rounded shadow-[0_0_20px_rgba(0,245,255,0.2)] flex items-center gap-3">
+        <i class="mdi mdi-check-circle text-flowork-cyan"></i>
+        <div>
+            <div class="text-xs text-gray-400 font-bold">COPIED TO CLIPBOARD</div>
+            <div id="toast-msg" class="text-sm font-mono text-white">#FFFFFF</div>
+        </div>
+    </div>
+
+    <div id="app" class="flex flex-col h-full">
+        <header class="h-16 border-b border-gray-800 bg-black/90 backdrop-blur fixed w-full z-50 flex items-center px-6 justify-between">
+            <div class="flex items-center gap-3">
+                <i class="mdi mdi-eyedropper text-3xl text-flowork-pink animate-pulse"></i>
+                <div>
+                    <h1 class="font-orbitron font-black text-xl text-white tracking-wider">PALETTE<span class="text-flowork-pink">THIEF</span></h1>
+                    <p class="text-[10px] text-gray-500 font-mono tracking-[0.4em] uppercase">Visual Extractor V1.0</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow pt-24 pb-20 px-4 md:px-8 relative z-10 max-w-7xl mx-auto w-full">
+
+            <div class="flex justify-center mb-10 border-b border-gray-800 sticky top-16 bg-flowork-bg/95 backdrop-blur z-40 pt-2">
+                <button id="tab-btn-app" class="px-8 py-3 font-orbitron font-bold text-sm tracking-widest transition-all tab-active cursor-default">
+                    INTELLIGENCE
+                </button>
+            </div>
+
+            <div v-if="isLoading" class="flex justify-center items-center h-64 text-flowork-pink font-orbitron animate-pulse">
+                INITIALIZING THIEF PROTOCOL...
+            </div>
+
+            <div v-else>
+                <div class="animate-fade-in"><div v-html="appContent"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const appContent = ref('');
+                const isLoading = ref(true);
+                const extractedColors = ref([]);
+
+                // LOAD PARTIALS
+                const loadPartials = async () => {
+                    isLoading.value = true;
+                    try {
+                        // Lander fetch removed
+                        const a = await fetch('partials/app.html').then(r => r.text());
+                        appContent.value = a;
+                    } catch (e) {
+                        console.error(e);
+                        appContent.value = "Error Loading Protocol."; // Fallback
+                    } finally {
+                        isLoading.value = false;
+                        await nextTick();
+                        // Restore state if any (though usually empty on init)
+                        if(extractedColors.value.length > 0) renderColors(extractedColors.value);
+                    }
+                };
+
+                // switchTab function removed
+
+                // GLOBAL METHODS
+                window.startScan = async () => {
+                    const urlInput = document.getElementById('in-url');
+                    const btnText = document.getElementById('btn-text');
+                    const loader = document.getElementById('loader');
+                    const resultArea = document.getElementById('result-area');
+
+                    if(!urlInput.value) {
+                        showToast("Please enter a URL first!", false);
+                        return;
+                    }
+
+                    // UI Loading
+                    btnText.innerText = "HUNTING...";
+                    loader.classList.remove('hidden');
+                    resultArea.classList.add('hidden');
+
+                    try {
+                        const res = await fetch('/api/v1/palette-thief/process', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ url: urlInput.value })
+                        });
+                        const result = await res.json();
+
+                        if(result.success) {
+                            extractedColors.value = result.data.colors;
+                            renderColors(result.data.colors);
+                            loader.classList.add('hidden');
+                            resultArea.classList.remove('hidden');
+                            btnText.innerText = "SCAN URL";
+                        } else {
+                            throw new Error(result.error);
+                        }
+                    } catch (e) {
+                        loader.classList.add('hidden');
+                        btnText.innerText = "SCAN URL";
+                        showToast("Failed to extract: " + e.message, false);
+                    }
+                };
+
+                window.copyColor = (hex) => {
+                    navigator.clipboard.writeText(hex).then(() => {
+                        showToast(hex);
+                    });
+                };
+
+                window.downloadJSON = () => {
+                    if(extractedColors.value.length === 0) return;
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(extractedColors.value));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", "palette_" + Date.now() + ".json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                };
+
+                const renderColors = (colors) => {
+                    const grid = document.getElementById('color-grid');
+                    const count = document.getElementById('count-found');
+                    if(!grid) return;
+
+                    count.innerText = colors.length;
+                    let html = '';
+
+                    colors.forEach(hex => {
+                        // Check brightness to decide text color (black/white)
+                        // Simple heuristic
+                        const isLight = true; // Simplified for now, can add logic later
+
+                        html += `
+                        <div class="swatch-card bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-lg group" onclick="window.copyColor('${hex}')">
+                            <div class="h-24 w-full relative" style="background-color: ${hex}">
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition">
+                                    <i class="mdi mdi-content-copy text-white text-2xl drop-shadow-md"></i>
+                                </div>
+                            </div>
+                            <div class="p-3 flex justify-between items-center bg-gray-900">
+                                <span class="font-mono text-xs text-gray-300 font-bold uppercase">${hex}</span>
+                                <div class="w-3 h-3 rounded-full border border-gray-600" style="background-color: ${hex}"></div>
+                            </div>
+                        </div>`;
+                    });
+
+                    grid.innerHTML = html;
+                };
+
+                const showToast = (msg, success=true) => {
+                    const toast = document.getElementById('toast');
+                    const msgEl = document.getElementById('toast-msg');
+
+                    msgEl.innerText = msg;
+                    // Reset classes
+                    toast.classList.remove('translate-x-full');
+
+                    setTimeout(() => {
+                        toast.classList.add('translate-x-full');
+                    }, 3000);
+                };
+
+                onMounted(() => {
+                    loadPartials();
+                });
+
+                return { appContent, isLoading };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VOICE JAMMER | ORIGINAL LOGIC</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+    <style>
+        /* --- THEME ENGINE --- */
+        :root {
+            --bg-core: #171925;
+            --surface-1: #1f2233;
+            --surface-2: #12141d;
+            --border-color: rgba(84, 215, 246, 0.2);
+            --primary: #54d7f6;
+            --secondary: #706bf3;
+            --accent: #0aff60;
+            --danger: #ff2a6d;
+            --txt-main: #e0f0ff;
+            --txt-muted: #94a3b8;
+            --txt-inv: #000000;
+        }
+
+        [data-theme="light"] {
+            --bg-core: #f1f5f9;
+            --surface-1: #ffffff;
+            --surface-2: #e2e8f0;
+            --border-color: #cbd5e1;
+            --primary: #0284c7;
+            --secondary: #4f46e5;
+            --accent: #059669;
+            --danger: #dc2626;
+            --txt-main: #0f172a;
+            --txt-muted: #64748b;
+            --txt-inv: #ffffff;
+        }
+
+        [data-theme="hacker"] {
+            --bg-core: #000000;
+            --surface-1: #0a0a0a;
+            --surface-2: #050505;
+            --border-color: #00ff00;
+            --primary: #00ff00;
+            --secondary: #008f11;
+            --accent: #00ff00;
+            --danger: #ff0000;
+            --txt-main: #00ff00;
+            --txt-muted: #005500;
+            --txt-inv: #000000;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--txt-main);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
+            background: var(--primary); cursor: pointer; margin-top: -6px;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer;
+            background: var(--surface-2); border-radius: 2px;
+        }
+
+        .safe-pt { padding-top: calc(84px + env(safe-area-inset-top)); }
+        .safe-pb { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+
+        .glass-panel {
+            background: var(--surface-1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+        }
+
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background: radial-gradient(at 0% 0%, var(--surface-2) 0px, transparent 50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="mesh-bg"></div>
+
+    <div id="app-mount-point" class="contents">
+        <nav class="fixed top-0 left-0 w-full h-16 z-40 flex items-center justify-between px-4 glass-panel border-b-0 shadow-sm pt-[env(safe-area-inset-top)] box-content"
+             style="background-color: var(--surface-1); border-color: var(--border-color);">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
+                     style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--txt-inv);">
+                    <i class="mdi mdi-waveform text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-widest leading-none orbitron">
+                        VOICE <span style="color: var(--primary);">JAMMER</span>
+                    </h1>
+                    <div class="text-[9px] font-bold tracking-[0.3em] mt-0.5 opacity-60" style="color: var(--txt-muted);">
+                        ORIGINAL ENGINE
+                    </div>
+                </div>
+            </div>
+            <div class="w-2 h-2 rounded-full animate-pulse" style="background-color: var(--accent);"></div>
+        </nav>
+
+        <main class="w-full h-full overflow-y-auto safe-pt safe-pb px-4 relative">
+
+            <div class="w-full relative z-20 shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 border mb-4 bg-[var(--surface-1)] border-[var(--border-color)]"
+                 :class="fileName ? 'h-[40vh] md:h-[400px]' : 'h-[300px] md:h-[400px]'">
+
+                <div v-if="!fileName" class="absolute inset-0 flex flex-col items-center justify-center z-10 p-4 text-center">
+                    <div class="cursor-pointer hover:scale-105 transition duration-300 group flex flex-col items-center" @click="triggerUpload">
+                        <div class="p-4 rounded-2xl border mb-3 shadow-lg flex items-center justify-center bg-black/10 border-[var(--border-color)]">
+                            <i class="mdi mdi-upload-network text-4xl text-[var(--primary)]"></i>
+                        </div>
+                        <div class="text-xs font-bold orbitron tracking-widest uppercase text-[var(--txt-main)]">Tap to Upload</div>
+                        <div class="text-[9px] mt-1 opacity-60 text-[var(--txt-muted)]">MP3 / WAV Only</div>
+                    </div>
+                    <div class="mt-6">
+                        <button @click="loadSampleAudio" class="text-[10px] font-bold px-4 py-2 rounded-full border border-dashed hover:opacity-80 transition text-[var(--accent)] border-[var(--txt-muted)]">
+                             TRY DEMO SAMPLE
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="fileName" class="absolute top-0 left-0 w-full p-3 flex justify-between items-center z-20 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+                    <div class="flex items-center gap-2 truncate pr-2">
+                        <i class="mdi mdi-shield-account text-xs text-[var(--primary)]"></i>
+                        <span class="text-[10px] font-bold truncate tracking-widest text-white">{{ fileName }}</span>
+                    </div>
+                    <div v-if="isPreviewing" class="text-[9px] font-black animate-pulse px-2 py-0.5 rounded bg-red-600 text-white">
+                        LIVE
+                    </div>
+                </div>
+
+                <div v-if="fileName" class="absolute bottom-4 right-4 z-30 flex flex-col gap-2">
+                    <button @click="handleZoom(1.2)" class="w-8 h-8 rounded-lg glass-panel flex items-center justify-center active:scale-95 text-[var(--txt-main)] hover:bg-[var(--surface-2)]">
+                        <i class="mdi mdi-plus"></i>
+                    </button>
+                    <button @click="handleZoom(0.8)" class="w-8 h-8 rounded-lg glass-panel flex items-center justify-center active:scale-95 text-[var(--txt-main)] hover:bg-[var(--surface-2)]">
+                        <i class="mdi mdi-minus"></i>
+                    </button>
+                    <div class="text-[8px] font-mono text-center bg-black/50 text-white rounded px-1">{{ zoomLevel.toFixed(1) }}x</div>
+                </div>
+
+                <canvas id="visualizer"
+                        @mousedown="startDrag" @touchstart="startDrag"
+                        @mousemove="onDrag" @touchmove="onDrag"
+                        @mouseup="endDrag" @touchend="endDrag"
+                        @wheel="onWheel"
+                        class="w-full h-full object-cover opacity-80 cursor-grab active:cursor-grabbing touch-none"></canvas>
+            </div>
+
+            <div v-if="resultUrl" class="p-4 rounded-xl border flex flex-col gap-3 animate__animated animate__fadeIn glass-panel border-[var(--accent)]">
+                <div class="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 text-[var(--accent)]">
+                    <i class="mdi mdi-check-circle"></i> Audio Poisoned
+                </div>
+                <audio controls :src="resultUrl" class="w-full h-8 opacity-80"></audio>
+            </div>
+
+            <input type="file" ref="fileInput" id="hidden-file-input" class="hidden" accept="audio/*" @change="handleFile">
+        </main>
+
+        <footer class="glass-panel border-t z-50 fixed bottom-0 w-full pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] border-[var(--border-color)]">
+            <div class="w-full flex justify-center py-2">
+                <div class="w-12 h-1 rounded-full opacity-20 bg-[var(--txt-muted)]"></div>
+            </div>
+
+            <div id="tool-menu" class="flex items-center w-full px-2 gap-4 relative justify-center">
+                <button v-if="!fileName" @click="triggerUpload" class="group min-w-[60px] flex flex-col items-center gap-1">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center border transition-all group-active:scale-90 bg-[var(--surface-1)] border-[var(--border-color)]">
+                        <i class="mdi mdi-upload text-xl text-[var(--primary)]"></i>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase opacity-60 text-[var(--txt-main)]">Upload</span>
+                </button>
+                <button v-else @click="resetApp" class="group min-w-[60px] flex flex-col items-center gap-1">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center border transition-all group-active:scale-90 bg-[var(--surface-1)] border-[var(--danger)]">
+                        <i class="mdi mdi-trash-can text-xl text-[var(--danger)]"></i>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase opacity-60 text-[var(--danger)]">Reset</span>
+                </button>
+
+                <button v-if="fileName" @click="showMixer = true" class="group min-w-[60px] flex flex-col items-center gap-1">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center border transition-all group-active:scale-90 bg-[var(--surface-1)] border-[var(--border-color)]">
+                        <i class="mdi mdi-tune text-xl text-[var(--accent)]"></i>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase opacity-60 text-[var(--txt-main)]">Mixer</span>
+                </button>
+
+                <button v-if="fileName" @click="togglePreview" class="group min-w-[60px] flex flex-col items-center gap-1">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center border transition-all group-active:scale-90"
+                         :style="isPreviewing ? 'background-color: var(--danger); border-color: var(--danger);' : 'background-color: var(--surface-1); border-color: var(--border-color);'">
+                        <i :class="isPreviewing ? 'mdi mdi-stop text-white' : 'mdi mdi-play text-[var(--primary)]'" class="text-xl"></i>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase opacity-60 text-[var(--txt-main)]">{{ isPreviewing ? 'Stop' : 'Preview' }}</span>
+                </button>
+
+                <button v-if="fileName" @click="processAudio" :disabled="isProcessing" class="group min-w-[60px] flex flex-col items-center gap-1">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all group-active:scale-90 shadow-lg"
+                         style="background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                         <i v-if="!isProcessing" class="mdi mdi-biohazard text-xl text-[var(--txt-inv)]"></i>
+                         <i v-else class="mdi mdi-loading mdi-spin text-xl text-[var(--txt-inv)]"></i>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase opacity-60 text-[var(--txt-main)]">Render</span>
+                </button>
+
+                <a v-if="resultUrl" :href="resultUrl" download="shielded_voice.wav" class="group min-w-[60px] flex flex-col items-center gap-1">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center border transition-all group-active:scale-90 bg-[var(--accent)] border-[var(--accent)]">
+                        <i class="mdi mdi-download text-xl text-[var(--txt-inv)]"></i>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase opacity-60 text-[var(--txt-main)]">Save</span>
+                </a>
+            </div>
+        </footer>
+
+        <div v-if="showMixer" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate__animated animate__fadeIn">
+            <div class="w-full sm:w-[350px] border-t sm:border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl relative animate__animated animate__slideInUp sm:animate__fadeInUp bg-[var(--surface-1)] border-[var(--border-color)]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold orbitron tracking-wider text-[var(--txt-main)]">AUDIO <span class="text-[var(--accent)]">MIXER</span></h3>
+                    <button @click="showMixer = false" class="text-[var(--txt-muted)] hover:text-white"><i class="mdi mdi-close text-xl"></i></button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex justify-between text-[10px] uppercase font-bold mb-2 text-[var(--txt-muted)]">
+                        <span>Original Voice</span>
+                        <span>{{ originalVolume }}%</span>
+                    </label>
+                    <input type="range" v-model="originalVolume" @input="updatePreviewParams" min="0" max="150">
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex justify-between text-[10px] uppercase font-bold mb-2 text-[var(--primary)]">
+                        <span>Ghost Voice (Swap & Fill)</span>
+                        <span>{{ ghostVolume }}%</span>
+                    </label>
+                    <input type="range" v-model="ghostVolume" @input="updatePreviewParams" min="0" max="150">
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex justify-between text-[10px] uppercase font-bold mb-2 text-[var(--secondary)]">
+                        <span>Ultrasonic Shield</span>
+                        <span>{{ sonicVolume }}%</span>
+                    </label>
+                    <input type="range" v-model="sonicVolume" @input="updatePreviewParams" min="0" max="150">
+                </div>
+
+                <button @click="showMixer = false" class="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider bg-[var(--bg-core)] text-[var(--txt-main)] border border-[var(--border-color)]">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const AppCore = {
+            vueApp: null,
+
+            init() {
+                const savedTheme = localStorage.getItem('flowork-theme');
+                if(savedTheme) this.applyTheme(savedTheme);
+                const urlTheme = new URLSearchParams(window.location.search).get('theme');
+                if(urlTheme) this.applyTheme(urlTheme);
+                if(window.parent) window.parent.postMessage({ type: 'iframe-ready' }, '*');
+                this.initVueApp();
+            },
+
+            applyTheme(theme) {
+                if(!theme) return;
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('flowork-theme', theme);
+            },
+
+            initVueApp() {
+                const { createApp, ref, onMounted } = Vue;
+                this.vueApp = createApp({
+                    setup() {
+                        const audioContext = ref(null);
+                        const fileInput = ref(null);
+                        const fileName = ref('');
+                        const isProcessing = ref(false);
+                        const isPreviewing = ref(false);
+                        const resultUrl = ref(null);
+                        const showMixer = ref(false);
+                        const playbackProgress = ref(0);
+
+                        // MIXER VARIABLES
+                        const originalVolume = ref(100);
+                        const ghostVolume = ref(100);
+                        const sonicVolume = ref(0);
+
+                        // ZOOM VARIABLES
+                        const zoomLevel = ref(1.0);
+                        const scrollOffset = ref(0.0);
+                        const isDragging = ref(false);
+                        const lastMouseX = ref(0);
+
+                        let audioBuffer = null;
+                        let previewSource = null;
+                        let previewContext = null;
+                        let previewDebounce = null;
+                        let animationFrameId = null;
+                        let previewStartTime = 0;
+
+                        // --- VISUALIZER ENGINE ---
+                        const startVisualizerLoop = () => {
+                            if (!isPreviewing.value || !audioBuffer) return;
+                            if (previewContext) {
+                                const elapsed = previewContext.currentTime - previewStartTime;
+                                playbackProgress.value = (elapsed % audioBuffer.duration) / audioBuffer.duration;
+                            }
+                            drawWaveform(audioBuffer, !!resultUrl.value);
+                            animationFrameId = requestAnimationFrame(startVisualizerLoop);
+                        };
+
+                        const stopVisualizerLoop = () => {
+                            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                            playbackProgress.value = 0;
+                            if (audioBuffer) drawWaveform(audioBuffer, !!resultUrl.value);
+                        };
+
+                        const drawWaveform = (buffer, isPoisoned = false) => {
+                            const canvas = document.getElementById('visualizer');
+                            if(!canvas || !buffer) return;
+                            const dpr = window.devicePixelRatio || 1;
+                            const rect = canvas.getBoundingClientRect();
+                            canvas.width = rect.width * dpr;
+                            canvas.height = rect.height * dpr;
+                            const ctx = canvas.getContext('2d');
+                            ctx.scale(dpr, dpr);
+
+                            const width = rect.width;
+                            const height = rect.height;
+                            const amp = height / 2;
+                            ctx.clearRect(0, 0, width, height);
+
+                            const style = getComputedStyle(document.body);
+                            const mainColor = isPoisoned ? style.getPropertyValue('--danger').trim() : style.getPropertyValue('--primary').trim();
+                            const playedColor = "#ffffff";
+
+                            const data = buffer.getChannelData(0);
+                            const totalSamples = data.length;
+                            const visibleSamples = Math.floor(totalSamples / zoomLevel.value);
+
+                            if (scrollOffset.value < 0) scrollOffset.value = 0;
+                            if (scrollOffset.value > 1) scrollOffset.value = 1;
+
+                            const maxStart = Math.max(0, totalSamples - visibleSamples);
+                            const startSample = Math.floor(scrollOffset.value * maxStart);
+                            const step = Math.ceil(visibleSamples / width);
+                            const currentSamplePos = playbackProgress.value * totalSamples;
+
+                            ctx.beginPath();
+                            for(let i = 0; i < width; i++) {
+                                let min = 1.0; let max = -1.0;
+                                let sampleIdx = startSample + (i * step);
+
+                                if (isPreviewing.value && sampleIdx < currentSamplePos) ctx.fillStyle = playedColor;
+                                else ctx.fillStyle = mainColor;
+
+                                if(sampleIdx < totalSamples) {
+                                    for (let j = 0; j < step; j++) {
+                                        const datum = data[sampleIdx + j];
+                                        if (datum < min) min = datum;
+                                        if (datum > max) max = datum;
+                                    }
+                                    ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+                                }
+                            }
+                        };
+
+                        // --- ZOOM & INTERACTION ---
+                        const handleZoom = (factor) => {
+                            if(!audioBuffer) return;
+                            const newZoom = zoomLevel.value * factor;
+                            zoomLevel.value = Math.max(1.0, Math.min(50.0, newZoom));
+                            drawWaveform(audioBuffer, !!resultUrl.value);
+                        };
+
+                        const onWheel = (e) => {
+                            if(!audioBuffer) return;
+                            e.preventDefault();
+                            const factor = (e.deltaY < 0) ? 1.1 : 0.9;
+                            handleZoom(factor);
+                        };
+
+                        const startDrag = (e) => {
+                            isDragging.value = true;
+                            lastMouseX.value = e.touches ? e.touches[0].clientX : e.clientX;
+                        };
+
+                        const onDrag = (e) => {
+                            if(!audioBuffer) return;
+                            e.preventDefault();
+                            if(!isDragging.value) return;
+                            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                            const deltaX = clientX - lastMouseX.value;
+                            lastMouseX.value = clientX;
+                            const movePercent = -(deltaX / window.innerWidth) / zoomLevel.value;
+                            scrollOffset.value += movePercent;
+                            drawWaveform(audioBuffer, !!resultUrl.value);
+                        };
+
+                        const endDrag = () => { isDragging.value = false; };
+
+                        // --- FILE HANDLING ---
+                        const triggerUpload = () => {
+                             if(fileInput.value) fileInput.value.click();
+                             else document.getElementById('hidden-file-input')?.click();
+                        };
+
+                        const handleFile = async (e) => {
+                            const file = e.target.files[0];
+                            if(!file) return;
+                            stopPreview();
+                            resultUrl.value = null;
+                            zoomLevel.value = 1.0;
+                            scrollOffset.value = 0.0;
+                            fileName.value = file.name;
+
+                            if(!audioContext.value) audioContext.value = new (window.AudioContext || window.webkitAudioContext)();
+                            try {
+                                const arrayBuffer = await file.arrayBuffer();
+                                audioBuffer = await audioContext.value.decodeAudioData(arrayBuffer);
+                                drawWaveform(audioBuffer);
+                            } catch (err) {
+                                alert("File error: " + err.message);
+                            } finally {
+                                e.target.value = '';
+                            }
+                        };
+
+                        const loadSampleAudio = async () => {
+                            if(isPreviewing.value) stopPreview();
+                            if(!audioContext.value) audioContext.value = new (window.AudioContext || window.webkitAudioContext)();
+                            const sr = audioContext.value.sampleRate;
+                            const buf = audioContext.value.createBuffer(1, sr * 5, sr);
+                            const d = buf.getChannelData(0);
+                            for(let i=0; i<d.length; i++) d[i] = Math.sin(i * 0.02) * 0.5;
+                            audioBuffer = buf;
+                            fileName.value = "SPEECH_SAMPLE.wav";
+                            drawWaveform(buf);
+                            zoomLevel.value = 1.0;
+                        };
+
+                        const resetApp = () => {
+                             stopPreview();
+                             fileName.value = '';
+                             resultUrl.value = null;
+                             audioBuffer = null;
+                             showMixer.value = false;
+                             zoomLevel.value = 1.0;
+                        };
+
+                        // --- PREVIEW SYSTEM ---
+                        const togglePreview = () => {
+                            if(isPreviewing.value) stopPreview();
+                            else startPreviewLoop();
+                        };
+
+                        const stopPreview = () => {
+                            stopVisualizerLoop();
+                            if(previewSource) { try { previewSource.stop(); } catch(e){} previewSource = null; }
+                            if(previewContext && previewContext.state !== 'closed') { previewContext.close(); previewContext = null; }
+                            isPreviewing.value = false;
+                        };
+
+                        const updatePreviewParams = () => {
+                            if(!isPreviewing.value) return;
+                            if(previewDebounce) clearTimeout(previewDebounce);
+                            previewDebounce = setTimeout(() => { startPreviewLoop(); }, 200);
+                        };
+
+                        const startPreviewLoop = async () => {
+                            if(!audioBuffer) return;
+                            if(previewSource) try { previewSource.stop(); } catch(e){}
+                            isPreviewing.value = true;
+
+                            // GUNAKAN RENDER FUNCTION YANG SAMA
+                            // Tapi minta output berupa buffer, bukan startRendering langsung ke context
+                            const renderedBuffer = await runJammerAlgorithm(audioBuffer, audioBuffer.duration, true);
+
+                            if(!previewContext) previewContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                            // Mainkan Buffer yang sudah jadi
+                            const source = previewContext.createBufferSource();
+                            source.buffer = renderedBuffer; // Sudah termixing dengan benar
+                            source.loop = true;
+                            source.connect(previewContext.destination);
+                            source.start();
+                            previewSource = source;
+
+                            previewStartTime = previewContext.currentTime;
+                            startVisualizerLoop();
+                        };
+
+                        // --- THE FIX: PARALLEL NODE GRAPH (NO DOUBLE MATH) ---
+                        // Fungsi ini mengembalikan Buffer yang sudah di-render
+                        const runJammerAlgorithm = async (inputBuffer, durationSec, isPreview = false) => {
+                            const sampleRate = inputBuffer.sampleRate;
+                            const frameCount = Math.floor(durationSec * sampleRate);
+                            // Offline Context untuk render output
+                            const offlineCtx = new OfflineAudioContext(inputBuffer.numberOfChannels, frameCount, sampleRate);
+
+                            const ratioOriginal = originalVolume.value / 100;
+                            const ratioGhost = ghostVolume.value / 100;
+                            const ratioSonic = sonicVolume.value / 100;
+
+                            // 1. NODE: ORIGINAL VOICE
+                            // Langsung dari buffer asli -> Gain -> Output
+                            const source = offlineCtx.createBufferSource();
+                            // Handle Preview Slice jika perlu
+                            if(isPreview) {
+                                const tempBuf = offlineCtx.createBuffer(inputBuffer.numberOfChannels, frameCount, sampleRate);
+                                for(let c=0; c<inputBuffer.numberOfChannels; c++) tempBuf.copyToChannel(inputBuffer.getChannelData(c).slice(0, frameCount), c);
+                                source.buffer = tempBuf;
+                            } else {
+                                source.buffer = inputBuffer;
+                            }
+
+                            const sourceGain = offlineCtx.createGain();
+                            sourceGain.gain.value = ratioOriginal;
+                            source.connect(sourceGain);
+                            sourceGain.connect(offlineCtx.destination);
+
+                            // 2. BUFFER: GHOST + SONIC ONLY
+                            // Buat buffer kosong untuk diisi data manipulasi
+                            const jammerBuffer = offlineCtx.createBuffer(inputBuffer.numberOfChannels, frameCount, sampleRate);
+                            const splitPoint = Math.floor(frameCount / 2);
+                            const sonicFreq = 20000;
+
+                            for (let ch = 0; ch < inputBuffer.numberOfChannels; ch++) {
+                                // Ambil data referensi (Read Only)
+                                const inputData = isPreview ? inputBuffer.getChannelData(ch).slice(0, frameCount) : inputBuffer.getChannelData(ch);
+                                // Data output untuk layer jammer
+                                const outputData = jammerBuffer.getChannelData(ch);
+                                let envelope = 0;
+
+                                for(let i = 0; i < frameCount; i++) {
+                                    // A. LOGIKA GHOST (SWAP + BOOST)
+                                    // Sesuai kode lama: tukar posisi buffer
+                                    let srcIdx = (i < (frameCount - splitPoint)) ? splitPoint + i : i - (frameCount - splitPoint);
+                                    let rawJammerSample = (srcIdx < inputData.length) ? inputData[srcIdx] : 0;
+
+                                    // Envelope detection
+                                    const absInput = Math.abs(inputData[i]);
+                                    envelope = envelope * 0.999 + absInput * 0.001;
+                                    let silenceFactor = (envelope < 0.1) ? 1.0 - (envelope * 10.0) : 0;
+                                    if(silenceFactor < 0) silenceFactor = 0;
+                                    const boostAmount = 1.0 + (silenceFactor * 1.5);
+
+                                    // Hitung sinyal Ghost (dikali volume ghost di sini)
+                                    const ghostSignal = (rawJammerSample * boostAmount) * ratioGhost;
+
+                                    // B. LOGIKA SONIC
+                                    let sonicSignal = 0;
+                                    if (ratioSonic > 0) {
+                                        const phase = (i / sampleRate) * sonicFreq * 2 * Math.PI;
+                                        sonicSignal = Math.sin(phase) * 0.5 * ratioSonic;
+                                    }
+
+                                    // SIMPAN KE BUFFER JAMMER (JANGAN DITAMBAH INPUT ASLI!)
+                                    outputData[i] = ghostSignal + sonicSignal;
+                                }
+                            }
+
+                            // 3. NODE: JAMMER PLAYER
+                            // Mainkan buffer hasil manipulasi secara paralel
+                            const jammerSource = offlineCtx.createBufferSource();
+                            jammerSource.buffer = jammerBuffer;
+                            jammerSource.connect(offlineCtx.destination); // Volume sudah dikali di loop
+
+                            jammerSource.start();
+                            source.start(); // Jalankan original voice paralel
+
+                            // Web Audio API akan otomatis nge-mix kedua sinyal ini di destination
+                            // Inilah cara kerja kode lama yang bikin suaranya bersih
+                            return await offlineCtx.startRendering();
+                        };
+
+                        const processAudio = async () => {
+                            if(!audioBuffer) return;
+                            isProcessing.value = true;
+                            stopPreview();
+                            try {
+                                const renderedBuffer = await runJammerAlgorithm(audioBuffer, audioBuffer.duration, false);
+                                const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+                                resultUrl.value = URL.createObjectURL(wavBlob);
+                                drawWaveform(renderedBuffer, true);
+                                zoomLevel.value = 1.0;
+                                scrollOffset.value = 0.0;
+                            } catch(e) {
+                                alert("Error: " + e.message);
+                            } finally {
+                                isProcessing.value = false;
+                            }
+                        };
+
+                        function bufferToWave(abuffer, len) {
+                            let numOfChan = abuffer.numberOfChannels,
+                                length = len * numOfChan * 2 + 44,
+                                buffer = new ArrayBuffer(length),
+                                view = new DataView(buffer),
+                                channels = [], i, sample, offset = 0, pos = 0;
+                            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+                            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+                            setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66);
+                            setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(abuffer.sampleRate);
+                            setUint32(abuffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16);
+                            setUint32(0x61746164); setUint32(length - pos - 4);
+                            for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+                            while(pos < length) {
+                                for(i = 0; i < numOfChan; i++) {
+                                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+                                    view.setInt16(pos, sample, true); pos += 2;
+                                }
+                                offset++;
+                            }
+                            return new Blob([buffer], {type: "audio/wav"});
+                        }
+
+                        onMounted(() => {
+                            window.addEventListener('resize', () => { if(audioBuffer) drawWaveform(audioBuffer, !!resultUrl.value); });
+                        });
+
+                        return {
+                            fileInput, fileName, isProcessing, isPreviewing, resultUrl,
+                            originalVolume, ghostVolume, sonicVolume,
+                            showMixer, zoomLevel,
+                            triggerUpload, handleFile, processAudio, loadSampleAudio, resetApp, togglePreview, updatePreviewParams,
+                            handleZoom, startDrag, onDrag, endDrag, onWheel
+                        };
+                    }
+                }).mount('#app-mount-point');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data) return;
+            if (data.type === 'THEME_UPDATE' || data.type === 'setTheme' || data.type === 'THEME_CHANGE') {
+                const theme = data.theme || data.payload;
+                if (theme) AppCore.applyTheme(theme);
+            }
+        });
+    </script>
+</body>
+</html>

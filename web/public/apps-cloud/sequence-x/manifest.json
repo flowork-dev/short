@@ -1,0 +1,22 @@
+{
+  "name": "Sequence-X",
+  "slug": "sequence-x",
+  "version": "1.0.0",
+  "description": "Infinite Video Permutation Engine. Create thousands of unique viral contents from modular clips.",
+  "author": "Flowork Corps",
+  "category": "viral",
+  "tier": "pro",
+  "width": 1200,
+  "height": 900,
+  "resizeable": true,
+  "icon_file": "icon.svg",
+  "capabilities": [
+    "local_storage",
+    "file_system"
+  ],
+  "gui": {
+    "layout": "fluid",
+    "theme": "cyberpunk",
+    "dashboard_path": "index.html"
+  }
+}

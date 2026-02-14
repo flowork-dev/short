@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Vision Cortex | Neural Optical Interface</title>
+
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+
+    <style>
+        :root {
+            /* Core Colors aligned with App Rubah Warna */
+            --bg-core: #171925;
+            --surface-1: #1f2233;
+            --surface-2: #12141d;
+            --border-color: rgba(84, 215, 246, 0.3);
+
+            --neon-cyan: #54d7f6;
+            --neon-purple: #706bf3;
+            --text-holo: #e0f0ff;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-holo);
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden; /* Prevent body scroll in App Mode */
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(23, 25, 37, 0.95), rgba(23, 25, 37, 0.95)),
+                linear-gradient(0deg, transparent 24%, rgba(84, 215, 246, 0.03) 25%, rgba(84, 215, 246, 0.03) 26%, transparent 27%, transparent 74%, rgba(84, 215, 246, 0.03) 75%, rgba(84, 215, 246, 0.03) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(84, 215, 246, 0.03) 25%, rgba(84, 215, 246, 0.03) 26%, transparent 27%, transparent 74%, rgba(84, 215, 246, 0.03) 75%, rgba(84, 215, 246, 0.03) 76%, transparent 77%, transparent);
+            background-size: 50px 50px; z-index: -1; pointer-events: none;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .hidden-view { display: none !important; }
+
+        /* Animations */
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan { animation: scan 2s infinite linear; }
+        .animate-spin-slow { animation: spin 4s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 2px; }
+
+        /* Layout Utils */
+        .mobile-fixed-top {
+            height: 40dvh; /* Dynamic Viewport Height for Mobile */
+        }
+        @media (min-width: 768px) {
+            .mobile-fixed-top { height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="view-lander" class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8 overflow-y-auto pb-20">
+
+        <div class="desktop-grid pt-8">
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-cyan-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="eye" class="w-3 h-3"></i> NEURAL OPTICAL V3.4
+                    </span>
+                </div>
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    DON'T JUST WATCH. <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">ANALYZE THE VIBES.</span>
+                </h1>
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md text-gray-400">
+                    Ini bukan sekadar scanner foto biasa. Ini adalah <strong>"Third Eye"</strong> digital lo. Baca teks burem, deteksi emosi, sampe ngelacak jejak digital.
+                </p>
+
+                <div class="mt-8 rounded-xl overflow-hidden border border-white/10 shadow-2xl max-w-md aspect-video relative group bg-black">
+                    <div class="absolute inset-0 bg-cyan-500/10 mix-blend-overlay z-10 pointer-events-none"></div>
+                    <div class="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                        <i class="mdi mdi-image-filter-center-focus text-6xl text-gray-700"></i>
+                    </div>
+                    <div class="absolute bottom-4 right-4 bg-black/80 px-2 py-1 rounded border border-cyan-500/50 text-[10px] text-cyan-400 font-mono tracking-widest animate-pulse z-20">
+                        TARGET: IDENTIFIED
+                    </div>
+                </div>
+
+                <div id="api-config-panel" class="mt-8 hidden bg-black/40 border border-purple-500/30 p-4 rounded-xl max-w-md backdrop-blur-sm">
+                    <h3 class="text-xs font-bold text-white mb-2 flex items-center gap-2 border-b border-white/10 pb-2">
+                        <i data-lucide="key" class="w-3 h-3 text-purple-400"></i> BYOK SYSTEM
+                    </h3>
+                    <p class="text-[10px] mb-3 text-gray-400">
+                        Sistem ini butuh "Mata" (Google Vision API Key) pribadi lo.
+                    </p>
+                    <button onclick="window.appCore.openSettings()" class="w-full py-2 rounded text-[10px] font-bold uppercase tracking-widest bg-purple-600/20 text-purple-400 border border-purple-500/50 hover:bg-purple-600 hover:text-white transition">
+                        Open Key Manager
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 pt-8 lg:pt-0 justify-center">
+                <div class="p-5 rounded-2xl bg-[#1f2233] border border-white/10">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-500">
+                            <i data-lucide="scan" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Neural Capabilities</h3>
+                    </div>
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <i data-lucide="text-select" class="w-5 h-5 text-green-500 shrink-0"></i>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">OCR Dewa</span>
+                                <span class="text-[10px] opacity-70 text-gray-400">Tulisan cakar ayam / struk lecek auto-decode jadi teks rapi.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i data-lucide="smile" class="w-5 h-5 text-purple-500 shrink-0"></i>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Vibe Check</span>
+                                <span class="text-[10px] opacity-70 text-gray-400">Deteksi emosi. Tau mana senyum tulus mana yang fake.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <i data-lucide="globe" class="w-5 h-5 text-yellow-500 shrink-0"></i>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Deep Intel</span>
+                                <span class="text-[10px] opacity-70 text-gray-400">Lacak jejak digital foto dan tebak lokasi.</span>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <button onclick="window.appCore.switchTab('app')"
+                        class="mt-6 w-full py-4 rounded-xl font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg bg-cyan-500 text-black shadow-cyan-500/20">
+                        <i data-lucide="eye" class="w-5 h-5"></i> ACTIVATE VISION
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-app" class="hidden-view h-screen w-full flex flex-col p-2 md:p-4 bg-[var(--bg-core)] overflow-hidden">
+
+        <div class="flex justify-between items-center mb-2 md:mb-4 flex-none border-b border-gray-800 pb-2 h-14 shrink-0">
+            <div class="flex items-center gap-3">
+                <i class="mdi mdi-eye-circle-outline text-cyan-400 text-3xl animate-spin-slow"></i>
+                <div>
+                    <h1 class="orbitron text-xl md:text-2xl font-bold text-white m-0 leading-none tracking-widest">
+                        VISION <span style="color:var(--neon-cyan)">CORTEX</span>
+                    </h1>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                 <button onclick="window.appCore.switchTab('lander')" class="text-xs text-gray-500 hover:text-white mr-2 md:mr-4 border-r border-gray-700 pr-2 md:pr-4 flex items-center gap-1 transition-colors">
+                    <i class="mdi mdi-arrow-left"></i> <span class="hidden md:inline">PROTOCOL</span><span class="md:hidden">BACK</span>
+                 </button>
+                 <div class="px-2 md:px-3 py-1 border border-cyan-500/50 rounded bg-cyan-900/20 text-cyan-400 text-[10px] md:text-xs mono flex items-center gap-2">
+                    <i class="mdi mdi-shield-check"></i> <span class="hidden md:inline">SECURE</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-grow flex flex-col md:grid md:grid-cols-12 gap-4 overflow-hidden min-h-0">
+
+            <div class="shrink-0 mobile-fixed-top md:h-full md:col-span-5 flex flex-col min-h-0 relative z-10">
+
+                <div class="flex-grow border border-cyan-500/30 bg-black/40 relative flex flex-col items-center justify-center overflow-hidden rounded-lg mb-2 md:mb-4 group transition-all hover:border-cyan-500/60 w-full h-full">
+
+                    <div id="scan-line" class="absolute top-0 left-0 w-full h-[3px] bg-cyan-400 shadow-[0_0_20px_#54d7f6] z-20 hidden"></div>
+
+                    <img id="img-preview" class="max-w-full max-h-full object-contain p-2 z-10 hidden" />
+
+                    <div id="img-placeholder" class="text-center p-8 opacity-60 transition-opacity">
+                        <i class="mdi mdi-image-filter-center-focus text-4xl md:text-6xl text-white mb-4"></i>
+                        <p class="orbitron text-xs tracking-widest text-white">TAP TO UPLOAD</p>
+                    </div>
+
+                    <div class="absolute inset-0 z-30 cursor-pointer flex items-center justify-center" onclick="document.getElementById('file-input').click()">
+                        <div class="bg-cyan-900/90 border border-cyan-400 text-cyan-100 px-4 py-2 rounded hover:bg-cyan-600 transition uppercase orbitron text-xs font-bold shadow-[0_0_15px_var(--neon-cyan)] opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                             UPLOAD
+                        </div>
+                    </div>
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="window.appCore.handleFile(event)">
+                </div>
+
+                <button onclick="window.appCore.analyze()" id="btn-analyze" disabled
+                    class="w-full py-3 md:py-4 bg-cyan-900/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500 hover:text-black transition uppercase font-bold orbitron disabled:opacity-30 disabled:cursor-not-allowed rounded shadow-[0_0_10px_rgba(84,215,246,0.1)] flex items-center justify-center gap-2 shrink-0">
+                    <span id="btn-text">INITIATE ANALYSIS</span>
+                    <i id="btn-icon" class="mdi mdi-flash"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 md:h-full md:col-span-7 overflow-hidden flex flex-col gap-2 min-h-0 relative">
+
+                <div class="flex border-b border-gray-700 bg-black/20 flex-none rounded-t shrink-0">
+                    <button onclick="window.appCore.setTab('ocr')" id="tab-ocr" class="flex-1 py-3 text-[10px] md:text-xs orbitron font-bold transition-all border-b-2 text-cyan-400 border-cyan-400 bg-cyan-900/10">OCR</button>
+                    <button onclick="window.appCore.setTab('bio')" id="tab-bio" class="flex-1 py-3 text-[10px] md:text-xs orbitron font-bold transition-all border-b-2 text-gray-500 border-transparent hover:text-white">BIO</button>
+                    <button onclick="window.appCore.setTab('intel')" id="tab-intel" class="flex-1 py-3 text-[10px] md:text-xs orbitron font-bold transition-all border-b-2 text-gray-500 border-transparent hover:text-white">INTEL</button>
+                    <button onclick="window.appCore.setTab('safety')" id="tab-safety" class="flex-1 py-3 text-[10px] md:text-xs orbitron font-bold transition-all border-b-2 text-gray-500 border-transparent hover:text-white">SAFE</button>
+                </div>
+
+                <div class="flex-grow overflow-y-auto p-4 custom-scrollbar bg-black/40 border border-gray-800 border-t-0 rounded-b relative pb-20">
+
+                    <div id="loading-state" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-50">
+                        <i class="mdi mdi-loading mdi-spin text-cyan-400 text-4xl mb-4"></i>
+                        <p class="mono text-xs text-cyan-400 animate-pulse">DECODING PIXELS...</p>
+                    </div>
+
+                    <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center opacity-30 pointer-events-none">
+                        <i class="mdi mdi-monitor-dashboard text-6xl mb-4"></i>
+                        <p class="mono text-xs">DATA STREAM OFFLINE</p>
+                    </div>
+
+                    <div id="content-ocr" class="hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-500 mono">DETECTED: <span id="ocr-lang" class="text-white font-bold">UNK</span></span>
+                            <button onclick="window.appCore.copyText()" class="text-xs font-bold text-cyan-400 hover:text-white border border-cyan-500 px-2 py-1 rounded hover:bg-cyan-900/50">COPY</button>
+                        </div>
+                        <div id="ocr-text" class="p-4 bg-[#0f111a] border border-gray-700 rounded mono text-sm text-cyan-50 whitespace-pre-wrap min-h-[150px] select-text">
+                            // WAITING FOR DATA STREAM...
+                        </div>
+                    </div>
+
+                    <div id="content-bio" class="hidden space-y-3"></div>
+
+                    <div id="content-intel" class="hidden space-y-4">
+                        <div>
+                            <h3 class="text-cyan-400 text-xs font-bold border-b border-gray-800 mb-2">GUESS ORIGIN</h3>
+                            <div id="intel-guess" class="text-white text-sm font-bold">Unknown</div>
+                        </div>
+                        <div>
+                            <h3 class="text-cyan-400 text-xs font-bold border-b border-gray-800 mb-2">RELATED TAGS</h3>
+                            <div id="intel-tags" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-cyan-400 text-xs font-bold border-b border-gray-800 mb-2">DIGITAL FOOTPRINT</h3>
+                            <div id="intel-pages" class="space-y-1"></div>
+                        </div>
+                    </div>
+
+                    <div id="content-safety" class="hidden space-y-2"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FLOWORK SECURITY INTERCEPTOR ---
+        async function secureFetch(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 401 || response.status === 402 || response.status === 429) {
+                    window.parent.postMessage({
+                        type: 'FLOWORK_API_ERROR',
+                        status: response.status
+                    }, '*');
+                    return null;
+                }
+                return response;
+            } catch (e) {
+                console.error("Network Error:", e);
+                return null;
+            }
+        }
+
+        const AppCore = {
+            currentUserAddress: null,
+            base64Data: null,
+            resultData: null,
+
+            async init() {
+                // Initialize Lander Icons
+                if(window.lucide) lucide.createIcons();
+                console.log("VISION SYSTEM ONLINE.");
+            },
+
+            switchTab(tab) {
+                const lander = document.getElementById('view-lander');
+                const app = document.getElementById('view-app');
+                if(tab === 'app') {
+                    lander.classList.add('hidden-view');
+                    app.classList.remove('hidden-view');
+                } else {
+                    app.classList.add('hidden-view');
+                    lander.classList.remove('hidden-view');
+                }
+            },
+
+            handleIdentityUpdate(address) {
+                this.currentUserAddress = address;
+                const tutorial = document.getElementById('api-config-panel');
+                if(address) tutorial?.classList.remove('hidden');
+                else tutorial?.classList.add('hidden');
+            },
+
+            openSettings() {
+                window.parent.postMessage({ type: 'OPEN_SETTINGS', tab: 'variables' }, '*');
+            },
+
+            // --- APP LOGIC ---
+            setTab(tabId) {
+                const tabs = ['ocr', 'bio', 'intel', 'safety'];
+                tabs.forEach(t => {
+                    const btn = document.getElementById(`tab-${t}`);
+                    const content = document.getElementById(`content-${t}`);
+
+                    if (t === tabId) {
+                        btn.className = "flex-1 py-3 text-[10px] md:text-xs orbitron font-bold transition-all border-b-2 text-cyan-400 border-cyan-400 bg-cyan-900/10";
+                        content.classList.remove('hidden');
+                    } else {
+                        btn.className = "flex-1 py-3 text-[10px] md:text-xs orbitron font-bold transition-all border-b-2 text-gray-500 border-transparent hover:text-white";
+                        content.classList.add('hidden');
+                    }
+                });
+                document.getElementById('empty-state').classList.add('hidden');
+            },
+
+            handleFile(e) {
+                const file = e.target.files[0];
+                if(!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    document.getElementById('img-preview').src = evt.target.result;
+                    document.getElementById('img-preview').classList.remove('hidden');
+                    document.getElementById('img-placeholder').classList.add('hidden');
+                    document.getElementById('btn-analyze').disabled = false;
+                    this.base64Data = evt.target.result.split(',')[1];
+                };
+                reader.readAsDataURL(file);
+            },
+
+            async analyze() {
+                if (!this.base64Data) return;
+
+                // UI Updates
+                document.getElementById('loading-state').classList.remove('hidden');
+                document.getElementById('scan-line').classList.remove('hidden');
+                document.getElementById('scan-line').classList.add('animate-scan');
+                const btn = document.getElementById('btn-analyze');
+                btn.disabled = true;
+                btn.querySelector('span').innerText = "NEURAL PROCESSING...";
+
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if(this.currentUserAddress) headers['X-User-Address'] = this.currentUserAddress;
+
+                    const res = await secureFetch('/api/v1/vision/analyze', {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({ image: this.base64Data })
+                    });
+
+                    if (!res) { // Auth error triggered
+                         document.getElementById('loading-state').classList.add('hidden');
+                         document.getElementById('scan-line').classList.add('hidden');
+                         document.getElementById('scan-line').classList.remove('animate-scan');
+                         btn.disabled = false;
+                         btn.querySelector('span').innerText = "INITIATE ANALYSIS";
+                         return;
+                    }
+
+                    if(!res.ok) {
+                        const errData = await res.json();
+                        throw new Error(errData.message || "Analysis Failed");
+                    }
+
+                    const data = await res.json();
+                    this.resultData = data.data;
+                    this.renderResults(data.data);
+
+                } catch(e) {
+                    console.error(e);
+                    alert("Analysis Failed: " + e.message);
+                } finally {
+                    if (this.resultData) {
+                        document.getElementById('loading-state').classList.add('hidden');
+                        document.getElementById('scan-line').classList.add('hidden');
+                        document.getElementById('scan-line').classList.remove('animate-scan');
+                        btn.disabled = false;
+                        btn.querySelector('span').innerText = "INITIATE ANALYSIS";
+                    }
+                }
+            },
+
+            renderResults(data) {
+                // OCR
+                document.getElementById('ocr-lang').innerText = data.ocr.language || 'UNK';
+                document.getElementById('ocr-text').innerText = data.ocr.text || "// NO TEXT DETECTED";
+
+                // BIO
+                const bioContainer = document.getElementById('content-bio');
+                bioContainer.innerHTML = '';
+                if(data.faces.length) {
+                    data.faces.forEach((face, i) => {
+                        bioContainer.innerHTML += `
+                            <div class="mb-3 p-3 border border-purple-500/30 bg-purple-900/10 rounded">
+                                <div class="flex justify-between mb-2 pb-1 border-b border-purple-500/20">
+                                    <span class="text-purple-400 font-bold text-xs">SUBJECT_${i+1}</span>
+                                    <span class="text-[10px] text-gray-400">${face.confidence}% CONFIDENCE</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-xs text-gray-300">
+                                    <div class="flex justify-between"><span>JOY</span> <span class="${this.getMoodColor(face.joy)}">${face.joy}</span></div>
+                                    <div class="flex justify-between"><span>ANGER</span> <span class="${this.getMoodColor(face.anger)}">${face.anger}</span></div>
+                                    <div class="flex justify-between"><span>SORROW</span> <span class="${this.getMoodColor(face.sorrow)}">${face.sorrow}</span></div>
+                                </div>
+                            </div>`;
+                    });
+                } else {
+                    bioContainer.innerHTML = '<div class="text-center text-gray-500 mt-10 text-xs mono">// NO BIOMETRIC SIGNATURES DETECTED</div>';
+                }
+
+                // INTEL
+                document.getElementById('intel-guess').innerText = data.web.guess || 'Unknown';
+                const tagsContainer = document.getElementById('intel-tags');
+                tagsContainer.innerHTML = '';
+                if(data.web.entities) {
+                    data.web.entities.forEach(ent => {
+                        tagsContainer.innerHTML += `
+                            <span class="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-[10px] text-gray-300">
+                                ${ent.name} <span class="text-cyan-400 ml-1">${ent.score}%</span>
+                            </span>`;
+                    });
+                }
+                const pagesContainer = document.getElementById('intel-pages');
+                pagesContainer.innerHTML = '';
+                if(data.web.pages) {
+                    data.web.pages.forEach(page => {
+                        pagesContainer.innerHTML += `
+                            <div class="text-xs truncate text-gray-400 hover:text-cyan-400 cursor-pointer p-1 hover:bg-white/5 rounded" onclick="window.open('${page.url}', '_blank')">
+                                <i class="mdi mdi-link mr-1"></i> ${page.title}
+                            </div>`;
+                    });
+                }
+
+                // SAFETY
+                const safetyContainer = document.getElementById('content-safety');
+                safetyContainer.innerHTML = '';
+                if(data.safeSearch) {
+                    for (const [key, val] of Object.entries(data.safeSearch)) {
+                        safetyContainer.innerHTML += `
+                            <div class="flex justify-between items-center border-b border-gray-800 pb-1">
+                                <span class="text-gray-400 uppercase text-[10px]">${key.replace('Likelihood', '')}</span>
+                                <span class="text-xs font-bold ${this.getSafetyColor(val)}">${val.replace('VERY_', '').replace('UNLIKELY', 'SAFE')}</span>
+                            </div>`;
+                    }
+                }
+
+                // Smart Tab Switch
+                if(data.ocr.text) this.setTab('ocr');
+                else if(data.faces.length) this.setTab('bio');
+                else if(data.web.entities.length) this.setTab('intel');
+                else this.setTab('safety');
+            },
+
+            getMoodColor(v) { return (v === 'VERY_LIKELY' || v === 'LIKELY') ? 'text-green-400 font-bold' : 'text-gray-500'; },
+            getSafetyColor(v) { return (v === 'VERY_UNLIKELY' || v === 'UNLIKELY') ? 'text-green-400' : 'text-red-500 animate-pulse'; },
+            copyText() {
+                const text = document.getElementById('ocr-text').innerText;
+                if(text) navigator.clipboard.writeText(text);
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+
+        window.addEventListener('message', (e) => {
+             if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                 AppCore.handleIdentityUpdate(e.data.userAddress);
+             }
+        });
+    </script>
+</body>
+</html>

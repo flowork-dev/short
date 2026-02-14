@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="brain-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff0055;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5500ff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="#050a0f" rx="100"/>
+
+  <path d="M156 256 C156 180, 200 120, 256 120 C312 120, 356 180, 356 256" fill="none" stroke="url(#brain-grad)" stroke-width="12" stroke-linecap="round"/>
+  <path d="M156 256 C156 332, 200 392, 256 392 C312 392, 356 332, 356 256" fill="none" stroke="url(#brain-grad)" stroke-width="12" stroke-linecap="round" opacity="0.6"/>
+
+  <circle cx="256" cy="180" r="15" fill="#ff0055" filter="url(#glow)"/>
+  <circle cx="180" cy="256" r="10" fill="#ff0055" filter="url(#glow)"/>
+  <circle cx="332" cy="256" r="10" fill="#ff0055" filter="url(#glow)"/>
+
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="20 10"/>
+  <line x1="256" y1="50" x2="256" y2="462" stroke="#ff0055" stroke-width="2" opacity="0.5"/>
+  <line x1="50" y1="256" x2="462" y2="256" stroke="#ff0055" stroke-width="2" opacity="0.5"/>
+
+  <path d="M200 420 L312 420" stroke="#ff0055" stroke-width="4"/>
+</svg>

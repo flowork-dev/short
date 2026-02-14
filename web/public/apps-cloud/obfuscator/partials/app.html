@@ -1,0 +1,124 @@
+<style>
+    /* FIX: MEMAKSA TEXTAREA AGAR BISA DI-INTERAKSI */
+    #inputCode {
+        user-select: text !important;
+        -webkit-user-select: text !important; /* Safari/Chrome */
+        -moz-user-select: text !important; /* Firefox */
+        -ms-user-select: text !important; /* IE/Edge */
+        cursor: text !important;
+        pointer-events: auto !important;
+        z-index: 50 !important; /* Pastikan dia di atas elemen lain */
+        position: relative !important;
+    }
+</style>
+
+<div class="container mx-auto p-4 md:p-8 h-full flex flex-col">
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+
+        <div class="flex flex-col gap-4">
+
+            <div class="bg-[#3a3962]/50 p-4 rounded-lg border border-[#3a3962] flex flex-col gap-2 h-full max-h-[60vh] relative z-0">
+                <div class="flex justify-between items-center">
+                    <label class="block text-xs font-mono text-[#54d7f6] uppercase tracking-wider">Source Code (JS)</label>
+
+                    <div class="flex gap-2">
+                         <button onclick="clearInput()" class="text-[10px] bg-red-500/10 text-red-500 border border-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-white transition-all font-bold">
+                            <i data-lucide="trash-2" class="w-3 h-3 inline"></i> CLEAR
+                        </button>
+
+                        <button onclick="pasteToInput()" class="text-[10px] bg-[#54d7f6]/10 text-[#54d7f6] border border-[#54d7f6] px-3 py-1 rounded hover:bg-[#54d7f6] hover:text-black transition-all font-bold">
+                            <i data-lucide="clipboard-paste" class="w-3 h-3 inline"></i> PASTE
+                        </button>
+                    </div>
+                </div>
+
+                <textarea
+                    id="inputCode"
+                    class="w-full flex-1 bg-[#171925] border border-gray-700 rounded p-4 text-xs font-mono text-gray-300 focus:outline-none focus:border-[#54d7f6] resize-none"
+                    placeholder="// Klik disini lalu tekan Ctrl+V untuk paste manual..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                ></textarea>
+            </div>
+
+            <div class="bg-[#3a3962]/50 p-4 rounded-lg border border-[#3a3962]">
+                <label class="block text-xs font-mono text-gray-400 mb-2 uppercase">PROTECTION LEVEL</label>
+                <select id="levelSelect" class="w-full bg-[#171925] text-white p-3 rounded border border-gray-700 outline-none cursor-pointer">
+                    <option value="low">Basic Encoding (Light)</option>
+                    <option value="medium" selected>Standard Obfuscation (Balanced)</option>
+                    <option value="high">Hardcore (Anti-Debug + Dead Code)</option>
+                </select>
+            </div>
+
+            <button id="procBtn" onclick="window.appCore.runProcess()" class="w-full py-4 bg-[#54d7f6] text-[#171925] font-black rounded hover:bg-cyan-400 transition-all flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(84,215,246,0.3)] hover:shadow-[0_0_25px_rgba(84,215,246,0.5)] transform active:scale-95">
+                <i data-lucide="lock"></i> LOCK CODE NOW
+            </button>
+        </div>
+
+        <div class="flex flex-col h-full">
+            <div class="bg-[#3a3962]/50 p-4 rounded-lg border border-[#3a3962] flex-1 flex flex-col h-full max-h-[80vh]">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-xs font-mono text-[#706bf3] uppercase tracking-wider">Obfuscated Result</label>
+
+                    <button onclick="copyResult()" class="text-[10px] bg-[#706bf3]/10 text-[#706bf3] border border-[#706bf3] px-3 py-1 rounded hover:bg-[#706bf3] hover:text-white transition-all font-bold flex items-center gap-1">
+                        <i data-lucide="copy"></i> COPY
+                    </button>
+                </div>
+
+                <textarea id="outputCode" readonly class="w-full flex-1 bg-black border border-gray-700 rounded p-4 text-xs font-mono text-green-500 focus:outline-none resize-none cursor-text" placeholder="// Hasil code 'bubur' akan muncul disini..."></textarea>
+            </div>
+
+            <p class="text-center text-[10px] text-gray-600 mt-4 font-mono">
+                System processed by Flowork Secure Engine v2.0. Logic protected inside /api/v1.
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // FUNGSI PASTE DENGAN DIAGNOSA
+    async function pasteToInput() {
+        const input = document.getElementById('inputCode');
+        input.focus(); // Fokus dulu ke kotak
+
+        try {
+            // Coba cara modern (Clipboard API)
+            const text = await navigator.clipboard.readText();
+            input.value = text;
+
+            // Animasi tombol
+            const btn = document.querySelector('button[onclick="pasteToInput()"]');
+            btn.innerHTML = "✅ SUCCESS";
+            setTimeout(() => btn.innerHTML = `<i data-lucide="clipboard-paste" class="w-3 h-3 inline"></i> PASTE`, 1000);
+
+            lucide.createIcons();
+        } catch (err) {
+            // Kalau gagal (biasanya karena belum HTTPS atau Browser nge-block)
+            console.error("Paste Error:", err);
+            alert("⚠️ Browser memblokir akses clipboard otomatis.\n\nSilakan klik kotaknya, lalu tekan Ctrl + V di keyboard.");
+            input.focus();
+        }
+    }
+
+    // FUNGSI CLEAR (Biar yakin area bersih)
+    function clearInput() {
+        const input = document.getElementById('inputCode');
+        input.value = "";
+        input.focus();
+    }
+
+    function copyResult() {
+        const text = document.getElementById('outputCode');
+        text.select();
+        text.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(text.value).then(() => {
+            alert("Berhasil dicopy! Siap deploy.");
+        });
+    }
+
+    if(window.lucide) lucide.createIcons();
+</script>

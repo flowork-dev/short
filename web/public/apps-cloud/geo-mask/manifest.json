@@ -1,0 +1,26 @@
+{
+    "id": "geo-mask",
+    "name": "PALSUKAN LOKASI FOTO (GPS SPOOFING) - KELILING DUNIA DARI RUMAH",
+    "version": "3.4.0",
+    "description": "Edit metadata foto sesuka hati. Hapus lokasi asli dan suntikkan koordinat GPS palsu (Paris, Tokyo, dll) untuk pamer di sosmed atau membuat alibi digital.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "geo-mask",
+    "capabilities": [
+        "local_processing",
+        "metadata_manipulation"
+    ],
+    "tags": [
+        "privacy",
+        "spoofing",
+        "exif",
+        "fake-location",
+        "social-engineering"
+    ],
+    "required_variables": []
+}

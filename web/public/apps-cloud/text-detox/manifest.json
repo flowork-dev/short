@@ -1,0 +1,28 @@
+{
+    "id": "text-detox",
+    "name": "HAPUS KARAKTER TERSEMBUNYI & AI FINGERPRINT",
+    "version": "1.0.0",
+    "description": "Bersihkan teks dari karakter gaib (zero-width space), format aneh, dan jejak fingerprint AI. Jadikan tulisanmu 100% teks murni (Plain Text) yang aman dan bersih.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "text-detox",
+    "capabilities": [
+        "client_side_processing",
+        "text_sanitization",
+        "clipboard_access",
+        "offline_capable"
+    ],
+    "tags": [
+        "privacy",
+        "text-cleaner",
+        "anti-ai",
+        "fingerprint-remover",
+        "productivity"
+    ],
+    "required_variables": []
+}

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Psych Ops | Human Intelligence</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <style>
+        [v-cloak] { display: none !important; }
+        :root {
+            --bg-core: #0f1016; --neon-cyan: #00f0ff; --neon-purple: #8a85ff;
+            --input-bg: #1e1e2f; --text-core: #ffffff; --psych-red: #ff0040; --psych-green: #00ff80;
+        }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        body { background-color: var(--bg-core); color: var(--text-core); font-family: 'Chakra Petch', sans-serif; margin: 0; overflow-x: hidden; overflow-y: auto; padding-bottom: 80px; }
+
+        .app-container-height { height: calc(100vh - 80px); }
+
+        @media (min-width: 768px) {
+            body { overflow: hidden; padding-bottom: 0; }
+            .desktop-scroll-col { overflow-y: auto; height: calc(100vh - 70px); padding-bottom: 50px; }
+            .app-container-height { height: 100%; }
+        }
+
+        .glass-panel { background: rgba(30, 30, 45, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .hidden-section { display: none !important; }
+
+        .article-content { color: #e0e0e0; line-height: 1.8; font-size: 1.05rem; }
+        .article-content h3 { color: var(--neon-cyan); font-weight: 900; font-size: 1.6rem; margin-top: 3rem; margin-bottom: 1.5rem; border-bottom: 2px solid rgba(0,240,255,0.3); padding-bottom: 10px; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,240,255,0.3); }
+        .article-content h4 { color: white; margin-top: 2rem; margin-bottom: 1rem; font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
+        .article-content h4::before { content: ''; display: block; width: 6px; height: 24px; background: var(--psych-red); }
+        .article-content p { margin-bottom: 1.5rem; text-align: justify; opacity: 1; font-weight: 500; }
+        .highlight-box { background: rgba(0, 240, 255, 0.08); border: 2px dashed rgba(0, 240, 255, 0.4); padding: 24px; border-radius: 12px; margin: 24px 0; }
+
+        .native-select { appearance: none; -webkit-appearance: none; background-color: #000; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); padding: 12px; width: 100%; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.3s; box-shadow: 0 0 10px rgba(0,240,255,0.2); }
+        .native-select:focus { outline: none; box-shadow: 0 0 20px rgba(0,240,255,0.5); }
+
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0) 50%, rgba(0,240,255,0.03) 50%, rgba(0,240,255,0.03)); background-size: 100% 4px; }
+
+        .nav-btn { border-bottom: 3px solid transparent; color: #888; transition: 0.3s; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
+        .nav-btn.active { border-color: var(--neon-cyan); color: var(--neon-cyan); text-shadow: 0 0 15px rgba(0, 240, 255, 0.8); }
+        .hidden-view { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <div id="app-shell">
+        <nav class="glass-panel sticky top-0 z-50 px-4 py-4 mx-2 mt-2 flex justify-between items-center shadow-2xl backdrop-blur-xl mb-0 border-b-2 border-[#54d7f6]/30">
+            <div class="flex items-center gap-3">
+                <i data-lucide="brain" class="text-cyan-400 w-8 h-8"></i>
+                <div>
+                    <h1 class="text-xl font-black tracking-widest text-white leading-none drop-shadow-[0_0_10px_rgba(84,215,246,0.5)]">
+                        PSYCH <span style="color: var(--neon-cyan)">OPS</span>
+                    </h1>
+                    <div class="text-[10px] text-gray-300 tracking-[0.3em] font-bold">HUMAN HACKING INTEL</div>
+                </div>
+            </div>
+            <div class="flex gap-4 text-xs font-black tracking-wider">
+                <button id="tab-app" class="nav-btn px-2 py-1 active cursor-default">INTELLIGENCE</button>
+            </div>
+        </nav>
+
+        <main class="p-0">
+            <div id="view-app"></div>
+        </main>
+    </div>
+
+    <script>
+        // --- FLOWORK SECURITY INTERCEPTOR ---
+        async function secureFetch(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+
+                // CEK STATUS KRITIKAL
+                if (response.status === 401 || response.status === 402 || response.status === 429) {
+                    // Lapor ke Main Window (QuickTools.vue)
+                    window.parent.postMessage({
+                        type: 'FLOWORK_API_ERROR',
+                        status: response.status
+                    }, '*');
+
+                    // Return null biar app berhenti proses
+                    return null;
+                }
+
+                return response;
+            } catch (e) {
+                console.error("Network Error:", e);
+                return null;
+            }
+        }
+
+        const AppCore = {
+            currentTab: 'app',
+            userAddress: null,
+            lang: 'id',
+            currentProfile: null, // Store result for tactical generation
+
+            actions: [
+                "NEGOTIATION REPLY", "CASUAL CHAT", "DE-ESCALATE ANGER", "COLD OUTREACH",
+                "CREATE PROPOSAL", "DEBT COLLECTION", "GHOSTING SCRIPT", "LOVE LETTER"
+            ],
+            selectedAction: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+                lucide.createIcons();
+                this.startTypewriter();
+
+                console.log("SYSTEM READY.");
+            },
+
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    document.getElementById(id).innerHTML = await res.text();
+                } catch(e) { console.error(e); }
+            },
+
+            // switchTab function removed
+
+            openSettings() {
+                window.parent.postMessage({ type: 'OPEN_SETTINGS', tab: 'variables' }, '*');
+            },
+
+            setLang(l) {
+                this.lang = l;
+                document.getElementById('lang-en').className = l === 'en' ? 'cursor-pointer px-2 font-bold text-white' : 'cursor-pointer px-2 font-bold text-gray-600';
+                document.getElementById('lang-id').className = l === 'id' ? 'cursor-pointer px-2 font-bold text-white' : 'cursor-pointer px-2 font-bold text-gray-600';
+            },
+
+            startTypewriter() {
+                const el = document.getElementById('typewriter-text');
+                if(!el) return;
+                const messages = [
+                    "SYSTEM READY. WAITING FOR TARGET DATA...",
+                    "INSTRUCTION: PASTE CHAT LOGS TO BEGIN PROFILING.",
+                    "CAPABILITIES: LIE DETECTION | DARK TRIAD | POWER DYNAMICS.",
+                    "WARNING: USE INTELLIGENCE DISCRETELY."
+                ];
+                let msgIdx = 0, charIdx = 0, isDeleting = false;
+
+                const type = () => {
+                    const current = messages[msgIdx];
+                    if(isDeleting) {
+                        el.innerText = current.substring(0, charIdx - 1);
+                        charIdx--;
+                        if(charIdx === 0) { isDeleting = false; msgIdx = (msgIdx + 1) % messages.length; }
+                    } else {
+                        el.innerText = current.substring(0, charIdx + 1);
+                        charIdx++;
+                        if(charIdx === current.length) { isDeleting = true; setTimeout(type, 2000); return; }
+                    }
+                    setTimeout(type, isDeleting ? 30 : 50);
+                };
+                type();
+            },
+
+            async executeProfile() {
+                const text = document.getElementById('inputText').value;
+                const model = document.getElementById('modelSelect').value;
+                if(!text) return alert("INPUT EMPTY");
+
+                this.setLoading(true, "ANALYZING SUBTEXT...");
+
+                try {
+                    // [FIX] Use secureFetch here
+                    const res = await secureFetch('/api/v1/psych/profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text, lang: this.lang, model: model })
+                    });
+
+                    // [FIX] Stop if null (auth trigger)
+                    if (!res) {
+                        this.setLoading(false);
+                        return;
+                    }
+
+                    const data = await res.json();
+
+                    if(data.success) {
+                        this.currentProfile = data.data; // Store for tactical
+                        this.renderProfile(data.data);
+                    } else {
+                        alert("Error: " + (data.message || "Unknown error"));
+                    }
+                } catch(e) {
+                    console.error(e);
+                    // Only alert if it's not a security block
+                    // alert("System Fail.");
+                }
+                this.setLoading(false);
+            },
+
+            async executeTactical() {
+                if(!this.currentProfile || !this.selectedAction) return;
+                const goal = document.getElementById('userGoal').value;
+                const model = document.getElementById('modelSelect').value;
+                const inputText = document.getElementById('inputText').value;
+
+                const btn = document.getElementById('btn-tactical');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<i class="mdi mdi-loading mdi-spin"></i> SYNTHESIZING...`;
+
+                try {
+                    // [FIX] Use secureFetch here too
+                    const res = await secureFetch('/api/v1/psych/tactical', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            profile: this.currentProfile,
+                            original: inputText,
+                            action: this.selectedAction,
+                            goal: goal,
+                            lang: this.lang,
+                            model_id: model
+                        })
+                    });
+
+                    // [FIX] Stop if null
+                    if (!res) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        return;
+                    }
+
+                    const data = await res.json();
+                    document.getElementById('tactical-result-box').innerHTML = data.data.result;
+                    document.getElementById('tactical-container').classList.remove('hidden');
+                } catch(e) {
+                    console.error(e);
+                }
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            },
+
+            selectAction(action) {
+                this.selectedAction = action;
+                // Highlight logic
+                document.querySelectorAll('.action-btn').forEach(btn => {
+                    if(btn.innerText.includes(action)) {
+                        btn.classList.add('bg-yellow-500/20', 'text-yellow-400', 'border-yellow-500', 'shadow-[0_0_10px_rgba(255,235,59,0.3)]');
+                        btn.classList.remove('border-gray-700', 'text-gray-500');
+                    } else {
+                        btn.classList.remove('bg-yellow-500/20', 'text-yellow-400', 'border-yellow-500', 'shadow-[0_0_10px_rgba(255,235,59,0.3)]');
+                        btn.classList.add('border-gray-700', 'text-gray-500');
+                    }
+                });
+            },
+
+            setLoading(state, text="") {
+                const overlay = document.getElementById('loading-overlay');
+                const loadingText = document.getElementById('loading-text');
+                const btn = document.getElementById('btn-execute');
+
+                if(state) {
+                    overlay.classList.remove('hidden');
+                    loadingText.innerText = text;
+                    if(btn) { btn.disabled = true; btn.innerText = "PROCESSING..."; btn.classList.add('opacity-50'); }
+                } else {
+                    overlay.classList.add('hidden');
+                    if(btn) { btn.disabled = false; btn.innerText = "INITIATE PROFILING"; btn.classList.remove('opacity-50'); }
+                }
+            },
+
+            renderProfile(data) {
+                const report = document.getElementById('intel-report');
+                const empty = document.getElementById('empty-state');
+
+                empty.classList.add('hidden');
+                report.classList.remove('hidden');
+
+                // Build HTML Structure Manually
+                let darkTriadHTML = '';
+                for (const [key, val] of Object.entries(data.dark_triad)) {
+                    const colorClass = val > 70 ? 'text-[#ff0040]' : 'text-[#00ff80]';
+                    darkTriadHTML += `
+                        <div class="flex justify-between text-[11px] text-gray-300 uppercase border-b border-gray-800 pb-2 font-bold">
+                            <span>${key}</span><span class="${colorClass}">${val}%</span>
+                        </div>
+                    `;
+                }
+
+                let insecuritiesHTML = '';
+                data.hidden_insecurities.forEach(f => {
+                    insecuritiesHTML += `
+                        <li class="text-[12px] text-white flex items-start gap-2 bg-[#ff0040]/10 p-2 rounded border border-[#ff0040]/30 font-bold">
+                            <i data-lucide="alert-circle" class="text-[#ff0040] w-4 h-4 mt-0.5"></i> ${f}
+                        </li>
+                    `;
+                });
+
+                let actionBtnsHTML = '';
+                this.actions.forEach(act => {
+                    actionBtnsHTML += `
+                        <button onclick="window.appCore.selectAction('${act}')" class="action-btn text-[10px] p-3 border-2 rounded-lg transition font-black uppercase tracking-wider border-gray-700 text-gray-500 hover:border-gray-500 hover:text-white">
+                            ${act}
+                        </button>
+                    `;
+                });
+
+                const html = `
+                    <div class="flex justify-end mb-2">
+                        <button onclick="window.appCore.saveReport()" class="text-[11px] font-bold text-[var(--neon-cyan)] border-2 border-[var(--neon-cyan)] px-4 py-2 rounded hover:bg-[var(--neon-cyan)] hover:text-black transition flex items-center gap-2 shadow-[0_0_10px_rgba(84,215,246,0.4)]">
+                            <i data-lucide="download" class="w-4 h-4"></i> SAVE REPORT
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-panel p-5 border-l-4 border-[var(--psych-red)]">
+                            <div class="text-[11px] text-gray-400 tracking-widest flex justify-between items-center font-bold">
+                                <span>ARCHETYPE</span>
+                                <span class="text-white font-black bg-[var(--psych-red)] px-2 py-0.5 rounded shadow-lg">${data.deception_radar?.verdict || 'ANALYZING'}</span>
+                            </div>
+                            <div class="text-2xl font-black text-white mt-3 uppercase leading-none drop-shadow-md">${data.archetype}</div>
+
+                            <div class="mt-5 bg-black/60 p-4 rounded-lg border border-gray-700 shadow-inner">
+                                <div class="flex justify-between text-[11px] mb-2 text-gray-300 font-bold">
+                                    <span>TRUTH PROBABILITY</span>
+                                    <span class="${data.deception_radar?.score > 50 ? 'text-[#00ff80]' : 'text-[#ff0040]'}">${data.deception_radar?.score || 0}%</span>
+                                </div>
+                                <div style="background:#333; height:8px; border-radius:4px; width:100%; overflow:hidden;">
+                                    <div style="width: ${data.deception_radar?.score || 0}%; background: ${data.deception_radar?.score > 50 ? '#00ff80' : '#ff0040'}; height:100%;"></div>
+                                </div>
+                                <div class="mt-3 text-[11px] text-gray-400 font-medium space-y-1">
+                                    ${(data.deception_radar?.flags || []).map(f => `<span class="block text-white">⚠️ ${f}</span>`).join('')}
+                                </div>
+                            </div>
+
+                            <div class="mt-5 space-y-2">
+                                ${darkTriadHTML}
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-5">
+                            <div class="text-[11px] text-gray-400 tracking-widest mb-3 font-bold">POWER DYNAMICS</div>
+                            <div class="mb-4 p-4 bg-blue-900/20 border border-blue-500/50 rounded-lg">
+                                <div class="text-[12px] text-blue-300 font-black mb-1">${data.power_dynamics?.status}</div>
+                                <div class="text-[12px] text-white mt-2 italic leading-relaxed font-medium">"${data.power_dynamics?.suggestion}"</div>
+                            </div>
+                            <div class="mt-5">
+                                <span class="text-[11px] text-[var(--psych-red)] font-black tracking-widest">CORE INSECURITIES</span>
+                                <ul class="list-none mt-3 space-y-2 p-0">
+                                    ${insecuritiesHTML}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 border-t-4 border-yellow-500/80">
+                        <div class="flex items-center gap-3 mb-5">
+                            <i data-lucide="zap" class="text-yellow-400 w-6 h-6"></i>
+                            <span class="text-sm font-black text-yellow-400 tracking-[0.2em] shadow-yellow-500/50">TACTICAL RESPONSE</span>
+                        </div>
+
+                        <div class="text-[10px] text-gray-400 mb-2 font-bold uppercase">Select Strategy:</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            ${actionBtnsHTML}
+                        </div>
+
+                        <div class="text-[10px] text-gray-400 mb-1 font-bold uppercase">Hidden Agenda (Goal):</div>
+                        <input id="userGoal" class="w-full bg-[var(--bg-core)] border-2 border-gray-700 p-3 text-sm font-bold text-white rounded-lg mb-4 focus:border-yellow-500 focus:outline-none transition" placeholder="e.g. 'Closing Sale', 'De-escalate Anger'">
+
+                        <button onclick="window.appCore.executeTactical()" id="btn-tactical" class="w-full bg-yellow-900/40 border-2 border-yellow-600 text-yellow-400 py-3 text-sm font-black rounded-lg hover:bg-yellow-500 hover:text-black transition flex items-center justify-center gap-3 shadow-lg">
+                            GENERATE DRAFT
+                        </button>
+
+                        <div id="tactical-container" class="mt-6 relative group animate__animated animate__fadeIn hidden">
+                            <div class="absolute -top-3 left-3 bg-yellow-600 text-[10px] text-black font-black px-3 py-1 rounded shadow-lg">DRAFT RESULT</div>
+                            <div id="tactical-result-box" class="bg-[#0f1016] p-6 text-[15px] leading-relaxed text-white rounded-lg border-2 border-gray-700 font-mono whitespace-pre-wrap shadow-inner"></div>
+                            <button onclick="navigator.clipboard.writeText(document.getElementById('tactical-result-box').innerText)" class="absolute top-3 right-3 opacity-60 group-hover:opacity-100 transition text-white hover:text-yellow-400 bg-black/50 p-2 rounded-lg">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                report.innerHTML = html;
+                lucide.createIcons(); // Refresh icons in new DOM
+            },
+
+            saveReport() {
+                const element = document.getElementById("intel-report");
+                html2canvas(element, { backgroundColor: "#0f1016" }).then(canvas => {
+                    const link = document.createElement("a");
+                    link.download = `PSYCH-OPS-INTEL-${Date.now()}.jpg`;
+                    link.href = canvas.toDataURL("image/jpeg", 0.9);
+                    link.click();
+                });
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur5"/>
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur10"/>
+            <feMerge>
+                <feMergeNode in="blur10"/>
+                <feMergeNode in="blur5"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+        <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f3ff"/>
+            <stop offset="100%" stop-color="#005eff"/>
+        </linearGradient>
+        <linearGradient id="purple-grad" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#bc13fe"/>
+            <stop offset="100%" stop-color="#ff2a6d"/>
+        </linearGradient>
+    </defs>
+
+    <path d="M256 24L469.569 147.5V364.5L256 488L42.4308 364.5V147.5L256 24Z"
+          stroke="url(#cyan-grad)" stroke-width="8" fill="#030508" opacity="0.9"/>
+
+    <circle cx="256" cy="256" r="190" stroke="url(#purple-grad)" stroke-width="3" stroke-dasharray="10 20" opacity="0.6" transform="rotate(45 256 256)"/>
+
+    <rect x="106" y="146" width="300" height="220" rx="45"
+          stroke="url(#cyan-grad)" stroke-width="8" fill="none" filter="url(#neon-glow)"/>
+
+    <path d="M140 320 L180 280 L220 300 L260 240 L300 270 L360 200"
+          stroke="url(#purple-grad)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7">
+        <animate attributeName="stroke-dashoffset" from="500" to="0" dur="3s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="M225 200 L330 256 L225 312 V200Z"
+          fill="url(#cyan-grad)" filter="url(#neon-glow)"/>
+
+    <circle cx="256" cy="256" r="30" stroke="white" stroke-width="2" opacity="0.8" stroke-dasharray="4 4"/>
+    <line x1="256" y1="120" x2="256" y2="140" stroke="var(--neon-cyan)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="256" y1="372" x2="256" y2="392" stroke="var(--neon-cyan)" stroke-width="4" stroke-linecap="round"/>
+
+</svg>

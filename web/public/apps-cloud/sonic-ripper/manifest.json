@@ -1,0 +1,35 @@
+{
+    "id": "stock-sentry",
+    "name": "STOCK SENTRY - MONITOR STOK GUDANG & TOKO ONLINE (REALTIME)",
+    "version": "1.0.0",
+    "description": "Sistem manajemen stok berbasis Cloudflare Workers KV & Google Drive. Zero cost, realtime update, dan anti selisih barang. Wajib buat UKM & Online Shop.",
+    "author": "Flowork Cyber Division",
+    "tier": "login",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 12,
+    "slug": "stock-sentry",
+    "capabilities": [
+        "internet_access",
+        "d1_database_access",
+        "google_drive_access"
+    ],
+    "tags": [
+        "inventory",
+        "stock",
+        "management",
+        "ukm",
+        "business"
+    ],
+    "required_variables": [
+        {
+            "name": "GOOGLE_DRIVE_KEY",
+            "label": "Google Drive API Key",
+            "description": "Required for database synchronization.",
+            "type": "secret",
+            "required": true
+        }
+    ]
+}

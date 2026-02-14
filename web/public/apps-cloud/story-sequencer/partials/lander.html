@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+</head>
+<body class="hide-scrollbar">
+
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-cyan-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="zap" class="w-3 h-3"></i> SYSTEM V.2.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    DOMINASI   <span class="gradient-text">ALGORITMA.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Engine brutal untuk memproduksi <strong>100+ Konten Slide</strong> TikTok/Instagram dalam hitungan detik. Dilengkapi <em>Anti-Detect Fingerprint</em>.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Deployment Protocol</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Upload Assets</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Drop gambar mentah ke dalam zona upload.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Set Parameters</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Atur caption & delay, lalu klik "INITIALIZE".</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Auto Export</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Hasil generate otomatis ter-download sebagai ZIP.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="fingerprint" class="w-5 h-5 mb-2 text-pink-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Unique Fingerprint</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Menyuntikkan invisible noise ke setiap pixel gambar agar lolos deteksi duplikasi platform.
+                        </p>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="layers" class="w-5 h-5 mb-2 text-cyan-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Bulk Sequencing</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Upload 50 gambar, tulis caption sekali jalan, export jadi satu file ZIP rapi.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Client-Side Ops</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Semua proses berjalan di browser lo (100% Private). Gambar lo gak pernah nyentuh server luar.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50">
+                        "Dominate the feed, ignore the noise."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+</html>

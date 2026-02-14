@@ -1,0 +1,33 @@
+<nav :class="showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" class="absolute md:static top-0 left-0 h-full w-64 bg-[#0f111a] border-r border-[#3a3962] flex flex-col justify-between pb-4 z-40 transition-transform duration-300 shadow-2xl md:shadow-none">
+    <div class="space-y-1 p-2 overflow-y-auto custom-scrollbar flex-1">
+        <div class="md:hidden flex justify-end p-2">
+            <button @click="showSidebar = false" class="text-gray-400 hover:text-white"><i class="mdi mdi-close text-2xl"></i></button>
+        </div>
+
+        <button @click="switchView('pos')" :class="currentView === 'pos' ? 'bg-[#00b4d8] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-4 mb-2 rounded-xl flex items-center gap-3 shadow-lg transition-all">
+            <i class="mdi mdi-cash-register text-2xl"></i><span class="font-bold text-lg">MESIN KASIR</span>
+        </button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">GUDANG & ADMIN</div>
+        <button @click="switchView('inventory')" :class="currentView === 'inventory' ? 'bg-[#54d7f6] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-cube-outline text-xl"></i><span class="font-bold">INVENTORY</span></button>
+        <button @click="switchView('analytics')" :class="currentView === 'analytics' ? 'bg-[#9d4edd] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-google-analytics text-xl"></i><span class="font-bold">ANALYTICS (AI)</span></button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">LOGISTIK</div>
+        <button @click="switchView('outbound')" :class="currentView === 'outbound' ? 'bg-[#ff9f1c] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-truck-delivery text-xl"></i><span class="font-bold">SURAT JALAN</span></button>
+        <button @click="switchView('po')" :class="currentView === 'po' ? 'bg-[#706bf3] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-import text-xl"></i><span class="font-bold">INBOUND (PO)</span></button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">OPERASIONAL</div>
+        <button @click="switchView('transfer')" :class="currentView === 'transfer' ? 'bg-[#2ec4b6] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-dolly text-xl"></i><span class="font-bold">TRANSFER</span></button>
+        <button @click="switchView('returns')" :class="currentView === 'returns' ? 'bg-[#ef233c] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-keyboard-return text-xl"></i><span class="font-bold">RETURNS</span></button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">AUDIT</div>
+        <button @click="switchView('opname')" :class="currentView === 'opname' ? 'bg-[#ff006e] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-qrcode-scan text-xl"></i><span class="font-bold">STOCK OPNAME</span></button>
+        <button @click="switchView('history')" :class="currentView === 'history' ? 'bg-white text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-history text-xl"></i><span class="font-bold">LOGS</span></button>
+    </div>
+
+    <div class="p-2 border-t border-[#3a3962]">
+            <button @click="connectDrive" class="w-full p-3 border border-[#3a3962] text-xs text-gray-500 hover:text-white rounded text-center transition-colors">
+            <i class="mdi mdi-refresh mr-1"></i> REBOOT SYSTEM
+        </button>
+    </div>
+</nav>

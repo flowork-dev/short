@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS Code Cloaker | Flowork Security</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root { --bg-core: #171925; --neon-cyan: #54d7f6; --neon-purple: #706bf3; --input-bg: #3a3962; --text-white: #e0f0ff; }
+        body { background-color: var(--bg-core); color: var(--text-white); font-family: 'Inter', sans-serif; }
+        .hidden-view { display: none !important; }
+        .active-tab { color: var(--neon-cyan); opacity: 1; font-weight: bold; text-shadow: 0 0 10px rgba(84,215,246,0.3); }
+        .inactive-tab { color: white; opacity: 0.5; }
+        @media (min-width: 768px) { body { height: 100vh; overflow: hidden; display: flex; flex-direction: column; } main { overflow-y: auto; flex: 1; } }
+        @media (max-width: 767px) { body { min-height: 100vh; overflow-y: auto; display: block; } main { height: auto; overflow: visible; } }
+    </style>
+</head>
+<body>
+
+    <nav class="h-16 border-b border-[#3a3962] flex items-center justify-between px-6 bg-[#171925] sticky top-0 z-50">
+        <div class="font-bold text-xl flex items-center gap-2">
+            <i data-lucide="shield" class="text-[#54d7f6]"></i>
+            <span class="tracking-widest">CLOAKER</span>
+        </div>
+        <div class="flex gap-6 text-sm font-mono tracking-wider">
+            <button id="tab-app" class="active-tab transition-all cursor-default">INTELLIGENCE</button>
+        </div>
+    </nav>
+
+    <main class="relative w-full">
+        <div id="view-app" class="w-full min-h-full"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            isLoggedIn: false,
+
+            async init() {
+                console.log("SYSTEM BOOT: OBFUSCATOR V2.1 (STABLE)...");
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                if(window.lucide) lucide.createIcons();
+            },
+
+            async loadPartial(containerId, url) {
+                try {
+                    const res = await fetch(url);
+                    if(!res.ok) throw new Error("Failed loading module");
+                    const html = await res.text();
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = html;
+
+                    const scripts = container.querySelectorAll("script");
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement("script");
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                } catch(e) { console.error(e); }
+            },
+
+            // switchTab function removed
+
+            // --- FUNGSI ENCODE UTAMA (FIXED) ---
+            async runProcess() {
+                const btn = document.getElementById('procBtn');
+                const outputBox = document.getElementById('outputCode');
+                const inputVal = document.getElementById('inputCode').value;
+                const levelVal = document.getElementById('levelSelect').value;
+
+                if(!inputVal) return alert("Bro, isi dulu kodenya!");
+
+                btn.innerHTML = `<i class="animate-spin" data-lucide="loader-2"></i> PROCESSING...`;
+                if(window.lucide) lucide.createIcons();
+
+                const formData = new FormData();
+                formData.append('code', inputVal);
+                formData.append('level', levelVal);
+
+                try {
+                    const req = await fetch('/api/v1/obfuscator/process', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if(req.status !== 200) throw new Error("API ERROR");
+
+                    const res = await req.json();
+                    if(res.success) {
+                        outputBox.value = res.result;
+                        alert("BOOM! Kode lu aman sekarang.");
+                    } else {
+                        throw new Error(res.error || "Unknown Error");
+                    }
+                } catch(e) {
+                    // --- FALLBACK SIMULATION (UNICODE SAFE) ---
+                    console.warn("Using Local Engine (Unicode Safe Mode)");
+                    setTimeout(() => {
+                        try {
+                            // FIX: Encode URI Component dulu agar btoa tidak crash kena Emoji/Simbol
+                            const safeString = unescape(encodeURIComponent(inputVal));
+                            const encoded = btoa(safeString);
+
+                            // Wrapper Logic agar bisa jalan di browser
+                            const wrapper = `/* PROTECTED BY FLOWORK */\n(function(){var _0x='${encoded}';eval(decodeURIComponent(escape(atob(_0x))))})();`;
+
+                            outputBox.value = wrapper;
+                            alert("Done (Local Mode Active)");
+                        } catch(err) {
+                            alert("Gagal Encode: " + err.message);
+                        }
+                    }, 1000);
+                } finally {
+                    btn.innerHTML = `LOCK CODE NOW`;
+                }
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                localStorage.setItem('flowork_session', 'active');
+                AppCore.isLoggedIn = true;
+            }
+        });
+    </script>
+</body>
+</html>

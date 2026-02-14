@@ -1,0 +1,24 @@
+{
+    "id": "syntax-breach",
+    "name": "KONVERTER DATA TAKTIS - JSON, CSV, BASE64 DALAM SEKEJAP",
+    "version": "1.0.0",
+    "description": "Ubah format data JSON, CSV, Base64, dan URL encoding secara instan. Tanpa pemrosesan server, 100% aman di browser. Tools wajib developer.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "syntax-breach",
+    "capabilities": [
+        "local_processing",
+        "clipboard_write"
+    ],
+    "tags": [
+        "developer tool",
+        "json formatter",
+        "base64",
+        "csv converter"
+    ]
+}

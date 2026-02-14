@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Strike | Flowork OS</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        flowork: { bg: '#050505', cyan: '#00f5ff', pink: '#ff4081', surface: '#121218' }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif'],
+                        serif: ['Noto Serif', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #050505; color: #e0e0e0; font-family: 'Rajdhani', sans-serif; overflow-x: hidden; }
+
+        /* SCROLLBAR CUSTOM */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1a1a1a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ff4081; }
+
+        .cyber-input { background: rgba(10, 10, 15, 0.9); border: 1px solid #333; color: white; transition: all 0.3s; }
+        .cyber-input:focus { border-color: #ff4081; outline: none; box-shadow: 0 0 15px rgba(255, 64, 129, 0.2); }
+        .tab-active { border-bottom: 2px solid #ff4081; color: #ff4081; text-shadow: 0 0 10px rgba(255, 64, 129, 0.5); }
+        .tab-inactive { color: #666; border-bottom: 2px solid transparent; }
+        .clip-path-btn { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+        .type-btn.active { border-color: #ff4081; background: rgba(255, 64, 129, 0.1); box-shadow: inset 0 0 10px rgba(255, 64, 129, 0.1); }
+    </style>
+</head>
+<body class="bg-flowork-bg min-h-screen flex flex-col">
+
+    <div id="app" class="flex flex-col h-full">
+        <header class="h-16 border-b border-gray-800 bg-black/90 backdrop-blur fixed w-full z-50 flex items-center px-6 justify-between">
+            <div class="flex items-center gap-3">
+                <i class="mdi mdi-gavel text-3xl text-flowork-pink animate-pulse"></i>
+                <div>
+                    <h1 class="font-orbitron font-black text-xl text-white tracking-wider">LEGAL<span class="text-flowork-pink">STRIKE</span></h1>
+                    <p class="text-[10px] text-gray-500 font-mono tracking-[0.4em] uppercase">Tactical Law Engine V2.0</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow pt-24 pb-20 px-4 md:px-8 relative z-10 max-w-7xl mx-auto w-full">
+
+            <div class="flex justify-center mb-10 border-b border-gray-800 sticky top-16 bg-flowork-bg/95 backdrop-blur z-40 pt-2">
+                <button id="tab-btn-app" class="px-8 py-3 font-orbitron font-bold text-sm tracking-widest transition-all tab-active cursor-default">
+                    INTELLIGENCE
+                </button>
+            </div>
+
+            <div v-if="isLoading" class="flex justify-center items-center h-64 text-flowork-pink font-orbitron animate-pulse">
+                INITIALIZING LEGAL CORE...
+            </div>
+
+            <div v-else>
+                <div class="animate-fade-in"><div v-html="appContent"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const appContent = ref('');
+                const isLoading = ref(true);
+
+                // DATA STATE
+                const docType = ref('somasi');
+                const myName = ref('');
+                const targetName = ref('');
+                const amount = ref('');
+                const date = ref('');
+
+                let debounceTimer;
+
+                // LOAD PARTIALS
+                const loadPartials = async () => {
+                    isLoading.value = true;
+                    try {
+                        // Lander fetch removed
+                        const a = await fetch('partials/app.html').then(r => r.text());
+                        appContent.value = a;
+                    } catch (e) {
+                        console.error(e);
+                        appContent.value = "Error Loading Protocol."; // Fallback if app load fails
+                    } finally {
+                        isLoading.value = false;
+                        await nextTick();
+                        restoreState(); // Restore state after content is loaded
+                    }
+                };
+
+                // switchTab function removed
+
+                const restoreState = () => {
+                    if(!document.getElementById('in-myname')) return;
+                    document.getElementById('in-myname').value = myName.value;
+                    document.getElementById('in-target').value = targetName.value;
+                    document.getElementById('in-amount').value = amount.value;
+                    document.getElementById('in-date').value = date.value;
+                    window.setType(docType.value, false);
+                };
+
+                // WINDOW EXPORTS FOR HTML INTERACTION
+
+                window.handleInput = () => {
+                    // 1. Update State
+                    myName.value = document.getElementById('in-myname').value;
+                    targetName.value = document.getElementById('in-target').value;
+                    amount.value = document.getElementById('in-amount').value;
+                    date.value = document.getElementById('in-date').value;
+
+                    // 2. Debounced API Call (Live Preview)
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        window.generateDoc();
+                    }, 800); // Tunggu 800ms
+                };
+
+                window.setType = (type, autoGenerate = true) => {
+                    docType.value = type;
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active', 'border-red-500', 'border-blue-500'));
+                    const activeBtn = document.getElementById(type === 'somasi' ? 'btn-somasi' : 'btn-nda');
+                    if(activeBtn) activeBtn.classList.add('active');
+
+                    const fieldAmt = document.getElementById('field-amount');
+                    const fieldDate = document.getElementById('field-date');
+                    if(fieldAmt) fieldAmt.style.display = 'block';
+                    if(fieldDate) fieldDate.style.display = (type === 'somasi') ? 'block' : 'none';
+
+                    if(autoGenerate) window.handleInput();
+                };
+
+                window.generateDoc = async () => {
+                    if(!myName.value && !targetName.value) return;
+
+                    const bodyEl = document.getElementById('out-body');
+                    const titleEl = document.getElementById('out-title');
+                    const idEl = document.getElementById('out-id');
+
+                    bodyEl.classList.add('opacity-50');
+
+                    try {
+                        const res = await fetch('/api/v1/legal-strike/process', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                type: docType.value,
+                                myName: myName.value,
+                                targetName: targetName.value,
+                                amount: amount.value,
+                                date: date.value
+                            })
+                        });
+                        const result = await res.json();
+
+                        if(result.success) {
+                            titleEl.innerText = result.data.title;
+                            // PAKE INNERHTML BIAR TAG <b> KEBACA BOLD
+                            bodyEl.innerHTML = result.data.body;
+                            idEl.innerText = "ID: " + result.data.generatedId;
+                        }
+                    } catch (e) {
+                        console.error("API Fail", e);
+                    } finally {
+                        bodyEl.classList.remove('opacity-50');
+                    }
+                };
+
+                window.downloadPDF = () => {
+                    const el = document.getElementById('legal-paper');
+                    const opt = {
+                        margin: [0.5, 0.5],
+                        filename: `LEGAL-STRIKE-${Date.now()}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    };
+                    html2pdf().set(opt).from(el).save();
+                };
+
+                onMounted(() => {
+                    loadPartials();
+                });
+
+                return { appContent, isLoading };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

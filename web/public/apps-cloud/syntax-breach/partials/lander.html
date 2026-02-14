@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+    <style>
+        /* Override Theme Colors for Syntax Breach */
+        :root {
+            --primary: #bc13fe; /* Neon Purple */
+            --accent: #706bf3;
+        }
+        .text-neon { color: var(--primary); }
+        .border-neon { border-color: rgba(188, 19, 254, 0.3); }
+        .bg-neon-low { background-color: rgba(188, 19, 254, 0.1); }
+    </style>
+</head>
+<body class="hide-scrollbar">
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-neon-low border-neon border rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-neon font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="code-2" class="w-3 h-3"></i> DATA CONVERTER V1.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    SYNTAX BREACH <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">TRANSLATOR.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Jembatan antara Developer & Data Analyst. Ubah format JSON ke CSV, Decode Base64, atau URL Encode tanpa jejak server.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-neon-low flex items-center justify-center text-neon">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Prosedur Konversi</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-neon-low text-neon flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Input Stream</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Paste data mentah (JSON/String) di kolom atas.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-neon-low text-neon flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Select Mode</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Pilih format: JSON Format, Convert to CSV, atau Base64.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-neon-low text-neon flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Export Result</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Copy hasil atau download file .CSV langsung ke device.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="shield-check" class="w-5 h-5 mb-2 text-neon"></i>
+                        <h4 class="text-xs font-bold mb-1">Local Processing</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Data sensitif kantor aman. Proses konversi berjalan 100% di browser lo, gak ada yang dikirim ke cloud.
+                        </p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="table-2" class="w-5 h-5 mb-2 text-pink-500"></i>
+                        <h4 class="text-xs font-bold mb-1">JSON to CSV</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Ubah data JSON yang rumit jadi format tabel (Excel friendly) dalam sekali klik. Favorit data analyst.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Dev Utilities</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Dilengkapi fitur Base64 Decode/Encode dan URL Parser buat lo yang sering ngulik API payload atau hidden strings.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50">
+                        "Data sovereignty is yours."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Icons
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    </script>
+</body>
+</html>

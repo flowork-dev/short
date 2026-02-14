@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deadline Ghost | The Art of Buying Time</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root {
+            /* FLOWORK PALETTE */
+            --bg-core: #171925;
+            --glass-panel: rgba(23, 25, 37, 0.95);
+            --neon-cyan: #54d7f6;
+            --neon-purple: #bd00ff;
+            --neon-red: #ff2a6d;
+            --input-bg: #3a3962;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: #e0f0ff;
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            overflow-y: auto; overflow-x: hidden;
+        }
+
+        .brand-font { font-family: 'Orbitron', sans-serif; }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .hidden-view { display: none !important; }
+
+        /* GLITCH EFFECT */
+        .glitch-text { position: relative; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .glitch-text::before { left: 2px; text-shadow: -1px 0 #00ffff; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 5s infinite linear alternate-reverse; }
+        .glitch-text::after { left: -2px; text-shadow: -1px 0 #ff00ff; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim2 5s infinite linear alternate-reverse; }
+        @keyframes glitch-anim { 0% { clip: rect(10px, 9999px, 30px, 0); } 100% { clip: rect(80px, 9999px, 90px, 0); } }
+        @keyframes glitch-anim2 { 0% { clip: rect(60px, 9999px, 70px, 0); } 100% { clip: rect(20px, 9999px, 50px, 0); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="w-full h-16 fixed top-0 z-50 flex items-center justify-between px-4 md:px-8 bg-[#171925]/95 backdrop-blur border-b border-red-900/30">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-red-900/20 rounded border border-red-500/30 flex items-center justify-center animate-pulse">
+                <i data-lucide="bomb" class="w-5 h-5 text-red-500"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-widest text-white leading-none brand-font glitch-text" data-text="DEADLINE_GHOST">DEADLINE_<span class="text-red-500">GHOST</span></h1>
+                <div class="text-[8px] text-gray-500 font-mono tracking-[0.3em]">FILE SABOTAGE TOOL</div>
+            </div>
+        </div>
+        <div class="flex gap-6 code-font text-xs font-bold h-full">
+            <button id="tab-app" class="tab-btn active h-full px-2 uppercase border-b-2 border-red-500 text-red-500 transition-all cursor-default">Corrupter</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 w-full relative pt-16">
+        <div id="view-app" class="w-full h-full overflow-hidden"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            selectedFile: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                lucide.createIcons();
+                console.log("SYSTEM: DEADLINE GHOST READY");
+            },
+
+            async loadPartial(id, url) {
+                const res = await fetch(url);
+                document.getElementById(id).innerHTML = await res.text();
+            },
+
+            // switchTab function removed as it is no longer needed
+
+            handleFileSelect(input) {
+                if (input.files && input.files[0]) {
+                    this.selectedFile = input.files[0];
+
+                    document.getElementById('drop-content').classList.add('hidden');
+                    const preview = document.getElementById('file-preview');
+                    preview.classList.remove('hidden');
+
+                    document.getElementById('fileName').innerText = this.selectedFile.name;
+                    document.getElementById('fileSize').innerText = (this.selectedFile.size / 1024 / 1024).toFixed(2) + ' MB';
+
+                    document.getElementById('btn-corrupt').disabled = false;
+                    document.getElementById('status-log').innerText = "TARGET LOCKED. WAITING FOR COMMAND.";
+                }
+            },
+
+            async corruptFile() {
+                if (!this.selectedFile) return;
+
+                const btn = document.getElementById('btn-corrupt');
+                const status = document.getElementById('status-log');
+                const bar = document.getElementById('progressBar');
+
+                // UI Animasi
+                btn.disabled = true;
+                btn.innerHTML = `<span class="animate-pulse">SABOTAGING...</span>`;
+                status.innerText = "INJECTING GARBAGE DATA INTO HEADERS...";
+                status.classList.add('text-red-400');
+                bar.style.width = "30%";
+
+                // Proses (Simulasi delay)
+                await new Promise(r => setTimeout(r, 800));
+                bar.style.width = "60%";
+
+                try {
+                    const buffer = await this.selectedFile.arrayBuffer();
+                    const uint8View = new Uint8Array(buffer);
+
+                    // CORRUPTION LOGIC (Hancurkan Header)
+                    const damageLevel = Math.min(1000, uint8View.length);
+                    for (let i = 0; i < damageLevel; i++) {
+                        uint8View[i] = Math.floor(Math.random() * 255);
+                    }
+
+                    // Random damage di tengah
+                    const midPoint = Math.floor(uint8View.length / 2);
+                    for (let i = midPoint; i < midPoint + 50; i++) {
+                        if(i < uint8View.length) uint8View[i] = Math.floor(Math.random() * 255);
+                    }
+
+                    bar.style.width = "100%";
+
+                    const corruptedBlob = new Blob([uint8View], { type: this.selectedFile.type });
+                    const url = URL.createObjectURL(corruptedBlob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "CORRUPTED_" + this.selectedFile.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    status.innerText = "SABOTAGE COMPLETE. FILE DESTROYED.";
+                    status.classList.remove('text-red-400');
+                    status.classList.add('text-green-400');
+
+                    btn.innerHTML = `MISSION ACCOMPLISHED`;
+                    btn.classList.add('border-green-500', 'text-green-500');
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = `EXECUTE CORRUPTION`;
+                        btn.classList.remove('border-green-500', 'text-green-500');
+                        status.innerText = "READY FOR NEXT TARGET.";
+                        status.classList.remove('text-green-400');
+                        bar.style.width = "0%";
+                    }, 3000);
+
+                } catch (e) {
+                    console.error(e);
+                    status.innerText = "ERROR: SYSTEM FAILURE.";
+                    btn.disabled = false;
+                }
+            }
+        };
+
+        window.AppCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

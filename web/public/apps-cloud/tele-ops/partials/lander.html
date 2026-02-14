@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+    <style>
+        /* Override Theme Colors for Tele Ops */
+        :root {
+            --primary: #54d7f6; /* Cyan */
+            --accent: #706bf3;  /* Purple */
+        }
+        .text-cyan { color: var(--primary); }
+        .border-cyan { border-color: rgba(84, 215, 246, 0.3); }
+        .bg-cyan-low { background-color: rgba(84, 215, 246, 0.1); }
+    </style>
+</head>
+<body class="hide-scrollbar">
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-cyan-low border-cyan border rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-cyan font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="monitor-play" class="w-3 h-3"></i> STUDIO TOOLS V2.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    TELE OPS <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PROMPTER.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Baca naskah tanpa mikir. Ubah layar lo jadi teleprompter profesional dengan kontrol kecepatan, font raksasa, dan mode cermin.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-low flex items-center justify-center text-cyan">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Cara Pakai</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-low text-cyan flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Input Naskah</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Paste skrip konten lo di editor atau pakai tombol Demo.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-low text-cyan flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Atur Tampilan</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Sesuaikan ukuran font dan kecepatan scroll sesuai ritme bicara.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-low text-cyan flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Launch & Record</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Klik Launch. Layar akan berubah jadi prompter fullscreen.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="eye" class="w-5 h-5 mb-2 text-cyan"></i>
+                        <h4 class="text-xs font-bold mb-1">Eye Contact</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Jaga mata tetap fokus ke lensa kamera, bukan lirik kertas contekan. Terlihat lebih profesional.
+                        </p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="flip-horizontal" class="w-5 h-5 mb-2 text-purple-400"></i>
+                        <h4 class="text-xs font-bold mb-1">Mirror Mode</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Fitur wajib buat lo yang punya hardware teleprompter kaca (beam splitter). Teks bisa dibalik.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Offline Ready</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Aplikasi ini berjalan 100% di browser. Tidak butuh internet saat recording. Aman dan privat.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50">
+                        "Speak like a pro."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Icons
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    </script>
+</body>
+</html>

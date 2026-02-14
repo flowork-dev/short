@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Tactical | Professional Billing</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --bg-core: #0f1016;
+            --neon-cyan: #54d7f6;
+            --neon-purple: #706bf3;
+            --input-bg: #1a1b26;
+            --text-white: #e0f0ff;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-white);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .mono { font-family: 'Share Tech Mono', monospace; }
+        .hidden-view { display: none !important; }
+
+        .nav-btn {
+            opacity: 0.6;
+            transition: 0.3s;
+            border-bottom: 2px solid transparent;
+            color: var(--text-white);
+        }
+        .nav-btn.active {
+            opacity: 1;
+            color: var(--neon-cyan);
+            border-bottom-color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .btn-action {
+            background: linear-gradient(90deg, rgba(112, 107, 243, 0.1), rgba(84, 215, 246, 0.2));
+            border: 1px solid var(--neon-purple);
+            color: var(--neon-purple);
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .btn-action:hover {
+            background: var(--neon-purple);
+            color: #171925;
+            box-shadow: 0 0 15px var(--neon-purple);
+        }
+
+        .tac-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #2d2e3e;
+            color: var(--neon-cyan);
+            font-family: 'Share Tech Mono';
+            padding: 10px 14px;
+            width: 100%;
+            transition: 0.3s;
+            border-radius: 6px;
+        }
+        .tac-input:focus {
+            border-color: var(--neon-cyan);
+            outline: none;
+            box-shadow: 0 0 15px rgba(84, 215, 246, 0.15);
+        }
+
+        .tac-label {
+            font-size: 0.65rem;
+            color: #8a8db1;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* ELEGANT INVOICE DESIGN */
+        .paper-preview {
+            background: #ffffff;
+            color: #1a1b26;
+            min-height: 1000px;
+            padding: 50px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 850px;
+            border-top: 10px solid var(--neon-purple);
+        }
+
+        .paper-preview::before {
+            content: "TACTICAL INVOICE";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100px;
+            font-weight: 900;
+            opacity: 0.02;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 768px) {
+            .paper-preview { padding: 60px; }
+        }
+
+        .btn-green { border-color: #00ff9d; color: #00ff9d; background: rgba(0, 255, 157, 0.1); }
+        .btn-green:hover { background: #00ff9d; color: #000; box-shadow: 0 0 15px #00ff9d; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d2e3e; border-radius: 2px; }
+
+        /* SCROLLABLE PREVIEW AREA */
+        .preview-scroll-area {
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        @media (max-width: 1024px) {
+            .preview-scroll-area {
+                height: 60vh; /* Kunci tinggi preview di mobile agar input di bawahnya bisa dijangkau */
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="fixed top-0 w-full h-16 bg-[#0f1016]/95 backdrop-blur z-50 px-4 md:px-8 border-b border-[#2d2e3e] flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <div class="border border-[var(--neon-purple)] p-2 rounded bg-[#1a1b26] shadow-[0_0_15px_rgba(112,107,243,0.3)]">
+                <i class="mdi mdi-shield-check-outline text-purple-400 text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="orbitron text-lg md:text-xl font-black text-white tracking-widest leading-none">
+                    INVOICE <span class="text-[var(--neon-purple)]">TACTICAL</span>
+                </h1>
+                <div class="text-[8px] md:text-[9px] text-cyan-400 tracking-[0.4em] opacity-80 uppercase font-bold">MILITARY GRADE BILLING</div>
+            </div>
+        </div>
+        <div class="flex gap-4 md:gap-8 h-full items-end pb-1">
+            <button id="tab-app" class="nav-btn pb-3 orbitron text-[10px] md:text-xs tracking-widest active cursor-default">APP</button>
+        </div>
+    </header>
+
+    <div class="pt-16 h-screen flex flex-col overflow-hidden">
+        <div id="view-app" class="h-full flex-1 overflow-hidden"></div>
+    </div>
+
+    <script>
+        const AppCore = {
+            items: [{ desc: 'Professional Consultation', qty: 1, price: 2500000 }],
+            currency: 'IDR',
+            debounceTimer: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                const today = new Date().toISOString().split('T')[0];
+                const invDate = document.getElementById('inv-date');
+                if(invDate) invDate.value = today;
+
+                this.loadProfile();
+                this.renderItems();
+                this.calculate();
+
+                ['name', 'email', 'address'].forEach(field => {
+                    const el = document.getElementById(`sender-${field}`);
+                    if(el) {
+                        el.addEventListener('input', (e) => {
+                            const prev = document.getElementById(`preview-sender-${field}`);
+                            if(prev) prev.innerText = e.target.value;
+                        });
+                    }
+                });
+
+                console.log("TACTICAL SYSTEM ENGAGED.");
+            },
+
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    document.getElementById(id).innerHTML = await res.text();
+                } catch(e) { console.error(e); }
+            },
+
+            // switchTab function removed
+
+            addItem() {
+                this.items.push({ desc: '', qty: 1, price: 0 });
+                this.renderItems();
+            },
+
+            removeItem(index) {
+                this.items.splice(index, 1);
+                this.renderItems();
+                this.calculate();
+            },
+
+            updateItem(index, field, val) {
+                this.items[index][field] = (field === 'qty' || field === 'price') ? parseFloat(val || 0) : val;
+                this.calculate();
+            },
+
+            renderItems() {
+                const container = document.getElementById('items-container');
+                if(!container) return;
+
+                let html = '';
+                this.items.forEach((item, index) => {
+                    html += `
+                        <div class="grid grid-cols-12 gap-3 mb-4 items-center group">
+                            <div class="col-span-12 md:col-span-6">
+                                <input oninput="window.appCore.updateItem(${index}, 'desc', this.value)" value="${item.desc}" type="text" class="w-full font-semibold text-gray-800 bg-gray-50 border-b border-gray-200 p-2 focus:bg-white focus:border-purple-500 outline-none transition-all" placeholder="Item Name">
+                            </div>
+                            <div class="col-span-4 md:col-span-2">
+                                <input oninput="window.appCore.updateItem(${index}, 'qty', this.value)" value="${item.qty}" type="number" class="w-full text-center font-bold text-gray-600 bg-gray-50 border-b border-gray-200 p-2 focus:bg-white outline-none" placeholder="1">
+                            </div>
+                            <div class="col-span-6 md:col-span-3">
+                                <input oninput="window.appCore.updateItem(${index}, 'price', this.value)" value="${item.price}" type="number" class="w-full text-right font-bold text-gray-600 bg-gray-50 border-b border-gray-200 p-2 focus:bg-white outline-none" placeholder="0">
+                            </div>
+                            <div class="col-span-2 md:col-span-1 text-center">
+                                <button onclick="window.appCore.removeItem(${index})" class="text-red-400 hover:text-red-600 transition-colors"><i class="mdi mdi-close-circle text-xl"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            },
+
+            setCurrency(c) {
+                this.currency = c;
+                const idrBtn = document.getElementById('curr-idr');
+                const usdBtn = document.getElementById('curr-usd');
+                if(idrBtn && usdBtn) {
+                    idrBtn.className = c === 'IDR' ? 'flex-1 py-2 text-xs font-black bg-purple-900/40 text-purple-400 border border-purple-500/50' : 'flex-1 py-2 text-xs font-bold text-gray-500 hover:text-white';
+                    usdBtn.className = c === 'USD' ? 'flex-1 py-2 text-xs font-black bg-purple-900/40 text-purple-400 border border-purple-500/50' : 'flex-1 py-2 text-xs font-bold text-gray-500 hover:text-white';
+                }
+                this.calculate();
+            },
+
+            formatMoney(amount) {
+                const prefix = this.currency === 'IDR' ? 'Rp ' : '$ ';
+                return prefix + amount.toLocaleString(this.currency === 'IDR' ? 'id-ID' : 'en-US');
+            },
+
+            calculate() {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(async () => {
+                    const taxVal = parseFloat(document.getElementById('input-tax')?.value || 0);
+                    const discVal = parseFloat(document.getElementById('input-discount')?.value || 0);
+                    const overlay = document.getElementById('loading-overlay');
+
+                    if(overlay) overlay.classList.remove('hidden');
+
+                    // LOCAL CALCULATION (Agar hasil langsung keluar tanpa nunggu API)
+                    const subtotal = this.items.reduce((acc, item) => acc + (item.qty * item.price), 0);
+                    const taxAmount = subtotal * (taxVal / 100);
+                    const total = subtotal + taxAmount - discVal;
+
+                    document.getElementById('val-subtotal').innerText = this.formatMoney(subtotal);
+                    document.getElementById('val-tax').innerText = this.formatMoney(taxAmount);
+                    document.getElementById('val-discount').innerText = '-' + this.formatMoney(discVal);
+                    document.getElementById('val-total').innerText = this.formatMoney(total);
+
+                    // Optional API Sync
+                    try {
+                        const res = await fetch('/api/v1/invoice/calculate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ items: this.items, taxRate: taxVal, discount: discVal, currency: this.currency })
+                        });
+                        const data = await res.json();
+                        if(data.success) {
+                            // Update with server precision if available
+                            document.getElementById('val-total').innerText = data.data.total_fmt;
+                        }
+                    } catch(e) { /* API Fail is okay, local calculation is active */ }
+
+                    if(overlay) overlay.classList.add('hidden');
+                }, 400);
+            },
+
+            saveProfile() {
+                const profile = {
+                    name: document.getElementById('sender-name').value,
+                    email: document.getElementById('sender-email').value,
+                    address: document.getElementById('sender-address').value
+                };
+                localStorage.setItem('flowork_invoice_profile', JSON.stringify(profile));
+                alert("SENDER DATA SECURED.");
+            },
+
+            loadProfile() {
+                const saved = localStorage.getItem('flowork_invoice_profile');
+                if(saved) {
+                    const profile = JSON.parse(saved);
+                    ['name', 'email', 'address'].forEach(f => {
+                        const input = document.getElementById(`sender-${f}`);
+                        const prev = document.getElementById(`preview-sender-${f}`);
+                        if(input) input.value = profile[f] || '';
+                        if(prev) prev.innerText = profile[f] || (f === 'name' ? 'YOUR COMMAND' : '');
+                    });
+                }
+            },
+
+            generatePDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const num = document.getElementById('inv-number').value;
+
+                doc.setFontSize(26); doc.setTextColor(112, 107, 243); doc.text("INVOICE", 20, 30);
+                doc.setFontSize(10); doc.setTextColor(100); doc.text(`#${num}`, 20, 38);
+
+                doc.autoTable({
+                    startY: 60,
+                    head: [['DESCRIPTION', 'QTY', 'UNIT PRICE', 'TOTAL']],
+                    body: this.items.map(i => [i.desc, i.qty, i.price, i.qty * i.price]),
+                    theme: 'striped',
+                    headStyles: { fillColor: [112, 107, 243] }
+                });
+
+                const finalY = doc.lastAutoTable.finalY + 15;
+                doc.setFontSize(14); doc.text(`TOTAL: ${document.getElementById('val-total').innerText}`, 190, finalY, { align: 'right' });
+                doc.save(`INVOICE_${num}.pdf`);
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

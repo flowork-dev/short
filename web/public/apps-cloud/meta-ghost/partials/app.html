@@ -1,0 +1,104 @@
+<div id="app-mount-point" class="h-full flex flex-col p-2 md:p-4 w-full">
+    <v-app style="background: transparent;">
+
+        <div class="flex-1 flex flex-col md:flex-row gap-4 h-full pb-10 md:pb-2 animate__animated animate__fadeIn">
+
+            <div class="w-full md:w-1/3 flex flex-col gap-4 shrink-0">
+
+                <div class="bg-black/30 border border-gray-700 hover:border-cyan-500 transition rounded p-4 flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden shrink-0 min-h-[200px] md:min-h-[250px]" @click="triggerUpload">
+                    <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="processFile">
+
+                    <div v-if="!filePreview" class="text-center z-10">
+                        <v-icon size="40" color="cyan" class="mb-2 group-hover:scale-110 transition-transform">mdi-cloud-upload</v-icon>
+                        <div class="text-[10px] md:text-xs font-bold text-gray-400 group-hover:text-white orbitron tracking-widest">UPLOAD EVIDENCE</div>
+                        <div class="text-[8px] md:text-[9px] text-gray-600 mt-1 uppercase">JPG, PNG, HEIC</div>
+                    </div>
+
+                    <img v-else :src="filePreview" class="absolute inset-0 w-full h-full object-contain bg-black p-2 z-0">
+
+                    <div v-if="filePreview" class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <span class="text-xs font-bold text-white flex items-center gap-2"><v-icon>mdi-refresh</v-icon> CHANGE FILE</span>
+                    </div>
+
+                    <button v-if="!filePreview" @click.stop="loadSample" class="absolute bottom-4 z-20 text-[8px] md:text-[10px] bg-gray-800/80 px-3 py-1 rounded text-gray-400 hover:text-white border border-gray-600 uppercase font-bold">
+                        LOAD SAMPLE
+                    </button>
+                </div>
+
+                <div v-if="analysisResult" class="bg-black/40 border border-gray-700 rounded p-4 h-auto md:flex-1 flex flex-col overflow-hidden animate__animated animate__fadeInUp">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
+                        <span class="text-[9px] md:text-[10px] text-gray-500 font-bold orbitron">PRIVACY SCORE</span>
+                        <span :class="analysisResult.score > 50 ? 'text-red-500' : 'text-green-500'" class="font-bold font-mono">{{ analysisResult.score }}/100</span>
+                    </div>
+
+                    <div class="overflow-y-auto custom-scroll space-y-2 max-h-[300px] md:max-h-none">
+                        <div class="text-center py-2">
+                            <div class="text-xl md:text-2xl font-black orbitron uppercase" :class="analysisResult.verdict === 'CRITICAL' ? 'text-red-500' : 'text-green-500'">
+                                {{ analysisResult.verdict }}
+                            </div>
+                            <div class="text-[10px] text-gray-400 mt-1 italic">"{{ analysisResult.message }}"</div>
+                        </div>
+
+                        <div v-if="analysisResult.threats.length > 0" class="mt-4">
+                            <div class="text-[8px] text-gray-600 mb-2 uppercase font-bold tracking-widest">Detected Threats:</div>
+                            <div v-for="threat in analysisResult.threats" :key="threat" class="bg-red-900/20 border border-red-900/50 p-2 rounded text-[9px] md:text-[10px] text-red-400 mb-1 flex items-center gap-2">
+                                <v-icon size="14" color="red">mdi-alert</v-icon> {{ threat }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="bg-black/40 border border-gray-700 rounded p-4 h-auto md:flex-1 flex flex-col overflow-hidden">
+                     <div class="text-[9px] md:text-[10px] text-cyan-500 font-bold orbitron mb-2 border-b border-gray-800 pb-1">METADATA MANIFEST</div>
+                     <div class="overflow-y-auto custom-scroll max-h-[200px] md:max-h-none">
+                         <div v-if="!filePreview" class="text-center text-gray-600 text-[10px] mt-10 italic">Waiting for file...</div>
+                         <div v-else class="space-y-1">
+                             <div v-for="(val, key) in displayMeta" :key="key" class="flex justify-between text-[10px] border-b border-gray-800 py-1.5">
+                                 <span class="text-gray-500 font-bold uppercase tracking-tighter">{{ key }}</span>
+                                 <span class="text-cyan-300 font-mono text-right truncate w-32 ml-2">{{ val }}</span>
+                             </div>
+                         </div>
+                     </div>
+                </div>
+
+            </div>
+
+            <div class="w-full md:w-2/3 flex flex-col gap-4">
+
+                <div class="bg-black/40 border border-gray-700 rounded relative h-[300px] md:flex-grow overflow-hidden">
+                    <div id="map" class="w-full h-full z-0"></div>
+
+                    <div v-if="filePreview && !gpsData" class="absolute inset-0 flex items-center justify-center bg-black/80 z-10 pointer-events-none p-4 text-center">
+                        <div>
+                            <v-icon size="40" color="grey" class="mb-2 opacity-50">mdi-map-marker-off</v-icon>
+                            <div class="text-gray-500 font-bold orbitron text-xs">NO GEOLOCATION DATA</div>
+                            <div class="text-[9px] text-gray-600 uppercase mt-1">File aman dari pelacakan GPS.</div>
+                        </div>
+                    </div>
+
+                    <div v-if="!filePreview" class="absolute inset-0 flex items-center justify-center bg-black/80 z-10 pointer-events-none">
+                        <div class="text-[8px] md:text-[10px] text-cyan-900 font-bold orbitron tracking-widest animate-pulse uppercase">AWAITING SATELLITE DATA...</div>
+                    </div>
+                </div>
+
+                <div class="h-auto md:h-40 flex flex-col md:flex-row gap-3 md:gap-4 shrink-0">
+                    <div class="w-full md:w-2/3 bg-black/40 border border-gray-700 rounded p-3 flex flex-col overflow-hidden min-h-[100px]">
+                        <div class="text-[9px] md:text-[10px] text-purple-500 font-bold orbitron mb-2 uppercase">RAW HEX DUMP</div>
+                        <div class="flex-1 bg-black p-2 font-mono text-[9px] text-green-500 overflow-y-auto custom-scroll leading-tight break-all">
+                            {{ hexDump || 'Waiting for binary stream...' }}
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/3 flex">
+                        <button @click="scrubMetadata" :disabled="!filePreview" class="w-full h-[60px] md:h-auto bg-red-900/20 hover:bg-red-900/40 border border-red-900 text-red-500 font-bold rounded flex flex-row md:flex-col items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+                            <v-icon size="20">mdi-shredder</v-icon>
+                            <span class="text-[10px] orbitron uppercase tracking-widest">SCRUB DATA</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </v-app>
+</div>

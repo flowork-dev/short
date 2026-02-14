@@ -1,0 +1,30 @@
+{
+    "id": "stock-sentry",
+    "name": "STOCK SENTRY: LOGISTICS OPS",
+    "version": "1.2.0",
+    "description": "Sistem audit logistik taktis. Pantau inventory, cegah kebocoran aset, dan sinkronisasi data terenkripsi via jalur pribadi (BYOS).",
+    "author": "Flowork Cyber Division",
+    "tier": "login",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "stock-sentry",
+    "capabilities": [
+        "client_side_only",
+        "local_storage",
+        "internet_access",
+        "external_api"
+    ],
+    "required_variables": [
+        {
+            "name": "STOCK_SENTRY_GOOGLE_ID",
+            "label": "Secure Cloud Client ID",
+            "type": "public",
+            "description": "Client ID untuk akses penyimpanan cloud pribadi (Google Drive).",
+            "required": true
+        }
+    ],
+    "tags": ["business", "inventory", "cloud-sync"]
+}

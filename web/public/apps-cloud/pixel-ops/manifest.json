@@ -1,0 +1,25 @@
+{
+    "id": "pixel-ops",
+    "name": "KECILIN UKURAN FOTO SAMPE 90% TANPA PECAH (KOMPRES GRATIS)",
+    "version": "1.0.0",
+    "description": "Kompresor gambar taktis. Perkecil ukuran JPG, PNG, WebP secara massal tanpa upload ke server. Download file ZIP instan. Hemat kuota dan storage.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 9,
+    "slug": "pixel-ops",
+    "capabilities": [
+        "file_system",
+        "local_processing"
+    ],
+    "tags": [
+        "image tool",
+        "compressor",
+        "optimizer",
+        "webp converter",
+        "productivity"
+    ]
+}

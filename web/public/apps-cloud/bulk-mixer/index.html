@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMART BULK MIXER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root { --bg-deep: #171925; --cyber-cyan: #54d7f6; --neon-purple: #706bf3; }
+        body { background-color: var(--bg-deep); color: #e0f0ff; font-family: sans-serif; }
+        .hidden-view { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f111a; }
+        ::-webkit-scrollbar-thumb { background: #3a3962; border-radius: 3px; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <nav class="h-16 border-b border-[#3a3962] flex items-center justify-between px-6 bg-[#171925] z-50 shrink-0">
+        <div class="font-bold text-lg tracking-widest flex items-center gap-2">
+            <i data-lucide="scissors" class="text-[#54d7f6]"></i>
+            <span>SMART<span class="text-[#54d7f6]">STITCH</span></span>
+        </div>
+        <div class="flex gap-4 text-xs font-bold font-mono">
+            <button id="tab-app" class="opacity-100 cursor-default">FACTORY</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 relative w-full h-full overflow-y-auto custom-scrollbar">
+        <div id="view-app" class="w-full min-h-full"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            isLoggedIn: false,
+            leftFiles: [], // Array of {file, duration}
+            rightFiles: [],
+            worker: null,
+            currentMode: 'audio_master',
+
+            async init() {
+                console.log("SMART MIXER v5.0 (STITCHING ENGINE)");
+                const userSession = localStorage.getItem('flowork_session');
+                if (userSession) this.isLoggedIn = true;
+
+                // Lander loading removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                if(window.lucide) lucide.createIcons();
+                // Tab switching logic removed
+                this.toggleMode();
+            },
+
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    if(!res.ok) throw new Error("Load failed");
+                    document.getElementById(id).innerHTML = await res.text();
+                    if(window.lucide) lucide.createIcons();
+                } catch(e) { console.error(e); }
+            },
+
+            // switchTab function removed as it is no longer needed
+
+            // --- UI MODE TOGGLE ---
+            toggleMode() {
+                const mode = document.getElementById('mixMode').value;
+                this.currentMode = mode;
+
+                if (mode === 'audio_master') {
+                    // JAHIT VIDEO (REC) KE AUDIO (MASTER)
+                    document.getElementById('mode-desc').innerText = '"Master Lagu. Sistem akan menjahit banyak video pendek secara acak sampai durasi lagu terpenuhi."';
+                    this.updateZoneLabel('left', 'KOLAM VIDEO (BAHAN JAHIT)', 'film');
+                    this.updateZoneLabel('right', 'KOLAM AUDIO (MASTER)', 'music');
+                } else {
+                    // JAHIT AUDIO (REC) KE VIDEO (MASTER)
+                    document.getElementById('mode-desc').innerText = '"Master Video. Sistem akan menjahit banyak efek suara/lagu pendek secara acak sampai durasi video terpenuhi."';
+                    this.updateZoneLabel('left', 'KOLAM VIDEO (MASTER)', 'film');
+                    this.updateZoneLabel('right', 'KOLAM AUDIO (BAHAN JAHIT)', 'music');
+                }
+            },
+
+            updateZoneLabel(side, text, icon) {
+                const label = document.getElementById(`label-${side}`);
+                if(label) label.querySelector('span').innerText = text;
+                const p = document.getElementById(`text-${side}`);
+                if(p) p.innerText = text;
+            },
+
+            // --- INPUT & DURATION SCANNER (CRUCIAL) ---
+            async handleInput(input, side) {
+                const files = Array.from(input.files).filter(f => {
+                    // Filter junk files
+                    return (f.type.startsWith('video/') || f.type.startsWith('audio/')) && f.size > 0;
+                });
+
+                if (files.length === 0) return;
+
+                // UI Update scanning
+                document.getElementById(`count-${side}`).innerText = `SCANNING ${files.length} FILES...`;
+                document.getElementById(`dur-${side}`).style.opacity = 1;
+
+                // SCAN DURASI (Satu-satu biar gak crash browser)
+                const processedFiles = [];
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    try {
+                        const duration = await this.getMediaDuration(f);
+                        processedFiles.push({ file: f, duration: duration });
+                    } catch (e) {
+                        console.warn(`Skip corrupt file: ${f.name}`);
+                    }
+                    // Update progress scan text
+                    if(i % 10 === 0) document.getElementById(`count-${side}`).innerText = `SCANNING ${i}/${files.length}`;
+                }
+
+                // Store Data
+                if (side === 'left') {
+                    this.leftFiles = processedFiles;
+                    document.getElementById('zone-left').classList.add('border-[#54d7f6]', 'bg-[#54d7f6]/10');
+                } else {
+                    this.rightFiles = processedFiles;
+                    document.getElementById('zone-right').classList.add('border-[#706bf3]', 'bg-[#706bf3]/10');
+                }
+
+                document.getElementById(`count-${side}`).innerText = `${processedFiles.length} VALID FILES`;
+                document.getElementById(`dur-${side}`).innerText = "SCAN COMPLETE";
+                this.log(`> LOADED & SCANNED ${processedFiles.length} FILES ON ${side.toUpperCase()}`);
+            },
+
+            getMediaDuration(file) {
+                return new Promise((resolve, reject) => {
+                    const url = URL.createObjectURL(file);
+                    const element = file.type.startsWith('audio') ? document.createElement('audio') : document.createElement('video');
+                    element.preload = 'metadata';
+                    element.onloadedmetadata = () => {
+                        const dur = element.duration;
+                        URL.revokeObjectURL(url);
+                        resolve(dur);
+                    };
+                    element.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        reject();
+                    };
+                    element.src = url;
+                });
+            },
+
+            // --- THE BRAIN: JOB DISTRIBUTION ---
+            async startSmartMixing() {
+                if (this.leftFiles.length === 0 || this.rightFiles.length === 0) {
+                    return alert("DATA KOSONG! UPLOAD KEDUA FOLDER DULU.");
+                }
+
+                document.getElementById('btn-start').disabled = true;
+                this.log("> MENGHITUNG KOMBINASI JAHITAN...", 'green');
+
+                let jobs = [];
+                // Clone array biar bisa diacak tanpa ngerusak data asli
+                let masters = [];
+                let slaves = []; // Bahan receh
+
+                if (this.currentMode === 'audio_master') {
+                    masters = [...this.rightFiles]; // Audio is Master
+                    slaves = [...this.leftFiles];   // Video is Slave
+                } else {
+                    masters = [...this.leftFiles];  // Video is Master
+                    slaves = [...this.rightFiles];  // Audio is Slave
+                }
+
+                // Shuffle Slaves (Biar Random)
+                slaves.sort(() => Math.random() - 0.5);
+
+                let slaveIndex = 0;
+
+                // BUILD JOBS
+                for (let i = 0; i < masters.length; i++) {
+                    const master = masters[i];
+                    const targetDuration = master.duration;
+                    let currentDuration = 0;
+                    let selectedSlaves = [];
+
+                    // Ambil recehan sampai durasi master terpenuhi
+                    while (currentDuration < targetDuration) {
+                        // Kalau stok receh habis, acak ulang dan mulai dari awal (Looping stok)
+                        if (slaveIndex >= slaves.length) {
+                            slaves.sort(() => Math.random() - 0.5);
+                            slaveIndex = 0;
+                        }
+
+                        const pick = slaves[slaveIndex];
+                        selectedSlaves.push(pick.file);
+                        currentDuration += pick.duration;
+                        slaveIndex++;
+                    }
+
+                    jobs.push({
+                        masterFile: master.file,
+                        slaveFiles: selectedSlaves, // Array of Files
+                        index: i + 1,
+                        mode: this.currentMode
+                    });
+                }
+
+                this.log(`> JOBS CREATED: ${jobs.length} MASTER FILES AKANDIPROSES.`);
+                this.processQueue(jobs);
+            },
+
+            // --- EXECUTION ENGINE ---
+            initWorker() {
+                if (this.worker) this.worker.terminate();
+                this.worker = new Worker('./js/worker.js');
+                this.worker.onerror = (e) => {
+                    this.log(`! WORKER CRASHED`, 'red');
+                    console.error(e);
+                };
+                return this.worker;
+            },
+
+            async processQueue(jobs) {
+                const total = jobs.length;
+
+                for (let i = 0; i < total; i++) {
+                    const job = jobs[i];
+                    this.updateProgress(i, total, `JAHIT FILE ${i+1}/${total} (${job.slaveFiles.length} CLIPS)...`);
+                    this.log(`> PROCESSING: ${job.masterFile.name} + ${job.slaveFiles.length} BAHAN`);
+
+                    const worker = this.initWorker();
+
+                    try {
+                        await new Promise((resolve, reject) => {
+                            // Kirim Array File ke Worker
+                            worker.postMessage({
+                                type: 'PROCESS_STITCH',
+                                data: job
+                            });
+
+                            worker.onmessage = (e) => {
+                                const { type, buffer, name, msg } = e.data;
+                                if (type === 'DONE') {
+                                    this.downloadFile(buffer, name);
+                                    this.log(`> SELESAI: ${name}`, 'green');
+                                    resolve();
+                                } else if (type === 'ERROR') {
+                                    this.log(`! ERROR: ${msg}`, 'red');
+                                    resolve(); // Skip error
+                                }
+                            };
+                        });
+                    } catch (err) {
+                        this.log(`! FATAL ERROR ON ITEM ${i+1}`, 'red');
+                    }
+
+                    worker.terminate(); // Hard Reset RAM
+
+                    // Cooldown 3 detik
+                    if(i < total - 1) await new Promise(r => setTimeout(r, 3000));
+                }
+
+                this.updateProgress(100, 100, "SEMUA SELESAI");
+                this.log("> PROSES PENJAHITAN MASSAL SELESAI.", 'green');
+                document.getElementById('btn-start').disabled = false;
+            },
+
+            downloadFile(buffer, name) {
+                const blob = new Blob([buffer], { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                a.click();
+            },
+
+            log(msg, color = 'gray') {
+                const logDiv = document.getElementById('terminal-logs');
+                const p = document.createElement('div');
+                p.innerText = msg;
+                if(color === 'green') p.className = "text-green-500 font-bold";
+                if(color === 'red') p.className = "text-red-500 font-bold";
+                else p.className = "text-gray-400";
+                logDiv.prepend(p);
+            },
+
+            updateProgress(current, total, text) {
+                const percent = Math.round((current / total) * 100);
+                document.getElementById('prog-text').innerText = text;
+                document.getElementById('prog-percent').innerText = percent + "%";
+                document.getElementById('prog-bar').style.width = percent + "%";
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') AppCore.isLoggedIn = true;
+        });
+    </script>
+</body>
+</html>

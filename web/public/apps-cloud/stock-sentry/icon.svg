@@ -1,0 +1,31 @@
+<svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+
+    <g filter="url(#glow)">
+        <path d="M20 25 L80 25 L90 35 L90 75 L80 85 L20 85 L10 75 L10 35 Z" stroke="#54d7f6" stroke-width="2" fill="none" stroke-linejoin="round"/>
+        <path d="M10 35 L20 25 M80 25 L90 35 M90 75 L80 85 M20 85 L10 75" stroke="#54d7f6" stroke-width="1" opacity="0.6"/>
+
+        <path d="M50 85 V35" stroke="#706bf3" stroke-width="1" stroke-dasharray="4 2" opacity="0.7"/>
+        <path d="M20 55 H80" stroke="#706bf3" stroke-width="1" stroke-dasharray="4 2" opacity="0.7"/>
+
+        <path d="M25 75 A 35 35 0 0 1 75 35" stroke="#706bf3" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+
+        <circle cx="50" cy="55" r="8" stroke="#54d7f6" stroke-width="2"/>
+        <line x1="50" y1="43" x2="50" y2="49" stroke="#54d7f6" stroke-width="2"/>
+        <line x1="50" y1="61" x2="50" y2="67" stroke="#54d7f6" stroke-width="2"/>
+        <line x1="38" y1="55" x2="44" y2="55" stroke="#54d7f6" stroke-width="2"/>
+        <line x1="56" y1="55" x2="62" y2="55" stroke="#54d7f6" stroke-width="2"/>
+
+        <circle cx="50" cy="55" r="3" fill="#ff2a6d"/>
+
+        <rect x="8" y="33" width="4" height="4" fill="#54d7f6"/>
+        <rect x="88" y="33" width="4" height="4" fill="#54d7f6"/>
+        <rect x="88" y="73" width="4" height="4" fill="#54d7f6"/>
+        <rect x="8" y="73" width="4" height="4" fill="#54d7f6"/>
+    </g>
+</svg>

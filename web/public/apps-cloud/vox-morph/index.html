@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>VOX MORPH | SILENT INJECT</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            /* DEFAULT (DARK) */
+            --bg-core: #0f1016;
+            --bg-panel: #171925;
+            --bg-input: #1f2233;
+            --border-dim: rgba(84, 215, 246, 0.1);
+            --border-bright: #54d7f6;
+            --primary: #54d7f6;
+            --secondary: #706bf3;
+            --accent: #ff3e3e;
+            --txt-main: #e0f0ff;
+            --txt-muted: #94a3b8;
+            --txt-inv: #0f1016;
+        }
+
+        [data-theme="light"] {
+            --bg-core: #f0f2f5;
+            --bg-panel: #ffffff;
+            --bg-input: #e2e8f0;
+            --border-dim: #cbd5e1;
+            --border-bright: #0077b6;
+            --primary: #0077b6;
+            --secondary: #4361ee;
+            --accent: #d90429;
+            --txt-main: #102a43;
+            --txt-muted: #627d98;
+            --txt-inv: #ffffff;
+        }
+
+        [data-theme="hacker"] {
+            --bg-core: #000000;
+            --bg-panel: #050505;
+            --bg-input: #0a0a0a;
+            --border-dim: #004400;
+            --border-bright: #00ff00;
+            --primary: #00ff00;
+            --secondary: #008f11;
+            --accent: #ff0000;
+            --txt-main: #00ff00;
+            --txt-muted: #005500;
+            --txt-inv: #000000;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--txt-main);
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .font-hud { font-family: 'Orbitron', sans-serif; }
+        .font-mono { font-family: 'Share Tech Mono', monospace; }
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Sliders */
+        input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            height: 24px; width: 24px; border-radius: 50%;
+            background: var(--primary); margin-top: -10px; cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); border: 2px solid var(--bg-panel);
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: var(--bg-input); border-radius: 2px;
+        }
+
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } }
+        .active-mic { animation: pulse-glow 1.5s infinite; border-color: var(--accent) !important; color: var(--accent) !important; }
+
+        @media (max-width: 1023px) {
+            .mobile-safe-area { padding-bottom: 400px; }
+            .sticky-visualizer { position: sticky; top: 0; z-index: 40; }
+        }
+
+        /* Success Animation */
+        .inject-success {
+            background-color: #22c55e !important; /* Green-500 */
+            color: white !important;
+            border-color: #22c55e !important;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col h-screen overflow-hidden bg-[var(--bg-core)] text-[var(--txt-main)]">
+
+    <nav class="h-16 shrink-0 z-50 flex items-center justify-between px-4 border-b bg-[var(--bg-panel)] border-[var(--border-dim)] shadow-md">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-lg text-[var(--txt-inv)] bg-gradient-to-br from-[var(--secondary)] to-[var(--primary)]">
+                VM
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-widest leading-none font-hud">VOX<span style="color: var(--primary);">MORPH</span></h1>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    <p class="text-[9px] font-bold tracking-[0.2em] opacity-60">SILENT INJECT V17</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="window.appCore.toggleTheme()" class="p-2 rounded-full border opacity-70 hover:opacity-100 border-[var(--border-dim)] text-[var(--txt-main)]">
+            <i data-lucide="sun-moon" class="w-6 h-6"></i>
+        </button>
+    </nav>
+
+    <main class="flex-1 w-full max-w-7xl mx-auto flex flex-col lg:flex-row overflow-hidden relative">
+
+        <div class="order-1 lg:order-2 lg:flex-1 relative flex flex-col bg-[var(--bg-core)]">
+            <div class="sticky-visualizer w-full lg:h-full lg:p-6 bg-[var(--bg-core)] z-30">
+                <div class="relative w-full aspect-video lg:h-full lg:aspect-auto bg-[var(--bg-input)] lg:rounded-2xl border-b lg:border border-[var(--border-dim)] overflow-hidden shadow-2xl">
+                    <canvas id="visualizer" class="w-full h-full opacity-80"></canvas>
+
+                    <div class="absolute inset-0 opacity-10 pointer-events-none"
+                         style="background-image: linear-gradient(0deg, transparent 24%, var(--primary) 25%, var(--primary) 26%, transparent 27%, transparent 74%, var(--primary) 75%, var(--primary) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, var(--primary) 25%, var(--primary) 26%, transparent 27%, transparent 74%, var(--primary) 75%, var(--primary) 76%, transparent 77%, transparent); background-size: 50px 50px;">
+                    </div>
+
+                    <div class="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+                        <div class="text-[10px] font-mono opacity-70">
+                            <div id="status-freq">FREQ: 0 Hz</div>
+                            <div id="status-gain">GAIN: 0.0 dB</div>
+                        </div>
+                        <div class="px-3 py-1 rounded bg-black/60 border border-[var(--primary)] text-[var(--primary)] text-[10px] font-bold tracking-widest backdrop-blur-md" id="dsp-badge">
+                            SYSTEM READY
+                        </div>
+                    </div>
+
+                    <div class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-center gap-6 backdrop-blur-sm">
+                        <button onclick="window.AudioEngine.stop()" class="p-3 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white border border-red-500 transition-all">
+                            <i data-lucide="square" class="w-5 h-5 fill-current"></i>
+                        </button>
+                        <button id="btn-play-pause" onclick="window.AudioEngine.togglePlay()" class="p-4 rounded-full bg-[var(--primary)] text-[var(--txt-inv)] shadow-[0_0_20px_var(--primary)] hover:scale-105 transition-transform">
+                            <i data-lucide="play" class="w-8 h-8 fill-current"></i>
+                        </button>
+                        <button onclick="window.AudioEngine.downloadRecording()" id="btn-rec-stream" class="p-3 rounded-full bg-[var(--bg-input)] text-[var(--txt-muted)] hover:text-[var(--accent)] border border-[var(--txt-muted)] hover:border-[var(--accent)] transition-all" title="Download Result">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="order-2 lg:order-1 w-full lg:w-[450px] flex flex-col bg-[var(--bg-panel)] z-20 border-r border-[var(--border-dim)] h-full overflow-y-auto hide-scroll">
+
+            <div class="p-5 space-y-6 mobile-safe-area">
+
+                <div class="p-4 rounded-xl border bg-[var(--bg-input)] border-[var(--border-dim)]">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-[10px] font-bold tracking-widest opacity-70">INPUT SOURCE</label>
+                        <span id="file-name" class="text-[10px] font-mono text-[var(--primary)] truncate max-w-[150px]">No File Loaded</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="relative group h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-[var(--bg-panel)] transition-all border-[var(--txt-muted)] hover:border-[var(--primary)]">
+                            <input type="file" id="audio-input" accept="audio/*" class="absolute inset-0 opacity-0 z-10 w-full h-full cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="folder-open" class="w-4 h-4"></i> <span class="text-[10px] font-bold">UPLOAD</span>
+                            </div>
+                        </label>
+                        <button onclick="window.AudioEngine.useMic()" id="btn-mic-source" class="h-16 rounded-lg border flex items-center justify-center gap-2 hover:bg-[var(--bg-panel)] transition-all border-[var(--txt-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                            <i data-lucide="mic" class="w-4 h-4"></i> <span class="text-[10px] font-bold">LIVE MIC</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl border bg-[var(--bg-input)] border-[var(--border-dim)]">
+                    <div class="flex items-center gap-2 mb-3 text-[var(--secondary)]">
+                        <i data-lucide="key" class="w-4 h-4"></i>
+                        <label class="text-[10px] font-bold tracking-widest">PHANTOM MESSAGE</label>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="stego-text" placeholder="Ketik pesan rahasia..."
+                               class="flex-1 bg-[var(--bg-panel)] border border-[var(--border-dim)] text-[var(--txt-main)] text-xs px-3 rounded outline-none focus:border-[var(--primary)]">
+                        <button id="btn-inject" onclick="window.AudioEngine.injectStego()" class="px-4 py-2 bg-[var(--secondary)]/20 border border-[var(--secondary)] text-[var(--secondary)] text-[10px] font-bold rounded hover:bg-[var(--secondary)] hover:text-white transition-all w-24 flex items-center justify-center">
+                            INJECT
+                        </button>
+                    </div>
+                    <p class="text-[8px] text-[var(--txt-muted)] mt-2 opacity-70">Menyisipkan sinyal data pendek. Mode senyap (No Alert).</p>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold tracking-widest opacity-70 mb-3 block pl-1">VOICE MODES</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="window.AudioEngine.setPreset('normal')" class="py-3 bg-[var(--bg-input)] border border-[var(--border-dim)] rounded-lg text-[10px] font-bold hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all">NORMAL</button>
+                        <button onclick="window.AudioEngine.setPreset('robot')" class="py-3 bg-[var(--bg-input)] border border-[var(--border-dim)] rounded-lg text-[10px] font-bold hover:border-yellow-400 hover:text-yellow-400 transition-all flex flex-col items-center gap-1"><i data-lucide="bot" class="w-3 h-3"></i> ROBOT</button>
+                        <button onclick="window.AudioEngine.setPreset('demon')" class="py-3 bg-[var(--bg-input)] border border-[var(--border-dim)] rounded-lg text-[10px] font-bold hover:border-red-500 hover:text-red-500 transition-all flex flex-col items-center gap-1"><i data-lucide="ghost" class="w-3 h-3"></i> DEMON</button>
+                        <button onclick="window.AudioEngine.setPreset('radio')" class="py-3 bg-[var(--bg-input)] border border-[var(--border-dim)] rounded-lg text-[10px] font-bold hover:border-orange-400 hover:text-orange-400 transition-all flex flex-col items-center gap-1"><i data-lucide="radio" class="w-3 h-3"></i> RADIO</button>
+                        <button onclick="window.AudioEngine.setPreset('cave')" class="py-3 bg-[var(--bg-input)] border border-[var(--border-dim)] rounded-lg text-[10px] font-bold hover:border-blue-400 hover:text-blue-400 transition-all flex flex-col items-center gap-1"><i data-lucide="wind" class="w-4 h-4"></i> CAVE</button>
+                        <button onclick="window.AudioEngine.setPreset('alien')" class="py-3 bg-[var(--bg-input)] border border-[var(--border-dim)] rounded-lg text-[10px] font-bold hover:border-green-400 hover:text-green-400 transition-all flex flex-col items-center gap-1"><i data-lucide="rocket" class="w-3 h-3"></i> ALIEN</button>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-[var(--bg-input)] p-4 rounded-xl border border-[var(--border-dim)]">
+                        <div class="flex justify-between mb-4">
+                            <span class="text-xs font-bold flex items-center gap-2"><i data-lucide="move-vertical" class="w-4 h-4 text-[var(--primary)]"></i> PITCH</span>
+                            <span id="disp-pitch" class="text-xs font-mono font-bold">1.0x</span>
+                        </div>
+                        <input type="range" id="sl-pitch" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full">
+                    </div>
+
+                    <div class="bg-[var(--bg-input)] p-4 rounded-xl border border-[var(--border-dim)]">
+                        <div class="flex justify-between mb-4">
+                            <span class="text-xs font-bold flex items-center gap-2"><i data-lucide="waves" class="w-4 h-4 text-[var(--secondary)]"></i> ECHO DELAY</span>
+                            <span id="disp-delay" class="text-xs font-mono font-bold">0.0s</span>
+                        </div>
+                        <input type="range" id="sl-delay" min="0" max="1.0" step="0.1" value="0" class="w-full">
+                    </div>
+
+                    <div class="bg-[var(--bg-input)] p-4 rounded-xl border border-[var(--border-dim)]">
+                        <div class="flex justify-between mb-4">
+                            <span class="text-xs font-bold flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-[var(--accent)]"></i> DISTORTION</span>
+                            <span id="disp-dist" class="text-xs font-mono font-bold">0%</span>
+                        </div>
+                        <input type="range" id="sl-dist" min="0" max="100" step="1" value="0" class="w-full">
+                    </div>
+                </div>
+
+                <button onclick="window.AudioEngine.generateOutput()" id="btn-generate"
+                        class="w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition-all"
+                        style="background: var(--primary); color: var(--txt-inv);">
+                    <i data-lucide="cpu" class="w-5 h-5"></i> GENERATE AUDIO
+                </button>
+
+                <div class="h-20 lg:hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const AudioEngine = {
+            ctx: null,
+            sourceNode: null,
+            gainNode: null,
+            analyser: null,
+            delayNode: null,
+            distNode: null,
+            isPlaying: false,
+            audioBuffer: null,
+            mediaStream: null,
+            recorder: null,
+            recordedChunks: [],
+            mode: 'file',
+
+            init() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                this.gainNode = this.ctx.createGain();
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 256;
+                this.gainNode.connect(this.analyser);
+                this.analyser.connect(this.ctx.destination);
+
+                this.delayNode = this.ctx.createDelay();
+                this.delayNode.delayTime.value = 0;
+                this.distNode = this.ctx.createWaveShaper();
+                this.distNode.curve = this.makeDistortionCurve(0);
+                this.distNode.oversample = '4x';
+
+                this.setupVisualizer();
+                console.log("ENGINE READY");
+            },
+
+            // --- ANDROID MIC FIX ---
+            async useMic() {
+                if(this.ctx.state === 'suspended') await this.ctx.resume(); // FORCE RESUME
+
+                try {
+                    this.stop();
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                    });
+
+                    this.mediaStream = stream;
+                    this.mode = 'mic';
+                    this.sourceNode = this.ctx.createMediaStreamSource(stream);
+                    this.connectGraph();
+
+                    document.getElementById('file-name').innerText = "LIVE MIC ACTIVE";
+                    document.getElementById('dsp-badge').innerText = "MIC INPUT";
+                    document.getElementById('dsp-badge').style.borderColor = "var(--accent)";
+                    document.getElementById('btn-mic-source').classList.add('active-mic');
+
+                    this.isPlaying = true;
+                    this.updatePlayButton();
+                    this.startStreamRecording(); // Auto record buffer
+
+                } catch(e) {
+                    alert("Akses Mic Gagal: " + e.message);
+                }
+            },
+
+            async handleFile(input) {
+                if(!input.files[0]) return;
+                const file = input.files[0];
+                document.getElementById('file-name').innerText = file.name;
+                this.mode = 'file';
+                const arrayBuffer = await file.arrayBuffer();
+                this.audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+                this.stop();
+                document.getElementById('dsp-badge').innerText = "FILE READY";
+                document.getElementById('btn-mic-source').classList.remove('active-mic');
+            },
+
+            // --- SILENT STEGO INJECTION ---
+            injectStego() {
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+
+                const text = document.getElementById('stego-text').value;
+
+                // Visual Feedback Button
+                const btn = document.getElementById('btn-inject');
+                const originalContent = btn.innerHTML;
+
+                if(!text) {
+                    btn.innerText = "KOSONG!";
+                    setTimeout(() => { btn.innerHTML = originalContent; }, 1000);
+                    return;
+                }
+
+                // Audio Logic
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(8000, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(12000, this.ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(this.gainNode);
+                osc.start(this.ctx.currentTime);
+                osc.stop(this.ctx.currentTime + 0.5);
+
+                // Success Animation
+                btn.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i> SENT';
+                btn.classList.add('inject-success');
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('inject-success');
+                    lucide.createIcons();
+                }, 1500);
+            },
+
+            // --- GENERATE & DOWNLOAD ---
+            generateOutput() {
+                if(!this.sourceNode) {
+                    const btn = document.getElementById('btn-generate');
+                    const oldTxt = btn.innerHTML;
+                    btn.innerText = "NO AUDIO!";
+                    setTimeout(() => btn.innerHTML = oldTxt, 1500);
+                    return;
+                }
+
+                const dest = this.ctx.createMediaStreamDestination();
+                this.gainNode.connect(dest);
+
+                this.recorder = new MediaRecorder(dest.stream);
+                this.recordedChunks = [];
+
+                this.recorder.ondataavailable = e => this.recordedChunks.push(e.data);
+                this.recorder.onstop = () => {
+                    const blob = new Blob(this.recordedChunks, { 'type' : 'audio/wav; codecs=MS_PCM' });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'vox_morph_result.wav';
+                    a.click();
+
+                    document.getElementById('btn-generate').innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> SELESAI';
+                    setTimeout(() => {
+                        document.getElementById('btn-generate').innerHTML = '<i data-lucide="cpu" class="w-5 h-5"></i> GENERATE AUDIO';
+                        lucide.createIcons();
+                    }, 2000);
+                };
+
+                this.recorder.start();
+                document.getElementById('btn-generate').innerHTML = '<span class="animate-pulse">MEREKAM... STOP UTK SIMPAN</span>';
+
+                if(this.mode === 'file' && !this.isPlaying) this.playBuffer();
+            },
+
+            downloadRecording() {
+                if(this.recorder && this.recorder.state === 'recording') {
+                    this.recorder.stop();
+                } else {
+                    alert("Klik 'GENERATE AUDIO' dulu untuk merekam output.");
+                }
+            },
+
+            // --- PLAYBACK ---
+            togglePlay() {
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+                if (this.isPlaying) this.stop();
+                else if (this.mode === 'file' && this.audioBuffer) this.playBuffer();
+            },
+
+            playBuffer() {
+                this.sourceNode = this.ctx.createBufferSource();
+                this.sourceNode.buffer = this.audioBuffer;
+                this.sourceNode.loop = true;
+                const rate = parseFloat(document.getElementById('sl-pitch').value);
+                this.sourceNode.playbackRate.value = rate;
+                this.connectGraph();
+                this.sourceNode.start(0);
+                this.startStreamRecording(); // Buffer auto record ready
+                this.isPlaying = true;
+                this.updatePlayButton();
+            },
+
+            stop() {
+                if (this.sourceNode) {
+                    try { this.sourceNode.stop(); } catch(e){}
+                    try { this.sourceNode.disconnect(); } catch(e){}
+                    this.sourceNode = null;
+                }
+                if (this.recorder && this.recorder.state === 'recording') {
+                    this.recorder.stop();
+                }
+                this.isPlaying = false;
+                this.updatePlayButton();
+                document.getElementById('btn-mic-source').classList.remove('active-mic');
+            },
+
+            connectGraph() {
+                this.sourceNode.disconnect();
+                this.sourceNode.connect(this.distNode);
+                const delayGain = this.ctx.createGain();
+                delayGain.gain.value = 0.5;
+                this.distNode.connect(this.delayNode);
+                this.delayNode.connect(delayGain);
+                delayGain.connect(this.gainNode);
+                this.distNode.connect(this.gainNode);
+            },
+
+            startStreamRecording() {
+                const dest = this.ctx.createMediaStreamDestination();
+                this.gainNode.connect(dest);
+                this.recorder = new MediaRecorder(dest.stream);
+                this.recordedChunks = [];
+                this.recorder.ondataavailable = e => this.recordedChunks.push(e.data);
+                this.recorder.onstop = () => {
+                    const blob = new Blob(this.recordedChunks, { 'type' : 'audio/wav; codecs=MS_PCM' });
+                    // Ready for manual download
+                    const url = URL.createObjectURL(blob);
+                    const btn = document.getElementById('btn-rec-stream');
+                    btn.onclick = () => {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'vox_morph_stream.wav';
+                        a.click();
+                    };
+                };
+                this.recorder.start();
+            },
+
+            updateParams() {
+                const pitch = parseFloat(document.getElementById('sl-pitch').value);
+                const delay = parseFloat(document.getElementById('sl-delay').value);
+                const dist = parseFloat(document.getElementById('sl-dist').value);
+
+                document.getElementById('disp-pitch').innerText = pitch.toFixed(1) + "x";
+                document.getElementById('disp-delay').innerText = delay.toFixed(1) + "s";
+                document.getElementById('disp-dist').innerText = dist + "%";
+
+                if(this.sourceNode && this.sourceNode.playbackRate) {
+                    this.sourceNode.playbackRate.value = pitch;
+                }
+                this.delayNode.delayTime.rampToValueAtTime(delay, this.ctx.currentTime + 0.1);
+                this.distNode.curve = this.makeDistortionCurve(dist);
+            },
+
+            makeDistortionCurve(amount) {
+                const k = amount;
+                const n = 44100;
+                const curve = new Float32Array(n);
+                if (amount === 0) return curve.map((_, i) => (i / n) * 2 - 1);
+                const deg = Math.PI / 180;
+                for (let i = 0; i < n; ++i) {
+                    const x = (i * 2) / n - 1;
+                    curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            },
+
+            setPreset(name) {
+                const p=document.getElementById('sl-pitch'), d=document.getElementById('sl-delay'), ds=document.getElementById('sl-dist');
+                if(name==='normal'){ p.value=1; d.value=0; ds.value=0; }
+                else if(name==='robot'){ p.value=0.8; d.value=0.1; ds.value=20; }
+                else if(name==='demon'){ p.value=0.6; d.value=0.3; ds.value=50; }
+                else if(name==='radio'){ p.value=1.5; d.value=0; ds.value=80; }
+                else if(name==='cave'){ p.value=1; d.value=0.5; ds.value=0; }
+                else if(name==='alien'){ p.value=1.8; d.value=0.2; ds.value=10; }
+                this.updateParams();
+            },
+
+            setupVisualizer() {
+                const canvas = document.getElementById('visualizer');
+                const ctx = canvas.getContext('2d');
+                const bufferLength = this.analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                const draw = () => {
+                    requestAnimationFrame(draw);
+                    this.analyser.getByteFrequencyData(dataArray);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let x = 0;
+                    const color = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+
+                    for(let i = 0; i < bufferLength; i++) {
+                        const barHeight = dataArray[i] / 1.5;
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 1;
+                    }
+                };
+                draw();
+            },
+
+            updatePlayButton() {
+                const btn = document.getElementById('btn-play-pause');
+                btn.innerHTML = this.isPlaying ?
+                    `<i data-lucide="pause" class="w-8 h-8 fill-current"></i>` :
+                    `<i data-lucide="play" class="w-8 h-8 fill-current"></i>`;
+                lucide.createIcons();
+            }
+        };
+
+        const AppCore = {
+            init() {
+                lucide.createIcons();
+                this.initTheme();
+
+                document.getElementById('audio-input').addEventListener('change', (e) => window.AudioEngine.handleFile(e.target));
+                document.querySelectorAll('input[type="range"]').forEach(el => {
+                    el.addEventListener('input', () => window.AudioEngine.updateParams());
+                });
+
+                window.AudioEngine.init();
+            },
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                const next = current === 'dark' ? 'light' : 'dark';
+                this.applyTheme(next);
+            },
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('flowork-theme', theme);
+            },
+            initTheme() {
+                const t = localStorage.getItem('flowork-theme');
+                if(t) this.applyTheme(t);
+                if(window.parent) window.parent.postMessage({ type: 'iframe-ready' }, '*');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.AudioEngine = AudioEngine;
+        window.onload = () => AppCore.init();
+        window.addEventListener('message', (e) => {
+            if(e.data?.type === 'THEME_UPDATE') AppCore.applyTheme(e.data.theme);
+        });
+    </script>
+</body>
+</html>

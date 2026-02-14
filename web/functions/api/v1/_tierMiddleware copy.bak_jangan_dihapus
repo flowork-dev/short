@@ -1,0 +1,147 @@
+//#######################################################################
+// WEBSITE      : https://flowork.cloud
+// File NAME    : functions/api/v1/_tierMiddleware.js
+// DESCRIPTION  : Centralized Tiering Logic & Rate Limiter
+// CORE SYSTEM  : Multi-tier Shared Variable & Global Rate Limiting
+//#######################################################################
+
+// CONFIGURATION PUSAT
+const CONSTANTS = {
+    ADDR_FREE: "0x9f655D3e73FF7347aeabe61E475102d9914C8403",
+    ADDR_LOGIN: "0x9f655D3e73FF7347aeabe61E475102d9914C8403",
+    ADDR_PRO: "0x9f655D3e73FF7347aeabe61E475102d9914C8403",
+    VIP_LIST_URL: 'https://raw.githubusercontent.com/flowork-dev/DONATUR/refs/heads/main/DONATE.txt',
+
+    // ATUR DURASI COOLDOWN DISINI (Dalam Milidetik)
+    COOLDOWN: {
+        FREE: 60000,
+        LOGIN: 180000,
+        PRO: 1000
+    }
+};
+
+// Cek VIP Status
+async function checkVipStatus(userAddress) {
+    if (!userAddress) return false;
+    try {
+        const res = await fetch(CONSTANTS.VIP_LIST_URL);
+        if (!res.ok) return false;
+        const text = await res.text();
+        const addrLower = userAddress.toLowerCase();
+        // Admin Bypass
+        if ([CONSTANTS.ADDR_PRO, CONSTANTS.ADDR_FREE].includes(addrLower)) return true;
+        return text.split('\n').some(line => {
+            const [addr] = line.trim().split('|');
+            return addr && addr.trim().toLowerCase() === addrLower;
+        });
+    } catch (e) { return false; }
+}
+
+/**
+ * FUNGSI UTAMA: TIER GUARDIAN
+ * @param {Object} context - Context dari Cloudflare Pages
+ * @param {String} keyName - Nama Variable API Key (cth: 'YOUTUBE_API_KEY')
+ * @param {String} limitScope - Nama Variable untuk Limit (cth: 'LAST_CHANNEL_SCAN_TS')
+ */
+export async function enforceSmartTiering(context, keyName, limitScope) {
+    const { request, env } = context;
+
+    // [SECURITY] ORIGIN CHECK (Anti Maling)
+    // Cek apakah request datang dari domain kita sendiri
+    const origin = request.headers.get("Origin");
+    const allowedDomain = "https://flowork.cloud"; // Domain Production
+
+    // Ijinkan localhost buat development, tapi blokir domain lain di production
+    // Jika origin ada (request dari browser) DAN bukan localhost DAN bukan domain resmi -> BLOKIR
+    if (origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && origin !== allowedDomain) {
+        throw {
+            status: 403,
+            body: { error: "FORBIDDEN_ORIGIN", message: "Access denied. Request stolen." }
+        };
+    }
+
+    const userAddress = request.headers.get("X-User-Address");
+
+    // 1. TENTUKAN KASTA (TIER)
+    let tier = "FREE";
+    let effectiveAddr = CONSTANTS.ADDR_FREE;
+    let waitTimeMs = CONSTANTS.COOLDOWN.FREE;
+
+    if (userAddress) {
+        tier = "LOGIN";
+        effectiveAddr = CONSTANTS.ADDR_LOGIN;
+        waitTimeMs = CONSTANTS.COOLDOWN.LOGIN;
+
+        if (await checkVipStatus(userAddress)) {
+            tier = "PRO";
+            effectiveAddr = CONSTANTS.ADDR_PRO;
+            waitTimeMs = CONSTANTS.COOLDOWN.PRO;
+        }
+    }
+
+    // 2. CARI KUNCI (API KEY)
+    let apiKey = null;
+    let isPrivate = false;
+
+    // Cek Private Vault User Dulu
+    if (userAddress) {
+        try {
+            const res = await env.DB.prepare("SELECT value FROM variables WHERE name = ? AND addr = ?")
+                .bind(keyName, userAddress.toLowerCase()).first();
+            if (res?.value) { apiKey = res.value; isPrivate = true; }
+        } catch(e) {}
+    }
+
+    // Kalau gak ada private, minta jatah Global Pool
+    if (!apiKey) {
+        try {
+            const res = await env.DB.prepare("SELECT value FROM variables WHERE name = ? AND addr = ?")
+                .bind(keyName, effectiveAddr.toLowerCase()).first();
+            if (res?.value) apiKey = res.value;
+        } catch(e) {}
+    }
+
+    // Kalau kunci gak ketemu sama sekali
+    if (!apiKey) {
+        throw {
+            status: 402, // 402 Payment Required -> Memicu Modal Config
+            body: {
+                error: "MISSING_CONFIG",
+                message: `Neural Link broken. Please inject ${keyName} in Settings for unlimited access.`
+            }
+        };
+    }
+
+    // 3. CEK LIMIT (Hanya untuk pengguna Shared Key)
+    if (!isPrivate) {
+        try {
+            const lastUsage = await env.DB.prepare(`SELECT ts FROM variables WHERE name = ? AND addr = ?`)
+                .bind(limitScope, effectiveAddr.toLowerCase()).first();
+
+            const now = Date.now();
+            if (lastUsage && (now - lastUsage.ts < waitTimeMs)) {
+                const remaining = Math.ceil((waitTimeMs - (now - lastUsage.ts)) / 1000);
+
+                // LEMPAR ERROR 429 BIAR FRONTEND TAU HARUS MUNCULIN POPUP APA
+                throw {
+                    status: 429,
+                    body: {
+                        error: "HIGH_PRIORITY_QUEUE_ACTIVE",
+                        tier: tier, // Frontend baca ini: kalau FREE -> Popup Login, kalau LOGIN -> Popup Upgrade
+                        message: `Queue limit reached. Cooldown: ${remaining}s.`
+                    }
+                };
+            }
+
+            // Update Timestamp (Tandai user baru aja make)
+            await env.DB.prepare(`INSERT OR REPLACE INTO variables (name, value, addr, ts) VALUES (?, 'active', ?, ?)`)
+                .bind(limitScope, effectiveAddr.toLowerCase(), now).run();
+        } catch(e) {
+            // Jika errornya dari logic kita (429), lempar ke atas. Jika error DB, ignore.
+            if (e.status === 429) throw e;
+        }
+    }
+
+    // 4. RETURN HASIL SUKSES
+    return { apiKey, tier, isPrivate };
+}

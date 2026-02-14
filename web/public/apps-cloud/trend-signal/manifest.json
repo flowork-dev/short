@@ -1,0 +1,35 @@
+{
+    "id": "trend-signal",
+    "name": "DETEKSI KONTEN VIRAL SEBELUM ORANG LAIN TAHU (YOUTUBE RADAR)",
+    "version": "1.0.0",
+    "description": "Analisa tren viral, kejenuhan konten, dan kecepatan pasar menggunakan data real-time. Temukan peluang konten cuan sebelum kompetitor sadar.",
+    "author": "Flowork Cyber Division",
+    "tier": "login",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "trend-signal",
+    "capabilities": [
+        "internet_access",
+        "data_analytics",
+        "youtube_api"
+    ],
+    "tags": [
+        "trend",
+        "market-research",
+        "youtube",
+        "analytics",
+        "viral"
+    ],
+    "required_variables": [
+        {
+            "name": "YOUTUBE_API_KEY",
+            "label": "YouTube Data API Key",
+            "description": "Required to fetch real-time market data and video statistics.",
+            "type": "secret",
+            "required": true
+        }
+    ]
+}

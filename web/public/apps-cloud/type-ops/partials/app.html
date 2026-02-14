@@ -1,0 +1,108 @@
+<div id="vue-root" class="h-full">
+    <v-app theme="dark" style="background: transparent;">
+        <v-main class="h-full flex flex-col p-0 overflow-hidden">
+
+            <div class="flex flex-col md:flex-row justify-between items-center p-3 md:p-4 border-b border-gray-800 bg-[#171925] z-10 shrink-0 gap-3">
+
+                <div class="flex w-full md:w-auto justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <v-icon icon="mdi-format-letter-case" color="purple-accent-3" size="24"></v-icon>
+                        <div>
+                            <h1 class="orbitron text-lg md:text-xl font-bold text-white m-0 leading-none tracking-widest">
+                                TYPE <span class="text-purple-400">OPS</span>
+                            </h1>
+                        </div>
+                    </div>
+                    <button onclick="window.appCore.switchTab('lander')" class="md:hidden text-[10px] text-gray-500 hover:text-white border-l border-gray-700 pl-3 flex items-center gap-1">
+                        BACK <v-icon size="small">mdi-arrow-right</v-icon>
+                    </button>
+                </div>
+
+                <div class="flex w-full md:w-auto gap-2 md:gap-4 items-center justify-between md:justify-end">
+                    <div class="flex bg-black rounded border border-gray-800 p-1 w-full md:w-auto justify-center">
+                        <button @click="mode = 'styles'" :class="mode === 'styles' ? 'bg-purple-900/50 text-purple-300' : 'text-gray-500'" class="flex-1 md:flex-none justify-center px-4 py-2 md:py-1 text-[10px] font-bold rounded transition-all flex items-center gap-1">
+                            <v-icon icon="mdi-format-font" size="x-small"></v-icon> STYLES
+                        </button>
+                        <button @click="mode = 'repeater'" :class="mode === 'repeater' ? 'bg-cyan-900/50 text-cyan-300' : 'text-gray-500'" class="flex-1 md:flex-none justify-center px-4 py-2 md:py-1 text-[10px] font-bold rounded transition-all flex items-center gap-1">
+                            <v-icon icon="mdi-repeat" size="x-small"></v-icon> REPEATER
+                        </button>
+                    </div>
+
+                    <button onclick="window.appCore.switchTab('lander')" class="hidden md:flex text-xs text-gray-500 hover:text-white border-l border-gray-700 pl-4 items-center gap-1">
+                        <v-icon size="small">mdi-arrow-left</v-icon> BACK
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+
+                <div class="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col bg-[#12141d] shrink-0 h-48 md:h-auto">
+                    <div class="p-2 md:p-3 bg-[#0a0a0a] border-b border-gray-800 flex justify-between items-center shrink-0">
+                        <span class="text-[10px] text-gray-500 font-bold tracking-wider orbitron">SOURCE INPUT</span>
+                        <button @click="inputText = ''" class="text-[10px] text-red-500 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded hover:bg-red-900/20">
+                            <v-icon icon="mdi-trash-can-outline" size="x-small"></v-icon> CLEAR
+                        </button>
+                    </div>
+                    <div class="flex-1 p-3 md:p-4 min-h-0">
+                        <textarea v-model="inputText" class="w-full h-full bg-[#0f111a] border border-gray-700 rounded-lg p-3 text-sm text-white focus:border-purple-500 outline-none resize-none font-mono transition" placeholder="Type tactical message here..."></textarea>
+                    </div>
+                    <div class="p-2 md:p-4 border-t border-gray-800 grid grid-cols-2 gap-2 shrink-0">
+                        <button @click="addSpacer" class="bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 md:py-3 rounded text-[10px] font-bold border border-gray-600 flex flex-col md:flex-row items-center justify-center gap-1 transition">
+                            <v-icon icon="mdi-keyboard-space" size="small"></v-icon> SPACER
+                        </button>
+                        <button @click="copyInput" class="bg-purple-900/40 hover:bg-purple-700/50 text-purple-300 py-2 md:py-3 rounded text-[10px] font-bold border border-purple-500 flex flex-col md:flex-row items-center justify-center gap-1 transition">
+                            <v-icon icon="mdi-content-copy" size="small"></v-icon> COPY RAW
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-[#0f111a] flex flex-col overflow-hidden relative min-h-0">
+
+                    <div v-if="mode === 'styles'" class="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar">
+                        <div v-if="!inputText" class="h-full flex flex-col items-center justify-center opacity-30 pointer-events-none select-none">
+                            <v-icon icon="mdi-keyboard-outline" size="48" class="mb-2 text-gray-500"></v-icon>
+                            <div class="text-xs md:text-sm orbitron tracking-widest text-gray-400 text-center">AWAITING INPUT<br>SIGNAL</div>
+                        </div>
+
+                        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pb-20 md:pb-0">
+                            <div v-for="(style, key) in styles" :key="key" class="bg-[#171925] border border-gray-800 p-3 md:p-4 rounded-xl group cursor-pointer hover:border-purple-500 hover:shadow-[0_0_15px_rgba(188,19,254,0.1)] transition relative overflow-hidden active:scale-[0.98] duration-100" @click="copyText(transform(inputText, key))">
+                                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                                    <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{{ style.name }}</span>
+                                    <span class="opacity-100 md:opacity-0 group-hover:opacity-100 text-[9px] font-bold px-2 py-0.5 rounded bg-purple-500 text-black flex items-center gap-1 transition">
+                                        <v-icon icon="mdi-content-copy" size="x-small"></v-icon> COPY
+                                    </span>
+                                </div>
+                                <div class="text-base md:text-lg text-white break-words leading-relaxed font-medium min-h-[30px]">
+                                    {{ transform(inputText, key) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="mode === 'repeater'" class="flex-1 p-4 md:p-6 flex flex-col gap-3 md:gap-4 overflow-hidden">
+                        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 bg-black p-3 md:p-4 rounded border border-gray-800 shrink-0">
+                            <div class="flex-1">
+                                <label class="text-[10px] text-gray-500 font-bold block mb-1">REPETITION COUNT</label>
+                                <input v-model="repeatCount" type="number" class="bg-transparent border-b border-cyan-500 text-cyan-400 w-full py-1 focus:outline-none font-mono text-xl" min="1" max="1000">
+                            </div>
+                            <div class="flex items-center gap-2 bg-gray-900 px-3 py-2 rounded justify-center md:justify-start">
+                                <input type="checkbox" v-model="repeatNewLine" id="newLine" class="accent-cyan-500 w-4 h-4 cursor-pointer">
+                                <label for="newLine" class="text-xs text-gray-300 cursor-pointer select-none">New Line</label>
+                            </div>
+                            <button @click="copyRepeated" class="bg-cyan-600 hover:bg-cyan-500 text-white px-6 py-3 rounded font-bold text-xs shadow-[0_0_15px_rgba(0,243,255,0.4)] transition-all active:scale-95">
+                                COPY RESULT
+                            </button>
+                        </div>
+
+                        <div class="flex-1 bg-black/40 border border-gray-800 rounded p-4 overflow-y-auto custom-scrollbar relative group mb-20 md:mb-0">
+                            <span class="absolute top-2 right-2 text-[9px] text-gray-600 border border-gray-700 px-2 py-1 rounded">PREVIEW OUTPUT</span>
+                            <div class="text-gray-300 whitespace-pre-wrap break-words font-mono text-sm mt-4">{{ repeatedText }}</div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </v-main>
+    </v-app>
+</div>

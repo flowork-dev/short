@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+    <style>
+        /* Override Theme Colors for Text Detox */
+        :root {
+            --primary: #00ff9d;
+            --accent: #00ff9d;
+        }
+        .text-neon { color: #00ff9d; }
+        .border-neon { border-color: rgba(0, 255, 157, 0.3); }
+        .bg-neon-low { background-color: rgba(0, 255, 157, 0.1); }
+    </style>
+</head>
+<body class="hide-scrollbar">
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-neon-low border-neon border rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-neon font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="shield-check" class="w-3 h-3"></i> ANTI-AI TRACKING V1.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    TEXT DETOX <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600">CLEANER.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Hapus karakter "hantu" (invisible characters) dan jejak digital AI dari teks lo. Pastikan tulisan lo bersih, murni, dan 100% ASCII.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-neon-low flex items-center justify-center text-neon">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Prosedur Detox</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-neon-low text-neon flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Paste Input</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Tempel teks hasil copy dari ChatGPT/Claude di kolom atas.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-neon-low text-neon flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Auto Scrub</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Sistem otomatis mendeteksi & menghapus karakter non-standar.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-neon-low text-neon flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Copy Clean</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Salin hasil bersih dari kolom bawah. Aman digunakan.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="ghost" class="w-5 h-5 mb-2 text-red-400"></i>
+                        <h4 class="text-xs font-bold mb-1">Ghost Characters</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Platform AI sering menyisipkan <i>Zero-width space</i> sebagai "Watermark" tak terlihat untuk melacak penggunaan.
+                        </p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="file-check" class="w-5 h-5 mb-2 text-neon"></i>
+                        <h4 class="text-xs font-bold mb-1">ASCII Purity</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Kami menormalisasi teks menjadi format standar keyboard (ASCII) agar tidak merusak format kodingan atau dokumen.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Privacy Protocol</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Proses pembersihan dilakukan 100% di browser Anda (Client-Side). Teks tidak pernah dikirim ke server kami.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50">
+                        "Stay untracked."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Icons
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    </script>
+</body>
+</html>

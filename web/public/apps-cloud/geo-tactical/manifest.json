@@ -1,0 +1,35 @@
+{
+    "id": "geo-tactical",
+    "name": "INTIP DATA LOKASI BISNIS & KOMPETITOR LEWAT PETA DIGITAL",
+    "version": "1.0.0",
+    "description": "Alat intelijen lokasi. Cari prospek bisnis, data POI, dan titik strategis di seluruh dunia menggunakan Google Places API secara taktikal. Wajib buat riset pasar.",
+    "author": "Flowork Cyber Division",
+    "tier": "login",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "geo-tactical",
+    "capabilities": [
+        "internet_access",
+        "geolocation",
+        "d1_database_access"
+    ],
+    "tags": [
+        "maps",
+        "leads",
+        "scout",
+        "business-intel",
+        "google-places"
+    ],
+    "required_variables": [
+        {
+            "name": "GOOGLE_MAPS_KEY",
+            "label": "Google Places API Key",
+            "description": "Required to access Google Places API for location searching.",
+            "type": "secret",
+            "required": true
+        }
+    ]
+}

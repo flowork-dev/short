@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTIP LOKASI FOTO TERSEMBUNYI DARI SEBUAH FOTO</title>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exifreader@4.12.0/dist/exif-reader.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root {
+            /* FLOWORK PALETTE V3.4 */
+            --bg-core: #171925;
+            --neon-cyan: #54d7f6;
+            --neon-green: #0aff60;
+            --input-bg: #3a3962;
+            --text-white: #e0f0ff;
+            --glass: rgba(23, 25, 37, 0.95);
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-white);
+            font-family: 'Share Tech Mono', monospace;
+            /* [RULE 1] Diubah agar bisa scroll di mobile */
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin: 0; padding: 0;
+        }
+
+        @media (min-width: 1024px) {
+            body { overflow: hidden; } /* Lock scroll hanya di desktop */
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .hidden-view { display: none !important; }
+
+        /* Custom Scroll */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--input-bg); border-radius: 3px; }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
+
+        /* UI Elements */
+        .glass { background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(84, 215, 246, 0.1); }
+        .nav-btn { font-family: 'Orbitron'; letter-spacing: 1px; font-size: 0.7rem; opacity: 0.5; transition: 0.3s; color: white; border-bottom: 2px solid transparent; }
+        @media (min-width: 768px) { .nav-btn { letter-spacing: 2px; font-size: 0.8rem; } }
+        .nav-btn.active { opacity: 1; color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); text-shadow: 0 0 10px rgba(84, 215, 246, 0.5); }
+
+        /* Map Styles */
+        .leaflet-container { background: #050a0f; filter: grayscale(100%) contrast(1.2) invert(1); }
+        .leaflet-control-attribution { display: none !important; }
+
+        /* Background Grid */
+        .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(var(--input-bg) 1px, transparent 1px), linear-gradient(90deg, var(--input-bg) 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; z-index: -1; pointer-events: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div class="bg-grid"></div>
+
+    <header class="glass h-16 shrink-0 flex items-center justify-between px-4 md:px-6 z-50 sticky top-0">
+        <div class="flex items-center gap-2 md:gap-3">
+            <div class="p-1 border border-cyan-500/50 rounded bg-cyan-900/20">
+                <i data-lucide="ghost" class="text-cyan-400 w-4 h-4 md:w-5 md:h-5"></i>
+            </div>
+            <div>
+                <h1 class="orbitron text-sm md:text-lg font-bold leading-none tracking-widest text-white">META <span class="text-cyan-400">GHOST</span></h1>
+                <div class="text-[8px] md:text-[9px] text-green-400 tracking-[0.2em] font-bold mt-0.5">FORENSICS UNIT</div>
+            </div>
+        </div>
+        <div class="flex h-full gap-4 md:gap-6">
+            <button id="tab-app" class="nav-btn h-full flex items-center active cursor-default">INTELLIGENCE</button>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full relative">
+        <div id="view-app" class="w-full h-full"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            isLoggedIn: false,
+            sessionKey: 'flowork_meta_ghost_session',
+            vueApp: null,
+
+            async init() {
+                console.log("BOOTING META GHOST...");
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                lucide.createIcons();
+
+                // Directly init Vue App
+                if (!this.vueApp) this.initVueApp();
+            },
+
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    const html = await res.text();
+                    document.getElementById(id).innerHTML = html;
+                } catch(e) { console.error("Load Failed:", e); }
+            },
+
+            // switchTab function removed
+
+            // --- VUE APP LOGIC ---
+            initVueApp() {
+                const { createApp, ref, nextTick } = Vue;
+                const { createVuetify } = Vuetify;
+                const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+                this.vueApp = createApp({
+                    setup() {
+                        const fileInput = ref(null);
+                        const filePreview = ref(null);
+                        const displayMeta = ref({});
+                        const hexDump = ref('');
+                        const gpsData = ref(null);
+                        const analysisResult = ref(null);
+                        const loading = ref(false);
+                        let map = null, marker = null;
+
+                        const triggerUpload = () => fileInput.value && fileInput.value.click();
+
+                        const loadSample = async () => {
+                            try {
+                                const res = await fetch('https://raw.githubusercontent.com/ianare/exif-samples/master/jpg/gps/DSCN0010.jpg');
+                                const blob = await res.blob();
+                                const file = new File([blob], "sample_evidence.jpg", { type: "image/jpeg" });
+                                processFile({ target: { files: [file] } });
+                            } catch(e) { alert("Sample load failed."); }
+                        };
+
+                        const processFile = async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+
+                            gpsData.value = null;
+                            analysisResult.value = null;
+                            if(map && marker) map.removeLayer(marker);
+
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { filePreview.value = ev.target.result; };
+                            reader.readAsDataURL(file);
+
+                            const hexReader = new FileReader();
+                            hexReader.onload = (ev) => {
+                                const u8 = new Uint8Array(ev.target.result.slice(0, 500));
+                                hexDump.value = Array.from(u8).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+                            };
+                            hexReader.readAsArrayBuffer(file);
+
+                            try {
+                                const tags = await ExifReader.load(file);
+                                const keys = ['Make', 'Model', 'DateTimeOriginal', 'Software', 'ISOSpeedRatings'];
+                                displayMeta.value = {};
+                                keys.forEach(k => { if(tags[k]) displayMeta.value[k] = tags[k].description; });
+
+                                if (tags['GPSLatitude'] && tags['GPSLongitude']) {
+                                    const lat = parseFloat(tags['GPSLatitude'].description);
+                                    const lng = parseFloat(tags['GPSLongitude'].description);
+                                    if(!isNaN(lat)) {
+                                        gpsData.value = { lat, lng };
+                                        updateMap(lat, lng);
+                                    }
+                                }
+                                analyzeRisk(tags);
+                            } catch (error) { console.error(error); }
+                        };
+
+                        const updateMap = (lat, lng) => {
+                            nextTick(() => {
+                                if (!map) {
+                                    map = L.map('map').setView([lat, lng], 13);
+                                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+                                } else {
+                                    map.setView([lat, lng], 13);
+                                }
+                                if(marker) map.removeLayer(marker);
+                                marker = L.marker([lat, lng]).addTo(map).bindPopup("TARGET LOCATED").openPopup();
+                                map.invalidateSize();
+                            });
+                        };
+
+                        const analyzeRisk = async (tags) => {
+                            loading.value = true;
+                            const payload = {
+                                Make: tags['Make']?.description,
+                                Model: tags['Model']?.description,
+                                Software: tags['Software']?.description,
+                                GPSLatitude: tags['GPSLatitude'],
+                                DateTimeOriginal: tags['DateTimeOriginal']
+                            };
+                            try {
+                                const req = await fetch('/api/v1/meta-ghost/analyze', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({ metadata: payload })
+                                });
+                                const res = await req.json();
+                                if(res.success) analysisResult.value = res.data;
+                            } catch(e) { console.error(e); }
+                            finally { loading.value = false; }
+                        };
+
+                        const scrubMetadata = () => {
+                             if (!filePreview.value) return;
+                             const img = new Image();
+                             img.onload = () => {
+                                 const canvas = document.createElement('canvas');
+                                 canvas.width = img.width; canvas.height = img.height;
+                                 canvas.getContext('2d').drawImage(img, 0, 0);
+                                 const link = document.createElement('a');
+                                 link.download = `scrubbed_evidence_${Date.now()}.jpg`;
+                                 link.href = canvas.toDataURL('image/jpeg', 0.95);
+                                 link.click();
+                             };
+                             img.src = filePreview.value;
+                        };
+
+                        return {
+                            fileInput, filePreview, displayMeta, hexDump, gpsData, analysisResult, loading,
+                            triggerUpload, processFile, scrubMetadata, loadSample
+                        };
+                    }
+                }).use(vuetify).mount('#app-mount-point');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

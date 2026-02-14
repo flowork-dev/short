@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+    <style>
+        /* Override Theme Colors for Struk Tactical */
+        :root {
+            --primary: #00f5ff; /* Cyan */
+            --accent: #ff4081;  /* Pink */
+        }
+        .text-cyan { color: var(--primary); }
+        .border-cyan { border-color: rgba(0, 245, 255, 0.3); }
+        .bg-cyan-low { background-color: rgba(0, 245, 255, 0.1); }
+    </style>
+</head>
+<body class="hide-scrollbar">
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-cyan-low border-cyan border rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-cyan font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="receipt" class="w-3 h-3"></i> FINANCIAL RECOVERY V1.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    STRUK TACTICAL <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">RECONSTRUCT.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Struk hilang? Don't panic. Tools ini membantu merekonstruksi bukti transaksi digital untuk keperluan reimbursement, validasi UMKM, atau konten.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-low flex items-center justify-center text-cyan">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Prosedur Cetak</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-low text-cyan flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Input Data</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Isi nama toko, alamat, kasir, dan daftar belanjaan lo.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-low text-cyan flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Auto Calc</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Sistem otomatis menghitung Subtotal, Pajak (10%), dan Total.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-low text-cyan flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Save PNG</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Download hasil struk format thermal paper resolusi tinggi.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="printer" class="w-5 h-5 mb-2 text-cyan"></i>
+                        <h4 class="text-xs font-bold mb-1">Thermal Look</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Menggunakan font <i>Dot Matrix</i> dan efek kertas pudar agar hasil terlihat otentik seperti mesin EDC asli.
+                        </p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="shield-check" class="w-5 h-5 mb-2 text-pink-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Local & Private</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Data transaksi lo diproses 100% di browser (Client-Side). Kami tidak menyimpan riwayat belanja lo.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Financial Anxiety?</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Kehilangan bukti fisik itu red flag buat cashflow. Gunakan ini sebagai "Digital Backup" untuk arsip pribadi lo.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50">
+                        "Your wallet time machine."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init Icons
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<div id="app-mount-point" class="h-full w-full max-w-5xl mx-auto overflow-y-auto custom-scroll p-2 md:p-4">
+
+    <div class="glass p-6 md:p-8 rounded-xl border-t-4 border-[#54d7f6] animate__animated animate__fadeIn mb-10">
+
+        <h2 class="text-xl font-black mb-6 flex items-center gap-2 text-white orbitron">
+            <span class="w-3 h-3 bg-[#54d7f6] rounded-full animate-pulse"></span>
+            ENGINE_ACTIVE: GLITCH_INJECTOR
+        </h2>
+
+        <div class="border-2 border-dashed border-[#3a3962] rounded-2xl p-8 text-center hover:border-[#54d7f6] transition-all cursor-pointer bg-black/20 group relative overflow-hidden" @click="triggerUpload">
+            <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFile">
+
+            <div v-if="!filePreview" class="text-gray-400 italic pointer-events-none">
+                <i class="mdi mdi-cloud-upload text-4xl text-[#54d7f6] mb-2 block group-hover:scale-110 transition-transform"></i>
+                Drag & drop artwork lo di sini atau <span class="text-[#54d7f6] font-bold">KLIK BUAT CARI FILE</span>
+            </div>
+
+            <img v-else :src="filePreview" class="max-h-64 mx-auto rounded-lg shadow-2xl relative z-10">
+
+            <div v-if="filePreview" class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                <span class="text-white font-bold orbitron flex items-center gap-2"><i class="mdi mdi-refresh"></i> CHANGE FILE</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-[#171925] p-4 rounded-xl border border-[#3a3962]">
+                <label class="block text-[10px] font-mono text-[#54d7f6] mb-2 uppercase flex justify-between">
+                    <span>Poison Intensity</span>
+                    <span>{{ intensity }}%</span>
+                </label>
+                <input type="range" v-model="intensity" min="1" max="100" class="w-full h-2 bg-[#3a3962] rounded-lg appearance-none cursor-pointer accent-[#54d7f6]">
+                <div class="flex justify-between text-[10px] font-mono mt-2 text-gray-500">
+                    <span>STEALTH</span>
+                    <span>MAX DAMAGE</span>
+                </div>
+            </div>
+            <div class="bg-[#171925] p-4 rounded-xl border border-[#3a3962]">
+                <label class="block text-[10px] font-mono text-[#54d7f6] mb-2 uppercase">Protection Mode</label>
+                <select v-model="mode" class="w-full bg-transparent text-sm focus:outline-none text-white border-b border-gray-600 pb-1">
+                    <option value="pixel" class="bg-[#171925]">Pixel Perturbation (Standard)</option>
+                    <option value="chroma" class="bg-[#171925]">Chromatic Glitch (Visual)</option>
+                </select>
+            </div>
+        </div>
+
+        <button @click="executePoison" :disabled="!filePreview || isProcessing" class="w-full py-4 mt-6 bg-[#54d7f6] hover:bg-[#4bc3e0] text-[#171925] font-black rounded-xl uppercase tracking-[0.2em] text-sm transition-all shadow-[0_0_20px_rgba(84,215,246,0.3)] disabled:opacity-50 disabled:cursor-not-allowed">
+            <span v-if="!isProcessing">INJECT GLITCH ARMOR</span>
+            <span v-else class="flex items-center justify-center gap-2"><i class="mdi mdi-loading mdi-spin"></i> PROCESSING...</span>
+        </button>
+
+        <canvas ref="canvasRef" class="hidden"></canvas>
+
+        <div v-if="resultImage" id="result-anchor" class="mt-8 text-center animate__animated animate__fadeInUp bg-green-900/10 border border-green-500/30 rounded-xl p-6 scroll-mt-20">
+            <h3 class="text-green-400 font-black mb-4 uppercase italic tracking-widest flex justify-center items-center gap-2">
+                <i class="mdi mdi-check-circle"></i> SUCCESS: SHIELD_INJECTED
+            </h3>
+            <div class="p-2 bg-black/40 rounded-xl inline-block mb-6 border border-gray-700">
+                <img :src="resultImage" class="max-h-80 rounded-lg">
+            </div>
+            <br>
+            <a :href="resultImage" download="armored_artwork.png" class="inline-flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all shadow-lg">
+                <i class="mdi mdi-download"></i> DOWNLOAD PROTECTED FILE
+            </a>
+        </div>
+
+    </div>
+
+    <div class="h-20"></div>
+</div>

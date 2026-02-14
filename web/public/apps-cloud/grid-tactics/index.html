@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Grid Tactics Protocol</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root { --bg-deep: #171925; --primary: #00ff9d; --secondary: #54d7f6; --panel: #2a2a40; --text: #e0f0ff; }
+        body { background-color: var(--bg-deep); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow: hidden; touch-action: none; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0a0a0a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--panel); border-radius: 4px; }
+        .hidden-view { display: none !important; }
+
+        .grid-line-v { position: absolute; top: 0; bottom: 0; border-left: 1px dashed #00ff9d; pointer-events: none; z-index: 20; }
+        .grid-line-h { position: absolute; left: 0; right: 0; border-top: 1px dashed #00ff9d; pointer-events: none; z-index: 20; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); }
+            100% { box-shadow: 0 0 0 10px rgba(0, 255, 157, 0); }
+        }
+        .btn-success-anim { animation: pulse-green 0.5s ease-out; }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <nav class="h-14 border-b border-[#333] flex items-center justify-between px-4 md:px-6 bg-[#0f1016] z-40 shrink-0 font-[Oswald]">
+        <div class="font-bold text-lg tracking-wider text-[#00ff9d]">GRID<span class="text-white">TACTICS</span></div>
+        <div class="flex gap-4 text-sm font-bold">
+            <button id="tab-app" class="opacity-100 text-[#00ff9d] cursor-default">TACTICAL</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 relative w-full h-full overflow-hidden p-0">
+        <div id="view-app" class="w-full h-full overflow-y-auto custom-scrollbar"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            currentImage: null,
+            mode: 'carousel',
+            sliceCount: 3,
+            gridRows: 3,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('app', 'partials/app.html');
+                lucide.createIcons();
+            },
+
+            async loadPartial(id, url) {
+                try { const res = await fetch(url); document.getElementById('view-'+id).innerHTML = await res.text(); } catch (e) { console.error(e); }
+            },
+
+            // switchTab function removed as it is no longer needed
+
+            // --- DIRECT HANDLERS ---
+
+            handleFile(input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        const container = document.getElementById('image-container');
+                        if (container) {
+                            container.innerHTML = '';
+                            container.appendChild(img);
+                        }
+
+                        // Style Image
+                        img.style.maxWidth = '100%';
+                        img.style.maxHeight = '80vh';
+                        img.style.display = 'block';
+                        img.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+
+                        // SAFE DOM ACCESS
+                        const placeholder = document.getElementById('upload-placeholder');
+                        if (placeholder) placeholder.classList.add('hidden');
+
+                        const btn = document.getElementById('btn-process');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+
+                        this.drawOverlay();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            },
+
+            setMode(newMode) {
+                this.mode = newMode;
+
+                // Safe Toggle
+                const ctrlCarousel = document.getElementById('ctrl-carousel');
+                const ctrlGrid = document.getElementById('ctrl-grid');
+                if(ctrlCarousel) ctrlCarousel.classList.toggle('hidden', newMode !== 'carousel');
+                if(ctrlGrid) ctrlGrid.classList.toggle('hidden', newMode !== 'grid');
+
+                // Toggle Radio Styles
+                document.querySelectorAll('input[name="cut-mode"]').forEach(r => {
+                    const labelSpan = r.nextElementSibling;
+                    if(labelSpan) {
+                        if(r.value === newMode) {
+                            labelSpan.classList.add('bg-[#00ff9d]', 'text-black');
+                            labelSpan.classList.remove('text-gray-500');
+                        } else {
+                            labelSpan.classList.remove('bg-[#00ff9d]', 'text-black');
+                            labelSpan.classList.add('text-gray-500');
+                        }
+                    }
+                });
+
+                this.drawOverlay();
+            },
+
+            updateSlider(type, val) {
+                if (type === 'carousel') {
+                    this.sliceCount = parseInt(val);
+                    const label = document.getElementById('val-carousel');
+                    if(label) label.innerText = this.sliceCount;
+                } else if (type === 'grid') {
+                    this.gridRows = parseInt(val);
+                    const label = document.getElementById('val-grid');
+                    if(label) label.innerText = `3x${this.gridRows}`;
+                }
+                this.drawOverlay();
+            },
+
+            drawOverlay() {
+                if (!this.currentImage) return;
+                const container = document.getElementById('overlay-container');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                if (this.mode === 'carousel') {
+                    for (let i = 1; i < this.sliceCount; i++) {
+                        const line = document.createElement('div');
+                        line.className = 'grid-line-v';
+                        line.style.left = `${(i / this.sliceCount) * 100}%`;
+                        container.appendChild(line);
+                    }
+                } else {
+                    for (let i = 1; i < 3; i++) {
+                        const line = document.createElement('div');
+                        line.className = 'grid-line-v';
+                        line.style.left = `${(i / 3) * 100}%`;
+                        container.appendChild(line);
+                    }
+                    for (let i = 1; i < this.gridRows; i++) {
+                        const line = document.createElement('div');
+                        line.className = 'grid-line-h';
+                        line.style.top = `${(i / this.gridRows) * 100}%`;
+                        container.appendChild(line);
+                    }
+                }
+            },
+
+            async processCut(btn) {
+                if (!this.currentImage) return alert("Upload dulu gambarnya bos!");
+                if (typeof JSZip === 'undefined') return alert("System Error: JSZip missing.");
+
+                const originalText = btn.innerHTML;
+
+                try {
+                    btn.disabled = true;
+                    btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin inline w-4 h-4 mr-2"></i> PROCESSING...`;
+                    lucide.createIcons();
+
+                    const zip = new JSZip();
+                    const folder = zip.folder("grid_tactics_result");
+                    const img = this.currentImage;
+
+                    await new Promise(r => setTimeout(r, 100)); // UI Refresh
+
+                    if (this.mode === 'carousel') {
+                        const sliceW = img.width / this.sliceCount;
+                        const sliceH = img.height;
+
+                        for (let i = 0; i < this.sliceCount; i++) {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = sliceW; canvas.height = sliceH;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, i * sliceW, 0, sliceW, sliceH, 0, 0, sliceW, sliceH);
+                            const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.95));
+                            folder.file(`0${i+1}_slide.jpg`, blob);
+                        }
+                    } else {
+                        // Grid Mode (3 Columns Fixed)
+                        const sliceW = img.width / 3;
+                        const sliceH = img.height / this.gridRows;
+
+                        let count = 1;
+                        for (let row = 0; row < this.gridRows; row++) {
+                            for (let col = 0; col < 3; col++) {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = sliceW; canvas.height = sliceH;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, col * sliceW, row * sliceH, sliceW, sliceH, 0, 0, sliceW, sliceH);
+                                const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.95));
+                                folder.file(`grid_${count++}.jpg`, blob);
+                            }
+                        }
+                    }
+
+                    const content = await zip.generateAsync({type:"blob"});
+                    saveAs(content, "flowork_aesthetic.zip");
+
+                    btn.innerHTML = `<i data-lucide="check" class="inline w-4 h-4 mr-2"></i> DOWNLOADED!`;
+                    lucide.createIcons();
+                    this.effect(btn);
+
+                } catch (e) {
+                    alert("Error: " + e.message);
+                } finally {
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }, 2000);
+                }
+            },
+
+            effect(btn) {
+                btn.classList.add('btn-success-anim');
+                if(navigator.vibrate) navigator.vibrate(100);
+                setTimeout(() => btn.classList.remove('btn-success-anim'), 1000);
+            }
+        };
+
+        window.AppCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

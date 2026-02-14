@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mark Command | README Architect</title>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root {
+            /* FLOWORK PALETTE */
+            --bg-core: #0f1016;
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --input-bg: #1a1a24;
+            --text-white: #ffffff;
+        }
+
+        /* RESET & BASE */
+        html, body {
+            background-color: var(--bg-core);
+            color: var(--text-white);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            height: 100dvh; /* Mobile Friendly Height */
+            margin: 0; padding: 0;
+            font-size: 16px; /* Prevent iOS Zoom */
+        }
+
+        /* FONTS */
+        .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+        .inter { font-family: 'Inter', sans-serif; }
+
+        /* SCROLLBAR */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #000; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 4px; border: 1px solid #000; }
+
+        .hidden-view { display: none !important; }
+
+        /* NO SCROLLBAR UTILS */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* SAFE AREA */
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body>
+
+    <div class="fixed inset-0 z-[-1] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+
+    <main class="w-full h-full relative flex flex-col">
+        <div id="view-app" class="w-full h-full overflow-hidden"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            userIdentity: null,
+            vueInstance: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+                this.initVue();
+
+                window.addEventListener('message', (e) => {
+                    if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                        this.setIdentity(e.data.userAddress);
+                    }
+                });
+
+                console.log("SYSTEM: MARK COMMAND READY");
+            },
+
+            async loadPartial(id, url) {
+                const res = await fetch(url);
+                document.getElementById(id).innerHTML = await res.text();
+            },
+
+            // switchTab function removed as it is no longer needed
+
+            setIdentity(address) {
+                this.userIdentity = address;
+                const tutorial = document.getElementById('api-tutorial');
+                if(tutorial) address ? tutorial.style.display = 'block' : tutorial.style.display = 'none';
+                if(this.vueInstance) this.vueInstance.userIdentity = address;
+            },
+
+            openSettings() {
+                window.parent.postMessage({ type: 'OPEN_SETTINGS', tab: 'variables' }, '*');
+            },
+
+            initVue() {
+                const { createApp, ref, computed } = Vue;
+                const { createVuetify } = Vuetify;
+                const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+                const app = createApp({
+                    setup() {
+                        const userIdentity = ref(null);
+                        const input = ref("# Project Alpha\n\n> Tactical description here.\n\n## Features\n- [x] Secure\n- [ ] Fast\n\n## Installation\n```bash\nnpm install flowork-core\n```");
+
+                        // Configure marked for safety/features if needed
+                        const compiledMarkdown = computed(() => marked.parse(input.value));
+
+                        const insertTemplate = (type) => {
+                            if (type === 'basic') {
+                                input.value = `# Project Title\n\n> A brief description of what this project does and who it's for.\n\n## ⚡ Features\n- High performance\n- Secure architecture\n- Easy deployment\n\n## 🛠 Installation\n\`\`\`bash\nnpm install my-project\ncd my-project\nnpm start\n\`\`\`\n\n## 🚀 Usage\nDescribe how to use your project here.\n\n## 📝 License\n[MIT](https://choosealicense.com/licenses/mit/)`;
+                            } else if (type === 'api') {
+                                input.value = `# API Documentation\n\nBase URL: \`https://api.example.com/v1\`\n\n## Authentication\nAll requests require an API Key header.\n\`\`\`http\nX-Api-Key: YOUR_KEY\n\`\`\`\n\n## Endpoints\n\n### GET /users\nReturns a list of users.\n\n**Response**\n\`\`\`json\n{\n  "id": 1,\n  "name": "Flowork User"\n}\n\`\`\``;
+                            }
+                        };
+
+                        const downloadMD = () => {
+                            const blob = new Blob([input.value], { type: 'text/markdown' });
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = 'README.md';
+                            a.click();
+                        };
+
+                        AppCore.vueInstance = { userIdentity };
+                        return { userIdentity, input, compiledMarkdown, insertTemplate, downloadMD };
+                    }
+                });
+
+                app.use(vuetify).mount('#vue-root');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Business Canvas | Flowork Edition</title>
+
+    <script>
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const forcedTheme = params.get('theme');
+                const cachedTheme = localStorage.getItem('flowork_theme');
+                const finalTheme = forcedTheme || cachedTheme || 'dark';
+                document.documentElement.setAttribute('data-theme', finalTheme);
+                localStorage.setItem('flowork_theme', finalTheme);
+            } catch (e) { console.error("Theme Error", e); }
+        })();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        page: 'var(--bg-page)',
+                        surface: 'var(--bg-surface)',
+                        input: 'var(--bg-input)',
+                        main: 'var(--text-main)',
+                        muted: 'var(--text-muted)',
+                        brand: 'var(--brand-color)',
+                        border: 'var(--border-color)',
+                        accent: 'var(--accent-color)',
+                        glow: 'var(--glow-color)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                        mono: ['Share Tech Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-page: #050505;
+            --bg-surface: rgba(18, 18, 18, 0.85);
+            --bg-input: rgba(30, 30, 30, 0.9);
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --brand-color: #54d7f6;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-color: #fbbf24;
+            --glow-color: rgba(84, 215, 246, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-page: #f2f2f7;
+            --bg-surface: rgba(255, 255, 255, 0.95);
+            --bg-input: rgba(240, 240, 245, 0.9);
+            --text-main: #000000;
+            --text-muted: #666666;
+            --brand-color: #007aff;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #ff9500;
+            --glow-color: rgba(0, 122, 255, 0.05);
+        }
+
+        [data-theme="hacker"] {
+            --bg-page: #000000;
+            --bg-surface: rgba(10, 10, 10, 0.95);
+            --bg-input: #001a00;
+            --text-main: #00ff00;
+            --text-muted: #008800;
+            --brand-color: #00ff00;
+            --border-color: #004400;
+            --accent-color: #00ff00;
+            --glow-color: rgba(0, 255, 0, 0.2);
+        }
+
+        /* UI BASE */
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background-color: var(--bg-page);
+            background-image:
+                radial-gradient(at 0% 0%, var(--glow-color) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, var(--glow-color) 0px, transparent 50%);
+            transition: background-color 0.3s ease;
+        }
+        body { -webkit-tap-highlight-color: transparent; user-select: none; overscroll-behavior: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .snap-x-mandatory { scroll-snap-type: x mandatory; }
+        * { transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease; }
+
+        /* BMC GRID SYSTEM */
+        .bmc-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(3, minmax(150px, 1fr));
+            gap: 2px;
+            background-color: var(--border-color);
+            border: 1px solid var(--border-color);
+            width: 1200px;
+            height: 675px; /* 16:9 Ratio */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        .bmc-cell {
+            background-color: var(--bg-surface);
+            padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            overflow: hidden; position: relative; transition: background-color 0.3s;
+        }
+        .bmc-cell-content {
+            flex: 1; overflow-y: auto; padding-right: 4px;
+            touch-action: pan-y; -webkit-overflow-scrolling: touch;
+        }
+        .bmc-cell-content::-webkit-scrollbar { width: 4px; }
+        .bmc-cell-content::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 2px; }
+
+        /* GRID AREAS */
+        .area-kp { grid-column: 1 / 3; grid-row: 1 / 3; }
+        .area-ka { grid-column: 3 / 5; grid-row: 1 / 2; }
+        .area-kr { grid-column: 3 / 5; grid-row: 2 / 3; }
+        .area-vp { grid-column: 5 / 7; grid-row: 1 / 3; }
+        .area-cr { grid-column: 7 / 9; grid-row: 1 / 2; }
+        .area-ch { grid-column: 7 / 9; grid-row: 2 / 3; }
+        .area-cs { grid-column: 9 / 11; grid-row: 1 / 3; }
+        .area-cst { grid-column: 1 / 6; grid-row: 3 / 4; }
+        .area-rs { grid-column: 6 / 11; grid-row: 3 / 4; }
+
+        .note-card {
+            padding: 8px 10px; border-radius: 6px; font-size: 12px;
+            border-left: 4px solid; color: var(--text-main);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer;
+            transition: transform 0.1s; white-space: pre-wrap; word-break: break-word;
+        }
+        .note-card:active { transform: scale(0.98); }
+
+        /* ANIMATIONS */
+        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-fade-in { animation: fade-in 0.2s ease-out; }
+    </style>
+</head>
+<body class="bg-page text-main font-sans h-screen w-screen flex flex-col overflow-hidden relative">
+
+    <div id="app" class="h-full flex flex-col">
+        <div class="mesh-bg"></div>
+
+        <div class="absolute top-0 left-0 w-full z-50 pt-[calc(env(safe-area-inset-top)+10px)] px-4 pointer-events-none flex justify-center">
+            <div class="w-full max-w-md flex justify-between items-center">
+                <button @click="closeApp" class="pointer-events-auto w-9 h-9 rounded-full bg-surface/60 backdrop-blur-md border border-border flex items-center justify-center text-main active:scale-90 transition-transform">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <div class="pointer-events-auto bg-brand/10 backdrop-blur px-3 py-1 rounded-full border border-brand/20 flex items-center gap-2">
+                    <i data-lucide="layout-grid" class="w-4 h-4 text-brand"></i>
+                    <span class="text-xs font-bold text-brand tracking-widest font-tech">BUSINESS CANVAS</span>
+                </div>
+
+                <button @click="requestThemeToggle" class="pointer-events-auto w-9 h-9 rounded-full bg-surface/60 backdrop-blur-md border border-border flex items-center justify-center text-main active:scale-90 transition-transform hover:bg-brand/10">
+                    <i data-lucide="palette" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <main id="main-canvas-area" class="flex-1 relative w-full overflow-hidden bg-transparent cursor-grab active:cursor-grabbing"
+            @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd"
+            @mousedown="handleMouseDown" @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseUp" @wheel.prevent="handleWheel">
+
+            <div id="canvas-stage" class="absolute origin-center transition-transform duration-75 ease-out"
+                :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})` }">
+
+                <div id="bmc-preview" class="bmc-container" :style="{ backgroundColor: globalBg }">
+                    <div v-for="(block, key) in blocks" :key="key" :class="'bmc-cell area-' + key" :style="{ backgroundColor: block.bg || 'var(--bg-surface)' }">
+                        <div class="flex items-center justify-between mb-2 pb-2 border-b border-border/50 shrink-0">
+                            <div class="flex items-center gap-2">
+                                <i :data-lucide="block.icon" class="w-4 h-4" :style="{color: block.color}"></i>
+                                <span class="font-tech font-bold text-[10px] uppercase tracking-wider text-muted" :style="{color: block.color}">{{ block.title }}</span>
+                            </div>
+                            <button @click.stop="openBlockSettings(key)" class="text-muted/50 hover:text-main p-1 active:scale-90">
+                                <i data-lucide="settings-2" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+
+                        <div class="bmc-cell-content flex flex-col gap-2" @wheel.stop @touchstart.stop @touchmove.stop>
+                            <div v-if="data[key].length === 0" class="text-[10px] text-muted opacity-30 italic font-mono text-center mt-4">KOSONG</div>
+                            <div v-for="(note, idx) in data[key]" :key="idx" class="note-card hover:brightness-110"
+                                :style="{ borderLeftColor: block.color, backgroundColor: note.bg || 'var(--bg-input)', color: note.color || 'var(--text-main)' }"
+                                @click.stop="editNote(key, idx)">
+                                {{ note.text }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-[140px] right-4 flex flex-col gap-2 z-40">
+                <button @click="centerCanvas" class="w-10 h-10 rounded-full bg-brand/20 backdrop-blur border border-brand/50 flex items-center justify-center text-brand active:scale-90 transition shadow-lg mb-2"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                <button @click="adjustZoom(0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                <div class="bg-surface/90 backdrop-blur text-main text-[10px] py-1 rounded-md text-center font-mono border border-border">{{ Math.round(zoomLevel * 100) }}%</div>
+                <button @click="adjustZoom(-0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg"><i data-lucide="minus" class="w-5 h-5"></i></button>
+            </div>
+        </main>
+
+        <footer class="bg-surface/95 backdrop-blur-xl border-t border-border z-50 fixed bottom-0 w-full pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-up">
+            <div class="w-full max-w-md mx-auto relative">
+                <div class="w-full flex justify-center py-2 cursor-pointer" @click="centerCanvas">
+                    <div class="w-12 h-1 bg-muted/20 rounded-full hover:bg-brand/50 transition-colors"></div>
+                </div>
+
+                <div class="flex items-center w-full px-2 gap-1">
+                    <button @click="scrollMenu('left')" class="w-8 h-full flex items-center justify-center text-muted active:text-brand transition-colors shrink-0 z-10"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+
+                    <div id="tool-menu" class="flex-1 flex overflow-x-auto hide-scroll gap-3 snap-x-mandatory items-center px-1 pb-2">
+                        <button @click="exportCanvas" class="flex flex-col items-center gap-1 min-w-[60px] snap-center group">
+                            <div class="w-12 h-12 rounded-xl bg-brand text-page border border-brand/50 flex items-center justify-center group-active:scale-90 transition-all shadow-lg shadow-brand/20"><i data-lucide="download" class="w-6 h-6"></i></div>
+                            <span class="text-[10px] font-bold text-brand font-tech">SAVE</span>
+                        </button>
+                        <button @click="openCanvasStyle" class="flex flex-col items-center gap-1 min-w-[60px] snap-center group">
+                            <div class="w-12 h-12 rounded-xl bg-input border border-border flex items-center justify-center group-active:scale-90 transition-all group-active:border-brand"><i data-lucide="palette" class="w-6 h-6 text-main"></i></div>
+                            <span class="text-[10px] font-bold text-muted font-tech">STYLE</span>
+                        </button>
+                        <button @click="resetData" class="flex flex-col items-center gap-1 min-w-[60px] snap-center group">
+                            <div class="w-12 h-12 rounded-xl bg-input border border-red-500/30 text-red-500 flex items-center justify-center group-active:scale-90 transition-all"><i data-lucide="trash-2" class="w-6 h-6"></i></div>
+                            <span class="text-[10px] font-bold text-red-500 font-tech">RESET</span>
+                        </button>
+                        <div class="w-[1px] h-8 bg-border shrink-0"></div>
+                        <button v-for="(block, key) in blocks" :key="key" @click="openInputModal(key)" class="flex flex-col items-center gap-1 min-w-[60px] snap-center group cursor-pointer">
+                            <div class="w-12 h-12 rounded-xl bg-input border border-border flex items-center justify-center group-active:scale-90 transition-all" :style="{ color: block.color, borderColor: block.color + '40' }">
+                                <i :data-lucide="block.icon" class="w-5 h-5"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-muted truncate max-w-[60px] font-tech">{{ block.short }}</span>
+                        </button>
+                        <div class="w-2 shrink-0"></div>
+                    </div>
+
+                    <button @click="scrollMenu('right')" class="w-8 h-full flex items-center justify-center text-muted active:text-brand transition-colors shrink-0 z-10"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+                </div>
+            </div>
+        </footer>
+
+        <div v-if="activeModal === 'input'" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" @click.self="closeModal">
+            <div class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up h-[60vh] flex flex-col relative">
+                <button @click="closeModal" class="absolute top-4 right-4 text-muted hover:text-white bg-input rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-3 mb-4 border-b border-border pb-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-input" :style="{ color: blocks[currentKey].color }"><i :data-lucide="blocks[currentKey].icon" class="w-6 h-6"></i></div>
+                    <div><h3 class="font-bold text-lg text-main font-tech">{{ blocks[currentKey].title }}</h3><p class="text-xs text-muted">Tap item untuk edit</p></div>
+                </div>
+                <div class="flex-1 overflow-y-auto space-y-2 mb-4 pr-1">
+                    <div v-if="data[currentKey].length === 0" class="text-center py-8 text-muted text-sm opacity-50 font-mono">Belum ada catatan.</div>
+                    <div v-for="(note, idx) in data[currentKey]" :key="idx" class="flex gap-2 items-center bg-input p-3 rounded-xl border border-border group cursor-pointer hover:border-brand" @click="editNote(currentKey, idx)">
+                        <div class="w-3 h-3 rounded-full border border-white/20" :style="{backgroundColor: note.bg}"></div>
+                        <span class="flex-1 text-sm text-main truncate font-sans">{{ note.text }}</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-muted"></i>
+                    </div>
+                </div>
+                <div class="mt-auto flex gap-2">
+                    <input type="text" v-model="newNoteInput" placeholder="Tulis disini..." class="flex-1 bg-input border border-border rounded-xl px-4 text-sm outline-none focus:border-brand font-mono" @keyup.enter="addNote">
+                    <button @click="addNote" class="bg-brand text-page px-4 rounded-xl font-bold active:scale-95 transition"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="activeModal === 'edit_note'" class="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" @click.self="activeModal = 'input'">
+            <div class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up relative">
+                <button @click="activeModal = 'input'" class="absolute top-4 right-4 text-muted hover:text-white bg-input rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3 class="text-brand font-bold text-lg mb-4 flex items-center gap-2 font-tech"><i data-lucide="pencil" class="w-5 h-5"></i> EDIT NOTE</h3>
+                <div class="space-y-4">
+                    <div><label class="text-[10px] text-muted block mb-1 tracking-widest">KONTEN</label><textarea v-model="editingNote.text" rows="4" class="w-full bg-input border border-border rounded-xl p-3 text-main outline-none focus:border-brand text-sm font-sans"></textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-[10px] text-muted block mb-1 tracking-widest">BACKGROUND</label><div class="flex items-center gap-2 bg-input p-2 rounded-xl border border-border"><input type="color" v-model="editingNote.bg" class="w-8 h-8 rounded cursor-pointer bg-transparent border-none"></div></div>
+                        <div><label class="text-[10px] text-muted block mb-1 tracking-widest">TEXT COLOR</label><div class="flex items-center gap-2 bg-input p-2 rounded-xl border border-border"><input type="color" v-model="editingNote.color" class="w-8 h-8 rounded cursor-pointer bg-transparent border-none"></div></div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button @click="deleteEditingNote" class="w-1/3 bg-red-500/10 text-red-500 border border-red-500/50 font-bold py-3 rounded-xl active:scale-95 flex items-center justify-center"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button @click="saveEditingNote" class="flex-1 bg-brand text-page font-bold py-3 rounded-xl active:scale-95 transition-transform font-tech">SIMPAN</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="activeModal === 'block_style' || activeModal === 'canvas_style'" class="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" @click.self="closeModal">
+            <div class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up relative">
+                <button @click="closeModal" class="absolute top-4 right-4 text-muted hover:text-white bg-input rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3 class="text-brand font-bold text-lg mb-4 font-tech">{{ activeModal === 'block_style' ? 'COLUMN STYLE' : 'CANVAS STYLE' }}</h3>
+
+                <div v-if="activeModal === 'block_style'" class="space-y-4">
+                    <div><label class="text-[10px] text-muted block mb-1 tracking-widest">ACCENT COLOR</label><input type="color" v-model="blocks[currentKey].color" class="w-full h-10 rounded-xl cursor-pointer bg-input border border-border p-1"></div>
+                    <div><label class="text-[10px] text-muted block mb-1 tracking-widest">BACKGROUND</label><input type="color" v-model="blocks[currentKey].bg" class="w-full h-10 rounded-xl cursor-pointer bg-input border border-border p-1"></div>
+                </div>
+
+                <div v-if="activeModal === 'canvas_style'" class="space-y-4">
+                    <div><label class="text-[10px] text-muted block mb-1 tracking-widest">GLOBAL BACKGROUND</label><input type="color" v-model="globalBg" class="w-full h-10 rounded-xl cursor-pointer bg-input border border-border p-1"></div>
+                </div>
+
+                <button @click="closeModal" class="w-full bg-brand text-page font-bold py-3 rounded-xl mt-6 active:scale-95 font-tech">APPLY</button>
+            </div>
+        </div>
+
+        <div v-if="alertData.show" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md px-4 animate-fade-in" @click.self="closeAlert">
+            <div class="w-full max-w-xs bg-surface border border-brand rounded-2xl p-6 shadow-[0_0_30px_var(--glow-color)] text-center relative overflow-hidden">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand/20 mb-4 text-brand"><i :data-lucide="alertData.icon" class="w-6 h-6"></i></div>
+                <h3 class="text-lg font-bold text-brand mb-2 font-tech">{{ alertData.title }}</h3>
+                <p class="text-sm text-muted mb-6 font-mono">{{ alertData.message }}</p>
+                <div class="flex gap-2">
+                    <button v-if="alertData.onConfirm" @click="confirmAlert" class="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-page hover:brightness-110 active:scale-95">YA</button>
+                    <button @click="closeAlert" class="flex-1 rounded-xl bg-input border border-border py-3 text-sm font-bold text-main active:scale-95">{{ alertData.onConfirm ? 'BATAL' : 'OK' }}</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, nextTick } = Vue;
+
+        const BLOCKS_DEF = {
+            kp: { title: 'Key Partners', short: 'Partners', icon: 'handshake', color: '#ef4444', bg: 'var(--bg-surface)' },
+            ka: { title: 'Key Activities', short: 'Activity', icon: 'cog', color: '#f97316', bg: 'var(--bg-surface)' },
+            kr: { title: 'Key Resources', short: 'Resources', icon: 'truck', color: '#eab308', bg: 'var(--bg-surface)' },
+            vp: { title: 'Value Propositions', short: 'Value', icon: 'gift', color: '#8b5cf6', bg: 'var(--bg-surface)' },
+            cr: { title: 'Customer Relationships', short: 'Relation', icon: 'heart', color: '#ec4899', bg: 'var(--bg-surface)' },
+            ch: { title: 'Channels', short: 'Channels', icon: 'megaphone', color: '#06b6d4', bg: 'var(--bg-surface)' },
+            cs: { title: 'Customer Segments', short: 'Segments', icon: 'users', color: '#3b82f6', bg: 'var(--bg-surface)' },
+            cst: { title: 'Cost Structure', short: 'Costs', icon: 'wallet', color: '#64748b', bg: 'var(--bg-surface)' },
+            rs: { title: 'Revenue Streams', short: 'Revenue', icon: 'banknote', color: '#22c55e', bg: 'var(--bg-surface)' }
+        };
+
+        createApp({
+            setup() {
+                const blocks = ref(JSON.parse(JSON.stringify(BLOCKS_DEF)));
+                const data = ref({ kp: [], ka: [], kr: [], vp: [], cr: [], ch: [], cs: [], cst: [], rs: [] });
+                const globalBg = ref('var(--border-color)');
+                const storedTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                const currentTheme = ref(storedTheme);
+
+                const activeModal = ref(null);
+                const currentKey = ref('kp');
+                const newNoteInput = ref("");
+                const editingNote = ref({ idx: -1, text: "", bg: "", color: "" });
+                const alertData = ref({ show: false, title: "", message: "", icon: "info", onConfirm: null });
+                const zoomLevel = ref(0.5);
+                const pan = ref({ x: 0, y: 0 });
+
+                // --- BRIDGE SYSTEM ---
+                const applyTheme = (themeName) => {
+                    if (!themeName) return;
+                    const clean = themeName.toLowerCase().trim();
+                    currentTheme.value = clean;
+                    document.documentElement.setAttribute('data-theme', clean);
+                    localStorage.setItem('flowork_theme', clean);
+                };
+
+                const requestThemeToggle = () => {
+                    if (window.parent) {
+                        window.parent.postMessage({ type: 'TOGGLE_THEME_REQUEST' }, '*');
+                    } else {
+                        const themes = ['dark', 'light', 'hacker'];
+                        const next = themes[(themes.indexOf(currentTheme.value) + 1) % themes.length];
+                        applyTheme(next);
+                    }
+                };
+
+                const closeApp = () => { if(window.parent) window.parent.postMessage({type: 'CLOSE_APP'}, '*'); };
+
+                // --- CORE LOGIC ---
+                const loadData = () => {
+                    const saved = localStorage.getItem('flowork_bmc_v4');
+                    const savedBlocks = localStorage.getItem('flowork_bmc_blocks');
+                    const savedBg = localStorage.getItem('flowork_bmc_bg');
+                    if (saved) try { data.value = JSON.parse(saved); } catch(e){}
+                    if (savedBlocks) try { blocks.value = JSON.parse(savedBlocks); } catch(e){}
+                    if (savedBg) globalBg.value = savedBg;
+                };
+
+                const saveData = () => {
+                    localStorage.setItem('flowork_bmc_v4', JSON.stringify(data.value));
+                    localStorage.setItem('flowork_bmc_blocks', JSON.stringify(blocks.value));
+                    localStorage.setItem('flowork_bmc_bg', globalBg.value);
+                };
+
+                const openInputModal = (key) => { currentKey.value = key; activeModal.value = 'input'; newNoteInput.value = ""; nextTick(lucide.createIcons); };
+                const openBlockSettings = (key) => { currentKey.value = key; activeModal.value = 'block_style'; nextTick(lucide.createIcons); };
+                const openCanvasStyle = () => { activeModal.value = 'canvas_style'; nextTick(lucide.createIcons); };
+                const closeModal = () => { activeModal.value = null; saveData(); };
+
+                const addNote = () => {
+                    if (!newNoteInput.value.trim()) return;
+                    data.value[currentKey.value].push({ text: newNoteInput.value, bg: 'var(--bg-input)', color: 'var(--text-main)' });
+                    newNoteInput.value = ""; saveData();
+                };
+
+                const editNote = (key, idx) => {
+                    currentKey.value = key;
+                    const n = data.value[key][idx];
+                    editingNote.value = { idx, text: n.text, bg: n.bg, color: n.color };
+                    activeModal.value = 'edit_note'; nextTick(lucide.createIcons);
+                };
+
+                const saveEditingNote = () => {
+                    const { idx, text, bg, color } = editingNote.value;
+                    data.value[currentKey.value][idx] = { text, bg, color };
+                    activeModal.value = 'input'; saveData();
+                };
+
+                const deleteEditingNote = () => {
+                    data.value[currentKey.value].splice(editingNote.value.idx, 1);
+                    activeModal.value = 'input'; saveData();
+                };
+
+                const resetData = () => {
+                    alertData.value = { show: true, title: "RESET", message: "Hapus semua data?", icon: "trash-2", onConfirm: () => {
+                        Object.keys(data.value).forEach(k => data.value[k] = []);
+                        blocks.value = JSON.parse(JSON.stringify(BLOCKS_DEF));
+                        globalBg.value = 'var(--border-color)';
+                        saveData();
+                    }}; nextTick(lucide.createIcons);
+                };
+
+                const closeAlert = () => alertData.value.show = false;
+                const confirmAlert = () => { if(alertData.value.onConfirm) alertData.value.onConfirm(); closeAlert(); };
+                const showAlert = (t, m, i) => { alertData.value = { show:true, title:t, message:m, icon:i }; nextTick(lucide.createIcons); };
+
+                // --- CANVAS NAV ---
+                const adjustZoom = (d) => zoomLevel.value = Math.min(Math.max(zoomLevel.value + d, 0.2), 2.0);
+                const centerCanvas = () => {
+                    const main = document.getElementById('main-canvas-area');
+                    if(main) {
+                        const scale = Math.min((main.clientWidth - 40) / 1200, (main.clientHeight - 40) / 675, 1.0);
+                        zoomLevel.value = Math.max(scale, 0.3);
+                        pan.value = { x: (main.clientWidth - (1200*zoomLevel.value))/2, y: (main.clientHeight - (675*zoomLevel.value))/2 };
+                    }
+                };
+
+                // INPUT GESTURES
+                let lastDist = 0, isDragging = false, startPan = {x:0, y:0};
+                const isScrollable = (t) => { const el = t.closest('.bmc-cell-content'); return el && el.scrollHeight > el.clientHeight; };
+
+                const handleTouchStart = (e) => {
+                    if (e.touches.length === 2) lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    else if (e.touches.length === 1 && !isScrollable(e.target)) { isDragging = true; startPan = { x: e.touches[0].clientX - pan.value.x, y: e.touches[0].clientY - pan.value.y }; }
+                };
+                const handleTouchMove = (e) => {
+                    if (e.touches.length === 1 && isScrollable(e.target)) return;
+                    e.preventDefault();
+                    if (e.touches.length === 2) {
+                        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        adjustZoom((dist - lastDist) * 0.005); lastDist = dist;
+                    } else if (isDragging) pan.value = { x: e.touches[0].clientX - startPan.x, y: e.touches[0].clientY - startPan.y };
+                };
+                const handleTouchEnd = () => isDragging = false;
+                const handleMouseDown = (e) => { if (!isScrollable(e.target)) { isDragging = true; startPan = { x: e.clientX - pan.value.x, y: e.clientY - pan.value.y }; }};
+                const handleMouseMove = (e) => { if(isDragging) { e.preventDefault(); pan.value = { x: e.clientX - startPan.x, y: e.clientY - startPan.y }; }};
+                const handleMouseUp = () => isDragging = false;
+                const handleWheel = (e) => { if(!isScrollable(e.target)) adjustZoom(e.deltaY * -0.001); };
+
+                const scrollMenu = (d) => document.getElementById('tool-menu').scrollBy({ left: d === 'left' ? -150 : 150, behavior: 'smooth' });
+
+                const exportCanvas = async () => {
+                    showAlert("Exporting", "Rendering high-res image...", "loader");
+                    setTimeout(async () => {
+                        const el = document.getElementById('bmc-preview');
+                        const ot = el.style.transform; el.style.transform = "none"; el.style.position="static";
+                        try {
+                            const canvas = await html2canvas(el, { scale: 2, backgroundColor: globalBg.value });
+                            const link = document.createElement('a'); link.download = `BMC-${Date.now()}.png`; link.href = canvas.toDataURL(); link.click();
+                            closeAlert();
+                        } catch(e) { console.error(e); closeAlert(); }
+                        el.style.position="absolute"; el.style.transform = ot;
+                    }, 500);
+                };
+
+                const initBridge = () => {
+                    if (window.parent) window.parent.postMessage({ type: 'APP_READY' }, '*');
+                    window.addEventListener('message', (event) => {
+                        const d = event.data;
+                        if (!d) return;
+                        if (['FLOWORK_THEME_UPDATE', 'THEME_UPDATE', 'setTheme', 'THEME_CHANGE'].includes(d.type)) applyTheme(d.theme || d.payload || d.value);
+                    });
+                };
+
+                onMounted(() => {
+                    loadData();
+                    lucide.createIcons();
+                    initBridge();
+                    centerCanvas();
+                    setTimeout(centerCanvas, 300);
+                });
+
+                return {
+                    blocks, data, globalBg, activeModal, currentKey, newNoteInput, editingNote, alertData, zoomLevel, pan,
+                    openInputModal, openBlockSettings, openCanvasStyle, closeModal, addNote, editNote, saveEditingNote, deleteEditingNote, resetData,
+                    adjustZoom, centerCanvas, handleTouchStart, handleTouchMove, handleTouchEnd, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel,
+                    showAlert, closeAlert, confirmAlert, scrollMenu, exportCanvas, closeApp, requestThemeToggle
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

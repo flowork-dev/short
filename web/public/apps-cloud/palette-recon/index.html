@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Palette Recon Protocol</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root { --bg-deep: #171925; --primary: #f59e0b; --secondary: #3b82f6; --panel: #1f2937; --text: #e0f0ff; }
+        body { background-color: var(--bg-deep); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow: hidden; touch-action: none; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0a0a0a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--panel); border-radius: 4px; }
+        .hidden-view { display: none !important; }
+
+        @media (max-width: 768px) { .mobile-stack { flex-direction: column; } }
+
+        /* Animation */
+        @keyframes fade-in-up { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        .anim-entry { animation: fade-in-up 0.3s ease-out forwards; }
+
+        /* Grid Color Item - Size Adjusted for 30 items */
+        .color-chip { aspect-ratio: 1/1; cursor: pointer; transition: transform 0.1s; position: relative; border-radius: 4px; }
+        .color-chip:hover { transform: scale(1.15); z-index: 10; border: 2px solid white; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <nav class="h-14 border-b border-gray-800 flex items-center justify-between px-4 md:px-6 bg-[#0f1016] z-40 shrink-0 font-[Oswald]">
+        <div class="font-bold text-lg tracking-wider text-[#f59e0b]">PALETTE<span class="text-white">RECON</span></div>
+        <div class="flex gap-4 text-sm font-bold">
+            <button id="tab-app" class="opacity-100 text-[#f59e0b] cursor-default">INTEL</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 relative w-full h-full overflow-hidden p-0">
+        <div id="view-app" class="w-full h-full overflow-y-auto custom-scrollbar"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            currentImage: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('app', 'partials/app.html');
+                lucide.createIcons();
+                this.initLogic();
+            },
+
+            async loadPartial(id, url) {
+                try { const res = await fetch(url); document.getElementById('view-'+id).innerHTML = await res.text(); } catch (e) { console.error(e); }
+            },
+
+            // switchTab function removed
+
+            initLogic() {
+                const fileInput = document.getElementById('file-input');
+                if(fileInput) fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+            },
+
+            handleFile(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        this.analyzeDeepScan(img);
+                    };
+                    img.src = e.target.result;
+
+                    // Show Preview & Hide Placeholder
+                    const container = document.getElementById('preview-container');
+                    container.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-contain filter drop-shadow-xl">`;
+                    container.classList.remove('opacity-0');
+                    document.getElementById('upload-placeholder').classList.add('opacity-0');
+                };
+                reader.readAsDataURL(file);
+            },
+
+            // --- DEEP SCAN ENGINE ---
+            analyzeDeepScan(img) {
+                const statusLabel = document.getElementById('scan-status');
+                statusLabel.innerText = "EXTRACTING DATA...";
+                statusLabel.className = "text-xs text-[#f59e0b] font-mono animate-pulse";
+
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const maxDim = 300;
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > maxDim) { h *= maxDim / w; w = maxDim; } }
+                    else { if (h > maxDim) { w *= maxDim / h; h = maxDim; } }
+
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    const imageData = ctx.getImageData(0, 0, w, h).data;
+                    const colorMap = {};
+
+                    // Sampling step 10
+                    for (let i = 0; i < imageData.length; i += 4 * 10) {
+                        const r = imageData[i], g = imageData[i+1], b = imageData[i+2], a = imageData[i+3];
+                        if (a < 128) continue;
+
+                        const rQ = Math.round(r/10)*10, gQ = Math.round(g/10)*10, bQ = Math.round(b/10)*10;
+                        const key = `${rQ},${gQ},${bQ}`;
+                        colorMap[key] = (colorMap[key] || 0) + 1;
+                    }
+
+                    const sortedColors = Object.keys(colorMap)
+                        .map(key => {
+                            const [r, g, b] = key.split(',').map(Number);
+                            return { r, g, b, count: colorMap[key], hex: this.rgbToHex(r, g, b) };
+                        })
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, 30);
+
+                    this.renderResults(sortedColors);
+                }, 100);
+            },
+
+            renderResults(palette) {
+                const resultSection = document.getElementById('result-section');
+                const paletteGrid = document.getElementById('palette-grid');
+                const statusLabel = document.getElementById('scan-status');
+
+                resultSection.classList.remove('hidden');
+                paletteGrid.innerHTML = '';
+                statusLabel.innerText = "SCAN COMPLETE";
+                statusLabel.className = "text-xs text-green-400 font-mono";
+
+                // Render Grid
+                const fragment = document.createDocumentFragment();
+                palette.forEach((color, index) => {
+                    const chip = document.createElement('div');
+                    // Style chip lebih keren: Rounded, Border, Shadow
+                    chip.className = "color-chip w-full aspect-square rounded-md border border-gray-800 shadow-sm hover:shadow-lg hover:scale-110 transition-all duration-200 cursor-pointer relative overflow-hidden group";
+                    chip.style.backgroundColor = color.hex;
+                    chip.style.animation = `fade-in-up 0.4s ease-out ${index * 0.05}s forwards`;
+                    chip.style.opacity = '0'; // start invisible for anim
+
+                    // Rank Badge
+                    chip.innerHTML = `<span class="absolute top-0 right-0 bg-black/50 text-[8px] text-white px-1 opacity-0 group-hover:opacity-100 transition">${index+1}</span>`;
+
+                    chip.onclick = () => this.showColorDetail(color);
+                    fragment.appendChild(chip);
+                });
+
+                paletteGrid.appendChild(fragment);
+
+                // Show detail first item auto
+                if(palette.length > 0) this.showColorDetail(palette[0]);
+            },
+
+            showColorDetail(color) {
+                const panel = document.getElementById('intel-panel');
+                const previewColor = document.getElementById('preview-color-box');
+                const hexVal = document.getElementById('val-hex');
+                const rgbVal = document.getElementById('val-rgb');
+                const vibeVal = document.getElementById('val-vibe');
+
+                // Slide Up Panel
+                panel.classList.remove('translate-y-full');
+
+                previewColor.style.backgroundColor = color.hex;
+                hexVal.innerText = color.hex;
+                rgbVal.innerText = `rgb(${color.r}, ${color.g}, ${color.b})`;
+
+                const vibe = this.getColorPsychology(color.r, color.g, color.b);
+                vibeVal.innerHTML = vibe;
+
+                // Animation Highlight
+                hexVal.classList.add('text-[#f59e0b]');
+                setTimeout(() => hexVal.classList.remove('text-[#f59e0b]'), 300);
+            },
+
+            copyCurrentHex() {
+                const hex = document.getElementById('val-hex').innerText;
+                navigator.clipboard.writeText(hex);
+
+                // Toast Effect UI
+                const originalText = document.getElementById('val-vibe').innerHTML;
+                document.getElementById('val-vibe').innerHTML = `<span class="text-green-400 font-bold"><i data-lucide="check" class="inline w-3 h-3"></i> COPIED TO CLIPBOARD</span>`;
+                lucide.createIcons();
+                setTimeout(() => document.getElementById('val-vibe').innerHTML = originalText, 1500);
+            },
+
+            rgbToHex(r, g, b) {
+                return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+            },
+
+            getColorPsychology(r, g, b) {
+                // Expanded Psychology Logic
+                if (r > 230 && g > 230 && b > 230) return "<b>WHITESPACE:</b> Memberi ruang nafas, kesan bersih & modern.";
+                if (r < 30 && g < 30 && b < 30) return "<b>VOID:</b> Latar belakang kontras tinggi, kesan misterius.";
+
+                // Dominants
+                if (r > g + 60 && r > b + 60) return "<b>URGENCY (RED):</b> Memicu emosi, lapar, atau bahaya. <i>High CTR Trigger.</i>";
+                if (g > r + 40 && g > b + 40) return "<b>GROWTH (GREEN):</b> Uang, sukses, atau solusi positif.";
+                if (b > r + 40 && b > g + 40) return "<b>TRUST (BLUE):</b> Profesional, teknologi, tenang. (Review/Tutorial).";
+
+                // Secondary Mixes
+                if (r > 200 && g > 150 && b < 50) return "<b>WARNING (YELLOW):</b> Warna paling cepat ditangkap mata manusia. Wajib untuk poin penting.";
+                if (r > 100 && g < 50 && b > 100) return "<b>MAGIC (PURPLE):</b> Kreativitas, misteri, atau hal ghaib/unik.";
+                if (r > 200 && g > 100 && b > 50 && b < 100) return "<b>ENERGY (ORANGE):</b> Antusiasme, semangat, notifikasi.";
+
+                return "<b>BALANCE:</b> Warna penyeimbang komposisi visual.";
+            }
+        };
+
+        window.AppCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

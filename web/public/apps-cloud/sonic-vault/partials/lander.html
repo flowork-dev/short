@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APP INFO</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        .tech-font { font-family: 'Share Tech Mono', monospace; }
+        .body-font { font-family: 'Rajdhani', sans-serif; }
+    </style>
+</head>
+<body class="hide-scrollbar body-font">
+
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div class="desktop-grid">
+
+            <div class="relative z-10 animate-fade-in flex flex-col justify-center h-full">
+                <div class="px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-green-500 font-bold tracking-widest flex items-center gap-2 uppercase tech-font">
+                        <i data-lucide="shield-check" class="w-3 h-3"></i> SYSTEM: UNTRACEABLE
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 tech-font uppercase">
+                    SONIC <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600">VAULT.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md opacity-80" style="color: var(--text-muted);">
+                    Kirim pesan rahasia di balik file lagu (MP3/WAV). Orang lain dengerin musiknya, tapi cuma <i>bestie</i> lo yang bisa baca isinya.
+                    <br><br>
+                    <span class="text-green-500 font-bold font-mono text-xs">> NO JEJAK. NO DRAMA.</span>
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center pt-10 lg:pt-0">
+
+                <div class="glass-panel p-5 rounded-2xl border-l-2 border-green-500">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i data-lucide="terminal" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold tech-font">OPERATIONAL PROTOCOL</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-[10px] font-bold font-mono">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5 text-white">Select Audio Base</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Pilih file .WAV. Jangan MP3 biar data gak rusak.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-[10px] font-bold font-mono">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5 text-white">Inject Payload</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Tulis rahasia lo, set password, lalu "Inject".</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-[10px] font-bold font-mono">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5 text-white">Distribute</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Kirim file via Document/File (Bukan Voice Note).</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl hover:border-green-500/30 transition-colors">
+                        <i data-lucide="heart-off" class="w-5 h-5 mb-2 text-red-500"></i>
+                        <h4 class="text-xs font-bold mb-1 text-white">Mode Backstreet</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            HP sering dicek ortu/pacar? Saling kirim lagu aja. Isinya surat cinta, cover-nya lagu Tulus. Aman.
+                        </p>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-xl hover:border-green-500/30 transition-colors">
+                        <i data-lucide="wallet" class="w-5 h-5 mb-2 text-yellow-500"></i>
+                        <h4 class="text-xs font-bold mb-1 text-white">Crypto Seed</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Simpen 12 kata kunci wallet lo di dalem suara "Hujan" (White Noise). Hacker gak bakal kepikiran.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border border-red-500/20 bg-red-900/5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>
+                        <h3 class="text-xs font-bold text-red-400">CRITICAL WARNING</h3>
+                    </div>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Musuh utama sistem ini adalah <strong>KOMPRESI</strong>.
+                        <br><br>
+                        ❌ JANGAN kirim via WA Voice Note / Story IG.<br>
+                        ✅ WAJIB kirim via <strong>DOCUMENT (FILE)</strong> / Email / GDrive.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl">
+                    <h3 class="text-xs font-bold mb-1 text-white">LSB Technology</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Kita ubah data suara dari "100" jadi "101". Kuping manusia gak denger bedanya, tapi komputer ngebaca itu sebagai kode.
+                    </p>
+                </div>
+
+                <div class="text-center mt-2 px-4 lg:hidden">
+                    <p class="text-[10px] italic opacity-50 tech-font">
+                        "Hidden in plain sight."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+</html>

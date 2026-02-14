@@ -1,0 +1,102 @@
+<!DOCTYPE  html >
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>APP INFO</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/assets/lander/main.js"></script>
+<link rel="stylesheet" href="/assets/lander/style.css">
+</head>
+<body class="hide-scrollbar">
+<div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+    <div class="desktop-grid">
+
+        <div class="relative z-10 animate-fade-in">
+            <div class="px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                <span class="text-[10px] text-purple-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                    <i data-lucide="banknote" class="w-3 h-3"></i> FREELANCER MONEY MACHINE
+                </span>
+            </div>
+
+            <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                INVOICE KILAT. <br> <span class="gradient-text">AUTO CAIR.</span>
+            </h1>
+
+            <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                Masih kirim tagihan pake file Word? <i>Ew, cringe.</i> Buat invoice profesional yang hitungannya presisi, tampilannya tegas, dan bikin klien segan buat nunda bayar.
+            </p>
+        </div>
+
+        <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+            <div class="glass-panel p-5 rounded-2xl">
+                <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="text-sm font-bold">Cara Penagihan</h3>
+                </div>
+
+                <ul class="space-y-4">
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Input Data</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Masukkan detail klien, item pekerjaan, dan harga satuan.</span>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Auto Calc</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Sistem menghitung Total, Diskon, dan Pajak secara otomatis.</span>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold mb-0.5">Export PDF</span>
+                            <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Download dokumen resmi berformat Vector PDF. Siap kirim via WA.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="glass-panel p-4 rounded-xl">
+                    <i data-lucide="calculator" class="w-5 h-5 mb-2 text-green-500"></i>
+                    <h4 class="text-xs font-bold mb-1">Precision Math</h4>
+                    <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                        Gak ada lagi drama salah hitung. Angka dihitung mesin sampai digit desimal terakhir.
+                    </p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl">
+                    <i data-lucide="shield-check" class="w-5 h-5 mb-2 text-blue-500"></i>
+                    <h4 class="text-xs font-bold mb-1">Zero Leak</h4>
+                    <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                        Data klien dan nominal tagihan tidak disimpan di server kami. Privasi finansial terjaga.
+                    </p>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                <h3 class="text-xs font-bold mb-1">PDF Vector Engine</h3>
+                <p class="text-[10px]" style="color: var(--text-muted);">
+                    Menghasilkan file PDF berkualitas tinggi yang tajam meski di-zoom 500%. Terlihat profesional di layar HP maupun Desktop.
+                </p>
+            </div>
+
+            <div class="text-center mt-2 px-4 lg:hidden">
+                <p class="text-[10px] italic opacity-50">
+                    "Get paid, don't get played."
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

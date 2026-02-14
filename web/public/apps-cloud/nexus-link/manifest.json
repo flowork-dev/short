@@ -1,0 +1,16 @@
+{
+    "id": "nexus-link",
+    "name": "NEXUS LINK - IDENTITY GRID",
+    "version": "1.0.0",
+    "description": "Generate self-hosted, cyberpunk-styled Link-in-Bio pages. No database required.",
+    "author": "Flowork Design Ops",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "slug": "nexus-link",
+    "capabilities": ["dom_manipulation", "file_export"],
+    "tags": ["social", "design", "marketing"],
+    "default_width": 1200,
+    "default_height": 900
+}

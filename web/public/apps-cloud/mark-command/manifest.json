@@ -1,0 +1,24 @@
+{
+    "id": "mark-command",
+    "name": "EDITOR TEKS MARKDOWN PREVIEW - TULIS DOKUMEN RAPI",
+    "version": "1.0.0",
+    "description": "Editor teks minimalis untuk penulis dan developer. Tulis format Markdown dan preview langsung. Ekspor ke HTML bersih. Sempurna untuk membuat file README.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "mark-command",
+    "capabilities": [
+        "local_processing",
+        "file_system"
+    ],
+    "tags": [
+        "markdown",
+        "editor",
+        "developer",
+        "readme"
+    ]
+}

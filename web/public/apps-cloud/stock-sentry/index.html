@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Sentry | Flowork</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js"
+        }
+    }
+    </script>
+
+    <script>
+        const originalError = console.error;
+        console.error = function(...args) {
+            const msg = args[0]?.toString() || "";
+            if (msg.includes("adsbygoogle") || msg.includes("TagError") || msg.includes("dtscout")) return;
+            originalError.apply(console, args);
+        };
+        window.onerror = function(msg) {
+            if (msg.toLowerCase().includes("adsbygoogle") || msg.toLowerCase().includes("tagerror")) return true;
+            return false;
+        };
+    </script>
+
+    <style>
+        :root { --bg-core: #171925; --neon-cyan: #54d7f6; --neon-purple: #706bf3; }
+        body { background-color: var(--bg-core); color: #e0f0ff; font-family: 'Rajdhani', sans-serif; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .nav-btn { opacity: 0.5; transition: 0.3s; border-bottom: 2px solid transparent; }
+        .nav-btn.active { opacity: 1; color: var(--neon-cyan); border-bottom: 2px solid var(--neon-cyan); }
+        .hidden-view { display: none !important; }
+
+        /* PERBAIKAN: Menambahkan CSS Custom Scrollbar yang sebelumnya hilang */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #171925; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3a3962; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #54d7f6; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <main class="flex-1 relative overflow-hidden">
+        <div id="global-loader" class="absolute inset-0 flex items-center justify-center bg-[#171925] z-40 hidden-view">
+            <div class="text-center">
+                <i class="mdi mdi-loading mdi-spin text-4xl text-[#54d7f6]"></i>
+                <p class="mt-2 text-xs font-mono text-[#54d7f6] animate-pulse">LOADING MODULE...</p>
+            </div>
+        </div>
+        <div id="view-lander" class="h-full w-full overflow-y-auto custom-scrollbar"></div>
+        <div id="view-app" class="h-full w-full overflow-hidden hidden-view"></div>
+    </main>
+
+    <script>
+        // FUNGSI SCRIPT RE-IGNITION (Agar Vue jalan)
+        function executeScripts(container) {
+            container.querySelectorAll("script").forEach((oldScript) => {
+                const newScript = document.createElement("script");
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+        }
+
+        // FUNGSI LOAD MODULE DARI FOLDER PARTIALS
+        async function loadModule(viewId, fileName) {
+            const container = document.getElementById(viewId);
+            // Cek Path: partials/[nama_file]
+            const filePath = `partials/${fileName}`;
+            try {
+                if (container.getAttribute('data-loaded') === 'true') return;
+                console.log(`[SYSTEM] Fetching: ${filePath}`);
+                const response = await fetch(`${filePath}?v=${Date.now()}`);
+
+                if (!response.ok) throw new Error(`Gagal memuat ${filePath} (Status: ${response.status})`);
+                const html = await response.text();
+                container.innerHTML = html;
+                executeScripts(container);
+
+                container.setAttribute('data-loaded', 'true');
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = `
+                    <div class="p-10 text-center text-red-500 font-mono border border-red-900 bg-red-900/10 m-4 rounded">
+                        <h2 class="text-xl font-bold mb-2">404 MODULE MISSING</h2>
+                        <p>Gagal mengambil file: <span class="text-white bg-red-900 px-1">${filePath}</span></p>
+                        <p class="text-xs mt-4 text-gray-400">Pastikan file <b>${fileName}</b> ada di dalam folder <b>partials/</b></p>
+                    </div>`;
+            }
+        }
+
+        window.switchTab = async function(tabName) {
+            const lander = document.getElementById('view-lander');
+            const app = document.getElementById('view-app');
+
+            // Safety check: Ambil tombol hanya jika ada di HTML (untuk mencegah error null)
+            const btnLander = document.getElementById('btn-lander');
+            const btnApp = document.getElementById('btn-app');
+
+            if (tabName === 'lander') {
+                lander.classList.remove('hidden-view');
+                app.classList.add('hidden-view');
+
+                if(btnLander) btnLander.classList.add('active');
+                if(btnApp) btnApp.classList.remove('active');
+            } else {
+                document.getElementById('global-loader').classList.remove('hidden-view');
+
+                // Panggil file tanpa 'partials/' karena sudah di-handle di fungsi loadModule
+                await loadModule('view-app', 'app.html');
+
+                setTimeout(() => {
+                    document.getElementById('global-loader').classList.add('hidden-view');
+                    app.classList.remove('hidden-view');
+                    lander.classList.add('hidden-view');
+
+                    if(btnApp) btnApp.classList.add('active');
+                    if(btnLander) btnLander.classList.remove('active');
+                }, 300);
+            }
+        };
+
+        // --- UPDATE LOGIC DISINI ---
+
+        // Fungsi ini dipanggil tombol "ENTER APP" di lander.html
+        window.enterApp = () => {
+            // Tandai user sudah pernah masuk
+            localStorage.setItem('ss_visited', 'true');
+            switchTab('app');
+        };
+
+        // INIT: Cek LocalStorage saat pertama kali load
+        window.addEventListener('DOMContentLoaded', async () => {
+            const hasVisited = localStorage.getItem('ss_visited');
+
+            if (hasVisited) {
+                // Jika sudah pernah berkunjung, langsung load APP
+                console.log("[SYSTEM] Returning User Detected - Skipping Lander");
+                await switchTab('app');
+            } else {
+                // Jika user baru, load LANDER
+                console.log("[SYSTEM] New User Detected - Loading Lander");
+                await loadModule('view-lander', 'lander.html');
+            }
+        });
+    </script>
+</body>
+</html>

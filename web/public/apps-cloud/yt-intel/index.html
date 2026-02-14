@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YT INTEL | DATA SPILL</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+
+    <style>
+        /* --- 1. THEME ENGINE (JANTUNG PERUBAHAN WARNA) --- */
+        :root {
+            /* DEFAULT (DARK / DEEP SPACE) */
+            --bg-core: #171925;
+            --surface-1: #1f2233;
+            --surface-2: #12141d;
+
+            --border-color: rgba(84, 215, 246, 0.2);
+            --border-dashed: rgba(84, 215, 246, 0.1);
+
+            --primary: #54d7f6;      /* Cyan */
+            --secondary: #706bf3;    /* Purple */
+            --accent: #0aff60;       /* Green */
+            --danger: #ff2a6d;       /* Red */
+            --warning: #facc15;      /* Yellow */
+
+            --txt-main: #e0f0ff;
+            --txt-muted: #94a3b8;
+            --txt-inv: #000000;
+
+            --shadow-val: 0 0 20px rgba(84, 215, 246, 0.1);
+        }
+
+        /* LIGHT MODE */
+        [data-theme="light"] {
+            --bg-core: #f8fafc !important;
+            --surface-1: #ffffff !important;
+            --surface-2: #e2e8f0 !important;
+            --border-color: #cbd5e1 !important;
+
+            --primary: #0284c7 !important;
+            --secondary: #4f46e5 !important;
+            --accent: #059669 !important;
+            --danger: #dc2626 !important;
+            --warning: #d97706 !important;
+
+            --txt-main: #0f172a !important;
+            --txt-muted: #64748b !important;
+            --txt-inv: #ffffff !important;
+
+            --shadow-val: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+        }
+
+        /* HACKER MODE */
+        [data-theme="hacker"] {
+            --bg-core: #000000 !important;
+            --surface-1: #0a0a0a !important;
+            --surface-2: #050505 !important;
+            --border-color: #00ff00 !important;
+
+            --primary: #00ff00 !important;
+            --secondary: #008f11 !important;
+            --accent: #00ff00 !important;
+            --danger: #ff0000 !important;
+            --warning: #ffff00 !important;
+
+            --txt-main: #00ff00 !important;
+            --txt-muted: #005500 !important;
+            --txt-inv: #000000 !important;
+
+            --shadow-val: none !important;
+        }
+
+        /* --- 2. LAYOUT & SCROLL FIX --- */
+        body {
+            background-color: var(--bg-core) !important;
+            color: var(--txt-main) !important;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* DESKTOP: Fixed Height, Scroll per kolom */
+        @media (min-width: 1024px) {
+            body { height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+            main { flex: 1; overflow: hidden; }
+            .col-scroll { overflow-y: auto; height: 100%; padding-bottom: 2rem; }
+
+            /* Custom Scrollbar Desktop */
+            .col-scroll::-webkit-scrollbar { width: 6px; }
+            .col-scroll::-webkit-scrollbar-track { background: transparent; }
+            .col-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+            .col-scroll::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        }
+
+        /* MOBILE: Native Scroll (FIX SCROLL MACET) */
+        @media (max-width: 1023px) {
+            body { height: auto; min-height: 100vh; overflow-y: auto; }
+            main { height: auto; overflow: visible; padding-bottom: 150px; } /* Space buat menu bawah */
+            .col-scroll { height: auto; overflow: visible; }
+        }
+
+        /* --- 3. CUSTOM COMPONENTS --- */
+        .glass-box {
+            background-color: var(--surface-1);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-val);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .input-skin {
+            background-color: var(--surface-2);
+            color: var(--txt-main);
+            border: 1px solid var(--border-color);
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .input-skin::placeholder { color: var(--txt-muted); opacity: 0.6; }
+        .input-skin:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px var(--border-color); }
+
+        .btn-skin {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--txt-inv);
+            border: none;
+            font-weight: 800;
+        }
+        html[data-theme="hacker"] .btn-skin {
+            background: #000; color: #00ff00; border: 1px solid #00ff00;
+        }
+
+        .tag-chip {
+            background-color: var(--surface-2);
+            border: 1px solid var(--border-color);
+            color: var(--secondary);
+            font-size: 11px; padding: 4px 10px; border-radius: 6px;
+            cursor: pointer; display: inline-block; font-weight: bold;
+            transition: 0.2s;
+        }
+        .tag-chip:hover {
+            background-color: var(--secondary); color: var(--txt-inv);
+        }
+
+        .scan-line {
+            width: 100%; height: 2px; background: var(--primary);
+            position: absolute; top: 0; left: 0; z-index: 10;
+            animation: scan 2s linear infinite; display: none;
+        }
+        .scanning .scan-line { display: block; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* Helpers */
+        .t-main { color: var(--txt-main) !important; }
+        .t-muted { color: var(--txt-muted) !important; }
+        .t-primary { color: var(--primary) !important; }
+        .t-secondary { color: var(--secondary) !important; }
+        .t-accent { color: var(--accent) !important; }
+        .t-warning { color: var(--warning) !important; }
+
+        .b-theme { border-color: var(--border-color) !important; }
+
+        .font-disp { font-family: 'Orbitron', sans-serif; }
+        .font-mono { font-family: 'Share Tech Mono', monospace; }
+        .hidden-section { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <nav class="glass-box fixed top-0 w-full h-16 z-50 flex items-center justify-between px-4 md:px-8">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: var(--txt-inv);">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-black tracking-widest leading-none font-disp t-main">
+                    YT <span class="t-primary">INTEL</span>
+                </h1>
+                <div class="text-[9px] font-mono font-bold tracking-[0.3em] mt-0.5 opacity-60 t-muted">
+                    TACTICAL V3.4
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="h-16 shrink-0"></div>
+
+    <main class="w-full max-w-7xl mx-auto px-3 md:px-6 pt-4">
+
+        <div class="sticky top-20 lg:top-4 z-40 mb-6">
+            <div class="glass-box p-2 rounded-2xl flex flex-col md:flex-row gap-2">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none t-muted">
+                        <i data-lucide="link" class="w-4 h-4"></i>
+                    </div>
+                    <input type="text" id="targetUrl" placeholder="Paste Link YouTube Disini..."
+                        class="input-skin w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-medium">
+                </div>
+                <button onclick="window.appCore.executeAnalysis()"
+                    class="btn-skin px-6 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    <span>SCAN</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start h-full">
+
+            <div class="lg:col-span-3 flex flex-col gap-4 order-2 lg:order-1 lg:h-full col-scroll">
+                <div class="glass-box p-4 rounded-2xl flex flex-col items-center text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 opacity-50" style="background: var(--primary);"></div>
+
+                    <img id="ch-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTU1IiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PC9zdmc+"
+                        class="w-16 h-16 rounded-full border-2 mb-3 object-cover shadow-lg"
+                        style="border-color: var(--primary); background-color: var(--surface-2);">
+
+                    <h2 id="ch-title" class="font-disp font-black text-sm tracking-wider mb-1 line-clamp-1 uppercase t-main">WAITING TARGET...</h2>
+
+                    <div class="flex gap-2 mb-4 justify-center">
+                        <span id="ch-country" class="text-[9px] px-2 py-0.5 rounded font-bold border b-theme t-muted" style="background-color: var(--surface-2);">UNK</span>
+                        <span id="ch-velocity" class="text-[9px] px-2 py-0.5 rounded font-bold border b-theme t-secondary" style="background-color: var(--surface-2);">0 UP</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <div class="p-2 rounded border b-theme" style="background-color: var(--surface-2);">
+                            <div class="text-[8px] mb-0.5 font-bold uppercase tracking-widest t-primary">SUBS</div>
+                            <div id="ch-subs" class="font-mono font-bold text-xs t-main">---</div>
+                        </div>
+                        <div class="p-2 rounded border b-theme" style="background-color: var(--surface-2);">
+                            <div class="text-[8px] mb-0.5 font-bold uppercase tracking-widest t-secondary">VIDS</div>
+                            <div id="ch-videos" class="font-mono font-bold text-xs t-main">---</div>
+                        </div>
+                    </div>
+
+                    <a id="download-thumb" href="#" target="_blank" class="mt-3 text-[10px] w-full py-2 rounded border border-dashed flex items-center justify-center gap-2 hover:opacity-80 transition-all t-muted b-theme">
+                        <i data-lucide="download" class="w-3 h-3"></i> Thumbnail
+                    </a>
+                </div>
+
+                <div class="glass-box p-4 rounded-2xl flex flex-col min-h-[150px]">
+                    <h3 class="text-[10px] tracking-widest mb-3 flex items-center gap-2 font-black uppercase border-b pb-2 b-theme t-warning">
+                        <i data-lucide="flame" class="w-3 h-3"></i> VIRAL SPIKES
+                    </h3>
+                    <div id="moments-list" class="space-y-1">
+                        <div class="text-[10px] italic opacity-50 text-center py-4 t-muted">No data yet...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-6 flex flex-col gap-4 order-1 lg:order-2 lg:h-full col-scroll">
+
+                <div id="player-container" class="glass-box p-1 rounded-2xl relative group overflow-hidden shadow-xl shrink-0 w-full aspect-video bg-black">
+                    <div class="scan-line"></div>
+                    <div id="video-frame" class="w-full h-full rounded-xl flex items-center justify-center" style="background-color: var(--surface-2);">
+                        <div class="flex flex-col items-center gap-2 opacity-50">
+                            <i data-lucide="monitor-play" class="w-12 h-12 t-primary"></i>
+                            <span class="font-mono text-xs animate-pulse tracking-widest t-main">READY TO SCAN</span>
+                        </div>
+                    </div>
+                    <div class="absolute top-3 left-3 px-3 py-2 rounded-lg backdrop-blur-md border b-theme shadow-lg z-20" style="background: rgba(0,0,0,0.6);">
+                        <div class="text-[8px] text-gray-300 mb-0.5 text-center font-black uppercase">ENGAGEMENT</div>
+                        <div id="vid-er" class="text-sm font-black text-white text-center font-mono">--%</div>
+                    </div>
+                    <div class="absolute top-3 right-3 px-3 py-2 rounded-lg backdrop-blur-md border b-theme shadow-lg z-20" style="background: rgba(0,0,0,0.6);">
+                        <div class="text-[8px] text-gray-300 mb-0.5 text-center font-black uppercase">SEO SCORE</div>
+                        <div id="seo-score" class="text-sm font-black text-white text-center font-mono">--</div>
+                    </div>
+                </div>
+
+                <div class="glass-box p-3 rounded-xl flex flex-wrap gap-4 justify-between items-center text-[10px] font-mono">
+                    <div class="flex gap-4 font-bold t-muted">
+                        <div class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3 h-3 t-primary"></i><span id="vid-date">--/--</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="hourglass" class="w-3 h-3 t-primary"></i><span id="vid-duration">--:--</span></div>
+                        <div class="flex items-center gap-1.5"><i data-lucide="monitor" class="w-3 h-3 t-primary"></i><span id="vid-quality">--</span></div>
+                    </div>
+                    <div class="font-black text-xs uppercase tracking-wider t-accent" id="vid-earning">EST: $0</div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="glass-box p-2 rounded-xl flex flex-col justify-center items-center border-t-2 b-primary">
+                        <div class="text-[8px] font-black uppercase opacity-70 t-muted">VIEWS</div>
+                        <div id="vid-views" class="font-mono font-black text-xs md:text-sm t-main">---</div>
+                    </div>
+                    <div class="glass-box p-2 rounded-xl flex flex-col justify-center items-center border-t-2" style="border-top-color: var(--danger);">
+                        <div class="text-[8px] font-black uppercase opacity-70 t-muted">LIKES</div>
+                        <div id="vid-likes" class="font-mono font-black text-xs md:text-sm t-main">---</div>
+                    </div>
+                    <div class="glass-box p-2 rounded-xl flex flex-col justify-center items-center border-t-2" style="border-top-color: var(--warning);">
+                        <div class="text-[8px] font-black uppercase opacity-70 t-muted">COMMS</div>
+                        <div id="vid-comments" class="font-mono font-black text-xs md:text-sm t-main">---</div>
+                    </div>
+                    <div class="glass-box p-2 rounded-xl flex flex-col justify-center items-center border-t-2" style="border-top-color: var(--secondary);">
+                        <div class="text-[8px] font-black uppercase opacity-70 t-muted">TYPE</div>
+                        <div id="vid-category" class="font-mono font-black text-[9px] md:text-xs truncate w-full text-center t-main">---</div>
+                    </div>
+                </div>
+
+                <div class="glass-box p-4 rounded-2xl flex flex-col min-h-[120px]">
+                    <h3 class="text-[10px] tracking-widest mb-3 flex items-center gap-2 font-black uppercase border-b b-theme pb-1 t-accent">
+                        <i data-lucide="wallet" class="w-3 h-3"></i> INCOME STREAM
+                    </h3>
+                    <div id="links-list" class="space-y-2 pr-2">
+                        <div class="text-[10px] italic opacity-50 t-muted">Scanning desc...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 flex flex-col gap-4 order-3 lg:h-full col-scroll">
+
+                <div class="glass-box p-4 rounded-2xl flex flex-col min-h-[250px]">
+                    <h3 class="text-[10px] tracking-widest mb-3 border-b b-theme pb-2 flex items-center gap-2 font-black uppercase t-primary">
+                        <i data-lucide="shield-check" class="w-3 h-3"></i> SEO AUDIT
+                    </h3>
+                    <div id="audit-list" class="space-y-2 text-xs font-mono t-main">
+                        <div class="opacity-50 italic t-muted">Menunggu data...</div>
+                    </div>
+                </div>
+
+                <div class="glass-box p-4 rounded-2xl flex flex-col min-h-[200px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-[10px] tracking-widest flex items-center gap-2 font-black uppercase t-secondary">
+                            <i data-lucide="hash" class="w-3 h-3"></i> TAGS
+                        </h3>
+                        <button onclick="window.appCore.copyTags()"
+                            class="text-[9px] px-3 py-1.5 rounded transition-all border font-bold uppercase tracking-tighter active:scale-95 b-theme t-secondary"
+                            style="background-color: var(--surface-2);">
+                            COPY
+                        </button>
+                    </div>
+                    <div id="tags-container" class="flex-1 content-start flex flex-wrap gap-1.5">
+                        <div class="text-[10px] w-full text-center mt-4 opacity-50 t-muted">NO METADATA</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- 1. SECURE FETCH (DENGAN ALERT ERROR) ---
+        async function secureFetch(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+
+                // Handle Error Auth/Rate Limit (Parent yang urus)
+                if ([401, 402, 429].includes(response.status)) {
+                    window.parent.postMessage({ type: 'FLOWORK_API_ERROR', status: response.status }, '*');
+                    return null;
+                }
+                return response;
+            } catch (e) {
+                // FIXED: Alert Network Error (Offline/DNS)
+                alert("NETWORK ERROR: " + e.message + "\nPeriksa koneksi internet lu bro!");
+                console.error("SecureFetch Error:", e);
+                return null;
+            }
+        }
+
+        // --- 2. APP LOGIC ---
+        const AppCore = {
+            currentUserAddress: null, isLoggedIn: false,
+
+            init() {
+                lucide.createIcons();
+
+                // --- THEME & HANDSHAKE ---
+                // 1. Cek LocalStorage dulu (Anti-Lupa)
+                const savedTheme = localStorage.getItem('flowork-theme');
+                if(savedTheme) this.applyTheme(savedTheme);
+
+                // 2. Cek URL Param
+                const urlTheme = new URLSearchParams(window.location.search).get('theme');
+                if(urlTheme) this.applyTheme(urlTheme);
+
+                // 3. Handshake Parent (Sync update)
+                if(window.parent) window.parent.postMessage({ type: 'iframe-ready' }, '*');
+            },
+
+            applyTheme(theme) {
+                if(!theme) return;
+                console.log("[YT INTEL] Applying theme:", theme);
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('flowork-theme', theme);
+            },
+
+            formatNum(n) { return new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(n); },
+            parseDuration(duration) {
+                if(!duration) return "--:--";
+                const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+                const h = (parseInt(match[1])||0), m = (parseInt(match[2])||0), s = (parseInt(match[3])||0);
+                return (h>0?h+":":"") + (m<10&&h>0?"0":"")+m + ":" + (s<10?"0":"")+s;
+            },
+            safeSetText(id, text) { const el = document.getElementById(id); if(el) el.innerText = text; },
+            renderList(id, data, tpl) {
+                const el = document.getElementById(id);
+                el.innerHTML = data.length ? '' : '<div class="text-[10px] opacity-50 italic text-center t-muted">Zonk, kosong.</div>';
+                data.forEach(x => el.innerHTML += tpl(x));
+            },
+
+            async executeAnalysis() {
+                const urlInput = document.getElementById('targetUrl').value.trim();
+                if(!urlInput) return alert("Link nya mana bro?");
+
+                document.getElementById('player-container').classList.add('scanning');
+                document.getElementById('seo-score').innerText = "...";
+
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (this.currentUserAddress) headers['X-User-Address'] = this.currentUserAddress;
+
+                    const res = await secureFetch(`/api/v1/google/youtube/analyze?url=${encodeURIComponent(urlInput)}`, { headers });
+                    if (!res) return; // Error handled by secureFetch/Parent
+
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        // FIXED: Throw Error biar ditangkap catch di bawah dan di-ALERT
+                        throw new Error(errData.message || "Gagal scan data. Cek link lagi.");
+                    }
+
+                    const data = await res.json();
+                    this.renderAllData(data);
+
+                } catch (e) {
+                    // FIXED: POPUP ALERT SEMUA ERROR
+                    alert("ERROR: " + e.message);
+                }
+                finally {
+                    document.getElementById('player-container').classList.remove('scanning');
+                }
+            },
+
+            renderAllData(data) {
+                const ch = data.channel, vid = data.video;
+                this.safeSetText('ch-title', ch.title);
+                document.getElementById('ch-img').src = ch.thumbnail;
+                this.safeSetText('ch-subs', this.formatNum(ch.stats.subscriberCount));
+                this.safeSetText('ch-videos', this.formatNum(ch.stats.videoCount));
+                this.safeSetText('ch-velocity', (ch.velocity || 0) + " UP");
+                this.safeSetText('vid-views', this.formatNum(vid.stats.viewCount));
+                this.safeSetText('vid-likes', this.formatNum(vid.stats.likeCount));
+                this.safeSetText('vid-comments', this.formatNum(vid.stats.commentCount));
+                this.safeSetText('vid-earning', "EST: " + data.revenue.video);
+
+                const pubDate = new Date(vid.snippet.publishedAt);
+                this.safeSetText('vid-date', pubDate.toLocaleDateString('id-ID'));
+                this.safeSetText('vid-duration', this.parseDuration(vid.details.duration));
+                this.safeSetText('vid-quality', (vid.details.definition||"SD").toUpperCase());
+                this.safeSetText('vid-category', vid.snippet.categoryName || "General");
+                document.getElementById('download-thumb').href = vid.thumbnails.maxres?.url || vid.thumbnails.high?.url;
+
+                const v = parseInt(vid.stats.viewCount)||0, i = (parseInt(vid.stats.likeCount)||0) + (parseInt(vid.stats.commentCount)||0);
+                const er = v ? (i/v)*100 : 0;
+                const erEl = document.getElementById('vid-er');
+                erEl.innerText = er.toFixed(2) + '%';
+                erEl.style.color = er > 4 ? 'var(--accent)' : (er > 1 ? 'var(--warning)' : 'var(--danger)');
+
+                document.getElementById('video-frame').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${vid.id}?autoplay=1&mute=1" frameborder="0" allow="autoplay; encrypted-media"></iframe>`;
+
+                const seoEl = document.getElementById('seo-score');
+                seoEl.innerText = data.seo.score;
+                seoEl.style.color = data.seo.score > 70 ? 'var(--accent)' : (data.seo.score > 40 ? 'var(--warning)' : 'var(--danger)');
+
+                const auditList = document.getElementById('audit-list');
+                auditList.innerHTML = '';
+                data.seo.audit.forEach(i => {
+                    const color = i.pass ? 'var(--accent)' : 'var(--danger)', icon = i.pass ? 'check' : 'x';
+                    auditList.innerHTML += `<div class="flex justify-between items-center border-b pb-1 mb-1" style="border-color: var(--border-color);"><span>${i.msg}</span> <i data-lucide="${icon}" class="w-3 h-3" style="color: ${color};"></i></div>`;
+                });
+
+                const tagsContainer = document.getElementById('tags-container');
+                tagsContainer.innerHTML = '';
+                if(vid.tags && vid.tags.length) {
+                    vid.tags.forEach(t => tagsContainer.innerHTML += `
+                        <span class="px-2 py-1 rounded text-[10px] font-bold border cursor-pointer hover:opacity-80 transition-colors"
+                              style="background-color: var(--surface-2); border-color: var(--border-color); color: var(--secondary);"
+                              onclick="window.appCore.copyText('${t}')">#${t}</span>`);
+                } else {
+                    tagsContainer.innerHTML = '<span class="text-xs w-full text-center opacity-50 t-muted">NO TAGS</span>';
+                }
+
+                this.renderList('moments-list', data.intel.moments, m => `<div class="flex justify-between items-center border px-2 py-1.5 rounded cursor-pointer hover:opacity-80 transition-all mb-1" style="border-color: var(--border-color); background-color: var(--surface-2);" onclick="window.appCore.seekVideo('${m.timestamp}')"><span class="text-xs font-mono font-bold" style="color: var(--accent);">⏱ ${m.timestamp}</span><span class="text-[9px] opacity-70">${m.mentions} mentions</span></div>`);
+                this.renderList('links-list', data.intel.income, l => {
+                    const color = l.type==='Affiliate'?'var(--primary)':(l.type==='Donation'?'var(--accent)':'var(--danger)');
+                    return `<div class="flex flex-col border-b pb-1 mb-1" style="border-color: var(--border-color);"><span class="text-[9px] font-bold" style="color: ${color};">${l.type}</span><a href="${l.url}" target="_blank" class="text-[10px] truncate hover:opacity-100 opacity-70" style="color: var(--txt-main);">${l.url}</a></div>`;
+                });
+                lucide.createIcons();
+            },
+            seekVideo(ts) {
+                const p = ts.split(':').reverse();
+                let s = 0;
+                if(p[0]) s += parseInt(p[0]); if(p[1]) s += parseInt(p[1])*60; if(p[2]) s += parseInt(p[2])*3600;
+                const ifr = document.querySelector('#video-frame iframe');
+                if(ifr) ifr.src = ifr.src.replace(/&start=\d+/,'').replace(/&autoplay=\d+/,'') + `&start=${s}&autoplay=1`;
+            },
+            copyText(t) { navigator.clipboard.writeText(t); alert("Copied: " + t); },
+            copyTags() {
+                const t = Array.from(document.querySelectorAll('#tags-container span')).map(e => e.innerText.replace('#','')).join(', ');
+                navigator.clipboard.writeText(t); alert("Tags copied!");
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data) return;
+            // 1. THEME SYNC
+            if (data.type === 'THEME_UPDATE' || data.type === 'setTheme' || data.type === 'THEME_CHANGE') {
+                const theme = data.theme || data.payload;
+                if (theme) AppCore.applyTheme(theme);
+            }
+            // 2. AUTH SYNC
+            if (data.type === 'FLOWORK_IDENTITY_SYNC') {
+                AppCore.currentUserAddress = data.userAddress;
+                AppCore.isLoggedIn = !!data.userAddress;
+            }
+        });
+    </script>
+</body>
+</html>

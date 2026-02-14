@@ -1,0 +1,139 @@
+<div id="vue-root" class="h-full">
+    <v-app theme="dark" style="background: transparent;">
+        <v-main class="h-full flex flex-col p-0 overflow-hidden">
+
+            <div class="flex justify-between items-center p-4 border-b border-gray-800 bg-[#171925] z-10">
+                <div class="flex items-center gap-3">
+                    <v-icon icon="mdi-zip-box-outline" color="cyan-accent-3" size="32"></v-icon>
+                    <div>
+                        <h1 class="orbitron text-xl font-bold text-white m-0 leading-none tracking-widest uppercase">
+                            PIXEL <span class="text-cyan-400">OPS</span>
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="window.appCore.openSettings()" class="text-gray-500 hover:text-white" title="Settings">
+                        <v-icon icon="mdi-cog"></v-icon>
+                    </button>
+
+                    <div class="hidden sm:flex items-center gap-2 bg-black border border-gray-800 px-3 py-1 rounded">
+                        <span class="text-[10px] text-gray-500 font-bold">SAVED:</span>
+                        <span class="text-xs mono text-green-400 font-bold">{{ totalSaved }}</span>
+                    </div>
+
+                    <button onclick="window.appCore.switchTab('lander')" class="text-xs text-gray-500 hover:text-white border-l border-gray-700 pl-4 flex items-center gap-1">
+                        <v-icon size="small">mdi-arrow-left</v-icon> <span class="hidden sm:inline">BRIEFING</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+
+                <div class="w-full lg:w-72 bg-[#12141d] border-b lg:border-b-0 lg:border-r border-gray-800 p-4 flex flex-col gap-6 flex-none">
+                    <div>
+                        <h3 class="text-xs font-bold text-cyan-500 mb-4 orbitron tracking-widest uppercase">COMPRESSION MATRIX</h3>
+
+                        <div class="mb-6">
+                            <div class="flex justify-between text-[10px] text-gray-400 mb-2">
+                                <span>QUALITY THRESHOLD</span>
+                                <span class="text-cyan-400 font-bold">{{ (options.maxSizeMB * 1000).toFixed(0) }}KB Target</span>
+                            </div>
+                            <input type="range" min="0.1" max="5" step="0.1" v-model="options.maxSizeMB" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                            <div class="flex justify-between text-[9px] text-gray-600 mt-1 font-bold">
+                                <span>AGGRESSIVE</span>
+                                <span>FIDELITY</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="flex items-center gap-2 cursor-pointer group p-2 rounded hover:bg-white/5 transition">
+                                <div class="w-4 h-4 border border-gray-600 rounded flex items-center justify-center transition-all" :class="{'bg-cyan-500 border-cyan-500': options.useWebWorker}">
+                                    <v-icon v-if="options.useWebWorker" icon="mdi-check" size="x-small" color="black"></v-icon>
+                                </div>
+                                <input type="checkbox" v-model="options.useWebWorker" class="hidden">
+                                <span class="text-xs text-gray-400 group-hover:text-white transition-colors">Acceleration</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto pb-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-black p-2 rounded border border-gray-800 text-center">
+                                <div class="text-[10px] text-gray-500 font-bold uppercase">QUEUE</div>
+                                <div class="text-lg font-bold text-white mono">{{ files.length }}</div>
+                            </div>
+                            <div class="bg-black p-2 rounded border border-gray-800 text-center">
+                                <div class="text-[10px] text-gray-500 font-bold uppercase">READY</div>
+                                <div class="text-lg font-bold text-green-400 mono">{{ processedFiles.length }}</div>
+                            </div>
+                        </div>
+                        <button @click="downloadAll" :disabled="processedFiles.length === 0" class="mt-4 w-full bg-cyan-900/50 hover:bg-cyan-700 text-cyan-400 border border-cyan-500 px-4 py-3 text-xs font-bold rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase">
+                            <v-icon icon="mdi-archive-arrow-down" size="small"></v-icon> DOWNLOAD ZIP
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col bg-[#0f111a] relative overflow-hidden min-h-[400px]">
+
+                    <div
+                        @dragover.prevent="isDragging = true"
+                        @dragleave.prevent="isDragging = false"
+                        @drop.prevent="handleDrop"
+                        :class="{'border-green-500 bg-green-900/10': isDragging, 'border-cyan-500/30 bg-black/30': !isDragging}"
+                        class="m-4 p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer relative overflow-hidden min-h-[150px] group transition-all shrink-0"
+                        @click="triggerUpload"
+                    >
+                        <input type="file" ref="fileInput" multiple accept="image/*" class="hidden" @change="handleFileSelect">
+
+                        <div v-if="!isProcessing" class="pointer-events-none">
+                            <v-icon icon="mdi-cloud-upload" size="48" :color="isDragging ? 'green' : 'grey'" class="mb-2 transition-colors group-hover:text-cyan-400"></v-icon>
+                            <h3 class="text-sm font-bold text-gray-300 orbitron tracking-widest uppercase">DROP ASSETS HERE</h3>
+                            <p class="text-xs text-gray-600 mt-1 mono uppercase">JPG, PNG, WEBP SUPPORTED</p>
+                        </div>
+                        <div v-else>
+                            <v-progress-circular indeterminate color="cyan" size="48" class="mb-2"></v-progress-circular>
+                            <h3 class="text-sm font-bold text-cyan-400 animate-pulse orbitron uppercase">COMPRESSING...</h3>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4">
+                        <div v-if="files.length === 0" class="h-64 flex flex-col items-center justify-center text-gray-600 opacity-50">
+                            <v-icon icon="mdi-image-filter-hdr" size="64" class="mb-4"></v-icon>
+                            <p class="text-xs mono italic uppercase text-center">Awaiting input stream...<br>Pencet kotak di atas atau seret foto ke sini.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div v-for="(file, index) in files" :key="index" class="bg-[#171925] border border-gray-800 p-3 rounded flex items-center justify-between group hover:bg-white/5 transition">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-10 h-10 bg-black rounded flex items-center justify-center shrink-0 border border-gray-800">
+                                        <v-icon icon="mdi-file-image" color="grey" size="small"></v-icon>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-white truncate w-32 sm:w-48">{{ file.original.name }}</div>
+                                        <div class="flex gap-2 text-[10px] mono">
+                                            <span class="text-gray-500">{{ formatSize(file.original.size) }}</span>
+                                            <span class="text-gray-600">➜</span>
+                                            <span v-if="file.compressed" class="text-green-400 font-bold">{{ formatSize(file.compressed.size) }}</span>
+                                            <span v-else class="text-yellow-500 animate-pulse">Wait...</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 sm:gap-4">
+                                    <div v-if="file.compressed" class="text-right">
+                                        <div class="text-xs font-bold text-cyan-400">-{{ getSavings(file) }}%</div>
+                                    </div>
+
+                                    <button v-if="file.compressed" @click.stop="downloadSingle(file)" class="bg-gray-800 hover:bg-cyan-900 text-gray-400 hover:text-cyan-400 p-2 rounded transition-all">
+                                        <v-icon icon="mdi-download" size="small"></v-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </v-main>
+    </v-app>
+</div>

@@ -1,0 +1,43 @@
+<div class="h-full min-h-[60vh] flex flex-col items-center justify-start pt-8 pb-20 animate-fade-in">
+
+    <div class="w-full max-w-3xl">
+        <div class="mb-8 text-center">
+            <h2 class="text-2xl font-bold text-white mb-2">NEURAL CONVERTER</h2>
+            <p class="text-xs text-[--neon-cyan] font-mono tracking-widest">LOCAL_MODE :: SECURE :: FAST</p>
+        </div>
+
+        <div id="drop-zone" class="glass-panel border-2 border-dashed border-gray-600 rounded-2xl p-12 text-center transition-all cursor-pointer group hover:border-[--neon-cyan] relative overflow-hidden"
+             onclick="document.getElementById('file-input').click()">
+            <div class="absolute inset-0 bg-[--neon-cyan] opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none"></div>
+
+            <input type="file" id="file-input" class="hidden" accept="image/png, image/jpeg, image/jpg" multiple onchange="window.appCore.handleFiles(this.files)">
+
+            <div class="w-20 h-20 mx-auto mb-6 text-gray-500 group-hover:text-[--neon-cyan] transition-colors duration-300">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            </div>
+
+            <h3 class="text-2xl font-bold mb-3 text-white">Drop Images Here</h3>
+            <p class="text-gray-400 text-sm mb-8 max-w-md mx-auto">
+                Mendukung JPG & PNG. Proses otomatis ke WebP.<br>
+                <span class="text-xs text-gray-600">Drag & drop banyak file sekaligus untuk batch processing.</span>
+            </p>
+
+            <button class="cyber-btn px-8 py-3 rounded-full text-sm shadow-lg">
+                PILIH FILE MANUAL
+            </button>
+        </div>
+
+        <div id="result-area" class="mt-8 hidden">
+            <div class="flex justify-between items-end pb-4 border-b border-gray-800 mb-4">
+                <div>
+                    <h4 class="text-[--neon-cyan] font-mono text-sm font-bold">STATUS ANTRIAN</h4>
+                    <p class="text-[10px] text-gray-500">Output: WebP Quality 80%</p>
+                </div>
+                <button onclick="window.appCore.resetApp()" class="text-xs text-red-500 hover:text-red-400 font-bold tracking-wider hover:underline">HAPUS SEMUA</button>
+            </div>
+
+            <div id="file-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar pb-10">
+                </div>
+        </div>
+    </div>
+</div>

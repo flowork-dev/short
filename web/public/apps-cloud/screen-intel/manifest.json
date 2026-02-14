@@ -1,0 +1,34 @@
+{
+    "id": "screen-intel",
+    "name": "REKAM LAYAR LAPTOP KUALITAS 4K - GRATIS, TANPA INSTALL",
+    "version": "1.0.0",
+    "description": "Screen recorder berbasis browser terbaik. Rekam aktivitas layar, tab Chrome, atau webcam tanpa watermark. Cocok untuk tutorial dan gaming.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "screen-intel",
+    "capabilities": [
+        "screen_capture",
+        "local_storage"
+    ],
+    "tags": [
+        "video",
+        "recorder",
+        "4k",
+        "creator",
+        "tools"
+    ],
+    "required_variables": [
+        {
+            "name": "YOUTUBE_API_KEY",
+            "label": "Cloud Sync API Key",
+            "description": "Optional: For auto-upload features to cloud storage.",
+            "type": "secret",
+            "required": false
+        }
+    ]
+}

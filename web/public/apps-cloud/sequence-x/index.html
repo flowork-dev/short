@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SEQUENCE-X ENGINE</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <script src="assets/ffmpeg/ffmpeg.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+
+        :root {
+            --bg-deep: #0f172a;
+            --primary-cyan: #54d7f6;
+            --secondary-purple: #706bf3;
+            --accent-gold: #ffd700;
+        }
+
+        body {
+            background-color: transparent;
+            color: #e0f0ff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+
+        /* === CANVA STYLE BG === */
+        .canva-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+            background: #0f172a;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: float 10s infinite alternate;
+        }
+        .blob-blue {
+            top: -10%; left: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, var(--primary-cyan) 0%, transparent 65%);
+        }
+        .blob-gold {
+            bottom: -10%; right: -10%; width: 70vw; height: 70vw;
+            background: radial-gradient(circle, var(--accent-gold) 0%, transparent 65%);
+            animation-delay: -5s;
+        }
+        @keyframes float {
+            0% { transform: translate(0,0); }
+            100% { transform: translate(20px, 40px); }
+        }
+
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px); }
+
+        .preview-box { touch-action: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <div class="canva-bg">
+        <div class="blob blob-blue"></div>
+        <div class="blob blob-gold"></div>
+    </div>
+
+    <div id="view-app" class="flex-1 w-full h-full flex flex-col relative z-10"></div>
+
+    <footer id="global-footer" class="border-t border-white/10 bg-[#0f172a]/80 backdrop-blur-md z-20 flex-none"></footer>
+
+    <script type="text/x-template" id="app-template">
+        <div class="flex flex-col h-full overflow-hidden relative">
+
+            <div class="flex-none px-4 py-3 border-b border-white/10 glass-dark flex justify-between items-center z-50">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="aperture" class="w-5 h-5 text-[#54d7f6]"></i>
+                    <div>
+                        <h1 class="orbitron font-bold text-sm tracking-wider text-white">SEQUENCE-X</h1>
+                        <p class="text-[9px] text-gray-400">PERMUTATION ENGINE</p>
+                    </div>
+                </div>
+                <button @click="resetHistory" class="text-[10px] text-red-400 bg-red-900/10 border border-red-500/20 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition">
+                    <i class="mdi mdi-delete"></i> RESET
+                </button>
+            </div>
+
+            <transition name="toast">
+                <div v-if="toast.show" class="fixed top-20 left-0 right-0 z-[60] flex justify-center pointer-events-none">
+                    <div class="bg-[#1e2130]/90 border border-[#54d7f6] text-white px-6 py-3 rounded-full shadow-[0_0_20px_rgba(84,215,246,0.3)] flex items-center gap-2 backdrop-blur-xl">
+                        <i class="mdi mdi-information-outline text-[#54d7f6]"></i>
+                        <span class="text-xs font-bold">{{ toast.message }}</span>
+                    </div>
+                </div>
+            </transition>
+
+            <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+                <div class="flex-1 lg:flex-[2] overflow-y-auto custom-scroll p-4 pb-80 lg:pb-10">
+
+                    <div class="flex justify-between items-center mb-4 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md py-2 z-30 rounded-lg px-2">
+                        <h2 class="text-xs font-bold orbitron text-gray-400 flex items-center gap-2">
+                            <i data-lucide="layers" class="w-3 h-3 text-[#54d7f6]"></i> VISUAL ASSETS
+                        </h2>
+                        <button @click="addFolder" class="px-3 py-1.5 bg-[#3a3962] text-[#54d7f6] text-[10px] font-bold rounded hover:bg-[#54d7f6] hover:text-black transition">
+                            <i class="mdi mdi-plus"></i> ADD SECTION
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+                        <div v-for="(folder, index) in folders" :key="folder.id" class="glass-dark rounded-xl p-4 relative hover:border-[#54d7f6] transition group">
+
+                            <button @click="removeFolder(index)" class="absolute -top-2 -right-2 bg-[#0f172a] border border-white/20 rounded-full p-1 text-gray-500 hover:text-red-500 z-10 opacity-0 group-hover:opacity-100 transition">
+                                <i data-lucide="x" class="w-3 h-3"></i>
+                            </button>
+
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 rounded bg-[#0f172a]/50 border border-white/10 flex items-center justify-center text-[#54d7f6] font-bold text-xs">{{ index + 1 }}</div>
+                                <input type="text" v-model="folder.name" class="bg-transparent border-b border-white/10 focus:border-[#54d7f6] w-full text-sm font-bold text-white py-1 outline-none" placeholder="Section Name...">
+                            </div>
+
+                            <button @click="openCaptionEditor(index)" class="w-full mb-3 py-2 px-3 bg-[#0f172a]/40 border border-white/10 rounded flex items-center justify-between hover:bg-[#3a3962] transition">
+                                <div class="flex items-center gap-2">
+                                    <i class="mdi mdi-format-text text-[#54d7f6]"></i>
+                                    <span class="text-[10px] text-gray-300 font-bold">TEXT SETTINGS</span>
+                                </div>
+                                <div v-if="folder.caption && folder.caption.text" class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]"></div>
+                                <span v-else class="text-[9px] text-gray-500">Empty</span>
+                            </button>
+
+                            <div class="border-2 border-dashed border-white/10 hover:border-[#54d7f6] hover:bg-[#54d7f6]/5 rounded-lg h-24 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden"
+                                @click="$refs['fileInput'+index][0].click()" @dragover.prevent @drop.prevent="handleDrop($event, index)">
+                                <input :ref="'fileInput'+index" type="file" multiple accept="video/*" class="hidden" @change="handleFileSelect($event, index)">
+
+                                <div v-if="folder.files.length === 0" class="flex flex-col items-center opacity-50">
+                                    <i data-lucide="video" class="w-5 h-5 text-[#54d7f6] mb-1"></i>
+                                    <p class="text-[8px] text-gray-400 uppercase">Video Only</p>
+                                </div>
+                                <div v-else class="w-full h-full p-2 overflow-y-auto custom-scroll space-y-1">
+                                    <div v-for="(file, fIndex) in folder.files" :key="fIndex" class="flex justify-between items-center text-[9px] bg-[#0f172a]/80 p-1 rounded border border-white/10">
+                                        <span class="truncate max-w-[70%] text-gray-300">{{ file.name }}</span>
+                                        <span class="text-[#54d7f6]">{{ (file.size/1024/1024).toFixed(1) }}MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-[9px] text-gray-500 text-right">{{ folder.files.length }} CLIPS</div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-white/10 pt-4 mt-6 mb-8">
+                        <h2 class="text-xs font-bold orbitron text-gray-400 flex items-center gap-2 mb-4">
+                            <i data-lucide="music" class="w-3 h-3 text-[#d946ef]"></i> BACKGROUND MUSIC
+                        </h2>
+                        <div class="glass-dark border border-[#d946ef]/20 rounded-xl p-4 relative hover:border-[#d946ef]/50 transition">
+                            <div class="border-2 border-dashed border-white/10 hover:border-[#d946ef] rounded-lg h-20 flex flex-col items-center justify-center cursor-pointer overflow-hidden"
+                                @click="$refs.bgmInput.click()" @dragover.prevent @drop.prevent="handleBgmDrop">
+                                <input ref="bgmInput" type="file" multiple accept="audio/*" class="hidden" @change="handleBgmSelect">
+
+                                <div v-if="bgmFiles.length === 0" class="flex flex-col items-center opacity-50">
+                                    <i data-lucide="headphones" class="w-5 h-5 text-[#d946ef] mb-1"></i>
+                                    <p class="text-[8px] text-gray-400 uppercase">Drop MP3 Here</p>
+                                </div>
+                                <div v-else class="w-full h-full p-2 overflow-y-auto custom-scroll space-y-1">
+                                    <div v-for="(file, index) in bgmFiles" :key="index" class="flex justify-between items-center text-[9px] bg-[#0f172a]/80 p-1 rounded border border-white/10">
+                                        <span class="truncate max-w-[80%] text-gray-300">{{ file.name }}</span>
+                                        <button @click.stop="removeBgm(index)" class="text-red-500 hover:text-white"><i class="mdi mdi-close"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-0 left-0 right-0 lg:static lg:flex-1 lg:h-full glass-dark border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40">
+
+                    <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mt-2 lg:hidden"></div>
+
+                    <div class="p-4 flex-none">
+                        <div class="flex gap-2 mb-3">
+                            <div class="flex-1 bg-[#0f172a]/60 rounded border border-white/10 p-2 flex items-center justify-between">
+                                <span class="text-[9px] text-gray-400 font-bold">QTY:</span>
+                                <div class="flex items-center gap-1">
+                                    <button @click="batchSize > 1 ? batchSize-- : null" class="w-6 h-6 bg-[#3a3962] rounded text-[#54d7f6] font-bold">-</button>
+                                    <input type="number" v-model.number="batchSize" class="w-8 bg-transparent text-center text-white font-black text-sm outline-none">
+                                    <button @click="batchSize < 50 ? batchSize++ : null" class="w-6 h-6 bg-[#3a3962] rounded text-[#54d7f6] font-bold">+</button>
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-[#0f172a]/60 rounded border border-white/10 p-2 flex items-center gap-2">
+                                <i class="mdi mdi-volume-high text-[#d946ef] text-xs"></i>
+                                <input type="range" v-model.number="bgmVolume" min="0" max="1" step="0.1" class="w-full h-1 bg-gray-700 rounded-lg accent-[#d946ef]">
+                            </div>
+                        </div>
+
+                        <button @click="runBatchSequence" :disabled="processingState !== 'idle' || totalCombinations === 0" class="w-full py-4 rounded-xl font-black orbitron text-sm tracking-widest bg-gradient-to-r from-[#54d7f6] to-[#706bf3] text-black shadow-[0_0_20px_rgba(84,215,246,0.3)] hover:shadow-[0_0_30px_rgba(84,215,246,0.5)] disabled:opacity-50 transition active:scale-95">
+                            <span v-if="processingState === 'idle'"><i class="mdi mdi-shimmer"></i> START RENDER ({{ batchSize }})</span>
+                            <span v-else class="animate-pulse"><i class="mdi mdi-loading mdi-spin"></i> PROCESSING...</span>
+                        </button>
+
+                        <div v-if="processingState !== 'idle'" class="mt-3 bg-black/50 rounded border border-white/10 p-2">
+                            <div class="flex justify-between text-[9px] mb-1">
+                                <span class="text-[#54d7f6]">{{ stateDescription }}</span>
+                                <span class="text-white font-bold">{{ progress }}%</span>
+                            </div>
+                            <div class="h-1.5 bg-[#0f172a] rounded-full overflow-hidden">
+                                <div class="h-full bg-[#54d7f6] transition-all duration-300" :style="{ width: progress + '%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto custom-scroll px-4 pb-4 bg-[#0f172a]/20 border-t border-white/10 min-h-[100px]">
+                        <div v-if="generatedVideos.length === 0" class="h-full flex items-center justify-center text-gray-500 text-[10px] italic">No results yet...</div>
+                        <div v-else class="space-y-2 mt-2">
+                            <div v-for="(video, vIdx) in generatedVideos" :key="vIdx" class="flex gap-3 bg-[#1e2130]/80 p-2 rounded border border-white/10 hover:border-[#54d7f6]/50 transition">
+                                <video class="h-10 w-8 bg-black object-cover rounded" :src="video.url"></video>
+                                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                    <div class="text-[10px] text-[#54d7f6] font-bold truncate">{{ video.name }}</div>
+                                    <div class="text-[9px] text-gray-500">HD • Ready</div>
+                                </div>
+                                <a :href="video.url" :download="video.name" class="w-8 h-8 bg-[#3a3962] rounded flex items-center justify-center text-white hover:bg-[#54d7f6] hover:text-black transition">
+                                    <i class="mdi mdi-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="showCaptionModal" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+                <div class="glass-dark border border-white/10 rounded-2xl w-full max-w-md flex flex-col max-h-[90vh] shadow-2xl">
+                    <div class="p-3 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
+                        <h3 class="orbitron font-bold text-[#54d7f6] text-xs">EDIT TEXT</h3>
+                        <button @click="closeCaptionModal" class="text-gray-400 hover:text-white"><i class="mdi mdi-close"></i></button>
+                    </div>
+
+                    <div class="flex-1 p-4 overflow-y-auto custom-scroll">
+                        <div class="relative w-[200px] h-[355px] bg-black border border-gray-700 mx-auto mb-4 preview-box overflow-hidden" ref="previewBox"
+                             @mousemove="onMove" @mouseup="stopAction" @mouseleave="stopAction"
+                             @touchmove="onTouchMove" @touchend="stopAction">
+
+                            <div class="absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-20 pointer-events-none border-white/20">
+                                <div class="border-r border-b border-white/20"></div><div class="border-b border-white/20"></div>
+                                <div class="border-r border-white/20"></div><div></div>
+                            </div>
+
+                            <div class="absolute border border-white/50 flex items-center justify-center text-center overflow-hidden"
+                                 :style="{
+                                    left: tempCaption.x + '%', top: tempCaption.y + '%',
+                                    width: tempCaption.w + '%', height: tempCaption.h + '%',
+                                    backgroundColor: tempCaption.bgColor
+                                 }"
+                                 @mousedown.stop="startMove" @touchstart.stop="startMoveTouch">
+
+                                <div class="w-full pointer-events-none p-1 leading-tight whitespace-pre-wrap"
+                                     :style="{
+                                        color: tempCaption.color,
+                                        fontSize: (tempCaption.size/5) + 'px',
+                                        fontFamily: 'Arial', fontWeight: 'bold'
+                                     }">{{ tempCaption.text || 'TEXT' }}</div>
+
+                                <div class="absolute bottom-0 right-0 w-5 h-5 bg-[#54d7f6] flex items-center justify-center rounded-tl cursor-se-resize"
+                                     @mousedown.stop="startResize" @touchstart.stop="startResizeTouch">
+                                    <i class="mdi mdi-resize-bottom-right text-black text-[8px]"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <textarea v-model="tempCaption.text" rows="2" class="w-full bg-[#0f172a] border border-white/10 rounded p-2 text-xs text-white focus:border-[#54d7f6] outline-none" placeholder="Enter text here..."></textarea>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[8px] text-gray-500 block mb-1">COLOR</label>
+                                    <input type="color" v-model="tempCaption.color" class="w-full h-8 bg-transparent border border-white/10 rounded cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="text-[8px] text-gray-500 block mb-1">BG COLOR</label>
+                                    <div class="flex gap-1">
+                                        <input type="color" v-model="tempCaption.bgColor" class="flex-1 h-8 bg-transparent border border-white/10 rounded cursor-pointer">
+                                        <button @click="tempCaption.bgColor = 'transparent'" class="px-2 bg-gray-700 text-white text-[8px] rounded">NO</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-[8px] text-gray-500 block mb-1">SIZE: {{ tempCaption.size }}</label>
+                                <input type="range" v-model.number="tempCaption.size" min="20" max="250" class="w-full h-1 bg-gray-700 rounded-lg accent-[#54d7f6]">
+                            </div>
+
+                            <select v-model="tempCaption.font" class="w-full bg-[#0f172a] border border-white/10 rounded p-2 text-xs text-white mt-2">
+                                <option v-for="font in fontList" :value="font">{{ font.replace('.ttf','') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-3 border-t border-white/10 bg-[#0f172a] flex justify-end gap-2">
+                        <button @click="clearCaption" class="text-xs text-red-400 font-bold px-3 py-2">CLEAR</button>
+                        <button @click="saveCaption" class="text-xs bg-[#54d7f6] text-black font-bold px-6 py-2 rounded hover:bg-white transition">SAVE</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </script>
+
+    <script>
+        const { createApp } = Vue;
+
+        const AppLogic = {
+            data() {
+                return {
+                    folders: [
+                        { id: 1, name: 'Hook (Depan)', files: [], caption: { text: '', x: 10, y: 70, w: 80, h: 10, color: '#ffffff', bgColor: '#000000', size: 50, font: 'Roboto-Black.ttf' } },
+                        { id: 2, name: 'Body (Isi)', files: [], caption: { text: '', x: 10, y: 70, w: 80, h: 10, color: '#ffffff', bgColor: 'transparent', size: 50, font: 'Roboto-Black.ttf' } },
+                        { id: 3, name: 'CTA (Akhir)', files: [], caption: { text: '', x: 10, y: 50, w: 80, h: 15, color: '#ffff00', bgColor: '#ff0000', size: 60, font: 'Roboto-Black.ttf' } }
+                    ],
+                    fontList: ['BitcountSingle-Black.ttf', 'GoogleSans-Bold.ttf', 'GravitasOne-Regular.ttf', 'Macondo-Regular.ttf', 'Oswald-VariableFont_wght.ttf', 'Raleway-VariableFont_wght.ttf', 'Roboto-Black.ttf', 'Roboto-ExtraBold.ttf', 'RobotoSlab-Light.ttf', 'SpecialGothicExpandedOne-Regular.ttf'],
+                    bgmFiles: [],
+                    bgmVolume: 0.5,
+
+                    showCaptionModal: false,
+                    activeFolderIndex: 0,
+                    tempCaption: {},
+
+                    dragMode: null, startX: 0, startY: 0, initX: 0, initY: 0, initW: 0, initH: 0,
+
+                    historyLog: JSON.parse(localStorage.getItem('seq_x_history')) || [],
+                    batchSize: 1,
+                    currentBatchIndex: 0,
+                    generatedVideos: [],
+                    processingState: 'idle',
+                    progress: 0,
+                    cooldownTimer: 0,
+                    _ffmpeg: null,
+
+                    toast: { show: false, message: '' }
+                }
+            },
+            computed: {
+                totalCombinations() {
+                    if (!this.folders || !Array.isArray(this.folders)) return 0;
+                    return this.folders.reduce((acc, f) => acc * (f.files ? f.files.length : 0), 1) || 0;
+                },
+                stateDescription() {
+                    if (this.processingState === 'loading') return 'LOADING ENGINE...';
+                    if (this.processingState === 'rendering') return 'RENDERING...';
+                    if (this.processingState === 'cooldown') return 'COOLING DOWN...';
+                    return 'IDLE';
+                }
+            },
+            methods: {
+                notify(msg) {
+                    this.toast.message = msg;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 3000);
+                },
+
+                addFolder() {
+                    if(!this.folders) this.folders = [];
+                    this.folders.push({ id: Date.now(), name: 'Section ' + (this.folders.length + 1), files: [], caption: { text: '', x: 10, y: 70, w: 80, h: 10, color: '#ffffff', bgColor: 'transparent', size: 40, font: 'Roboto-Black.ttf' } });
+                },
+                removeFolder(i) { if(confirm('Hapus bagian ini?')) this.folders.splice(i, 1); },
+
+                handleFileSelect(e, i) {
+                    if(!this.folders[i].files) this.folders[i].files = [];
+                    this.folders[i].files.push(...Array.from(e.target.files));
+                },
+                handleDrop(e, i) {
+                    if(!this.folders[i].files) this.folders[i].files = [];
+                    this.folders[i].files.push(...Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/')));
+                },
+                handleBgmSelect(e) { this.bgmFiles.push(...Array.from(e.target.files)); },
+                handleBgmDrop(e) { this.bgmFiles.push(...Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'))); },
+                removeBgm(i) { this.bgmFiles.splice(i, 1); },
+
+                resetHistory() { if(confirm('Reset memori?')) { this.historyLog = []; localStorage.removeItem('seq_x_history'); } },
+
+                openCaptionEditor(index) {
+                    this.activeFolderIndex = index;
+                    const def = { text: '', x: 10, y: 70, w: 80, h: 10, color: '#ffffff', bgColor: 'transparent', size: 40, font: 'Roboto-Black.ttf' };
+                    this.tempCaption = { ...def, ...this.folders[index].caption };
+                    this.showCaptionModal = true;
+                },
+                closeCaptionModal() { this.showCaptionModal = false; },
+                saveCaption() {
+                    this.folders[this.activeFolderIndex].caption = { ...this.tempCaption };
+                    this.closeCaptionModal();
+                },
+                clearCaption() { this.tempCaption.text = ''; this.saveCaption(); },
+
+                startMove(e) { this.initDrag(e.clientX, e.clientY, 'move'); },
+                startMoveTouch(e) { this.initDrag(e.touches[0].clientX, e.touches[0].clientY, 'move'); e.preventDefault(); },
+
+                startResize(e) { this.initDrag(e.clientX, e.clientY, 'resize'); },
+                startResizeTouch(e) { this.initDrag(e.touches[0].clientX, e.touches[0].clientY, 'resize'); e.preventDefault(); },
+
+                initDrag(cx, cy, mode) {
+                    this.dragMode = mode;
+                    this.startX = cx;
+                    this.startY = cy;
+                    this.initX = this.tempCaption.x;
+                    this.initY = this.tempCaption.y;
+                    this.initW = this.tempCaption.w;
+                    this.initH = this.tempCaption.h;
+                },
+
+                onMove(e) { this.handleDrag(e.clientX, e.clientY); },
+                onTouchMove(e) { this.handleDrag(e.touches[0].clientX, e.touches[0].clientY); },
+
+                handleDrag(cx, cy) {
+                    if (!this.dragMode) return;
+                    const rect = this.$refs.previewBox.getBoundingClientRect();
+                    const dx = ((cx - this.startX) / rect.width) * 100;
+                    const dy = ((cy - this.startY) / rect.height) * 100;
+
+                    if (this.dragMode === 'move') {
+                        this.tempCaption.x = Math.max(0, Math.min(100 - this.tempCaption.w, this.initX + dx));
+                        this.tempCaption.y = Math.max(0, Math.min(100 - this.tempCaption.h, this.initY + dy));
+                    } else if (this.dragMode === 'resize') {
+                        this.tempCaption.w = Math.max(10, Math.min(100 - this.tempCaption.x, this.initW + dx));
+                        this.tempCaption.h = Math.max(5, Math.min(100 - this.tempCaption.y, this.initH + dy));
+                    }
+                },
+                stopAction() { this.dragMode = null; },
+
+                wrapText(text, fontSize, boxWidth) {
+                    if (!text) return "";
+                    const charWidth = fontSize * 0.55;
+                    const safeBoxWidth = boxWidth * 0.95;
+                    const maxCharsPerLine = Math.floor(safeBoxWidth / charWidth);
+                    const lines = [];
+                    const paragraphs = text.split('\n');
+                    paragraphs.forEach(paragraph => {
+                        const words = paragraph.split(' ');
+                        let currentLine = words[0];
+                        for (let i = 1; i < words.length; i++) {
+                            if ((currentLine.length + 1 + words[i].length) <= maxCharsPerLine) {
+                                currentLine += " " + words[i];
+                            } else {
+                                lines.push(currentLine);
+                                currentLine = words[i];
+                            }
+                        }
+                        lines.push(currentLine);
+                    });
+                    return lines.join('\n');
+                },
+
+                async initEngine() {
+                    if (this._ffmpeg) { try { this._ffmpeg.exit(); } catch(e){} this._ffmpeg = null; }
+                    const { createFFmpeg } = FFmpeg;
+                    let baseUrl = window.location.href.split('?')[0];
+                    baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                    const corePath = new URL('assets/ffmpeg/ffmpeg-core.js', baseUrl).href;
+
+                    this._ffmpeg = createFFmpeg({
+                        log: true, corePath, mainName: 'main',
+                        progress: (p) => { if(p.ratio) this.progress = Math.round(p.ratio * 100); }
+                    });
+                    await this._ffmpeg.load();
+                    return this._ffmpeg;
+                },
+
+                async runBatchSequence() {
+                    if (!this.folders || this.folders.some(f => !f.files || f.files.length === 0)) return this.notify("Please fill all folder sections!");
+                    this.generatedVideos = [];
+
+                    for (let i = 1; i <= this.batchSize; i++) {
+                        this.currentBatchIndex = i;
+                        this.progress = 0;
+                        try {
+                            this.processingState = 'loading';
+                            await this.initEngine();
+                            const { fetchFile } = FFmpeg;
+                            this.processingState = 'rendering';
+
+                            let combo = null;
+                            for(let a=0; a<2000; a++) {
+                                let temp = [], ids = [];
+                                this.folders.forEach(f => {
+                                    let file = f.files[Math.floor(Math.random() * f.files.length)];
+                                    temp.push(file); ids.push(file.name + file.size);
+                                });
+                                if(!this.historyLog.includes(ids.join('|'))) { combo = {files: temp, id: ids.join('|')}; break; }
+                            }
+                            if (!combo) { this.notify("No unique combinations left!"); break; }
+
+                            const url = await this.renderVideo(combo, i, fetchFile);
+                            const resultObj = { url, name: `SEQX_${Date.now()}_${i}.mp4`, size: 'HD', batchId: i };
+                            this.generatedVideos.unshift(resultObj);
+                            this.historyLog.push(combo.id);
+                            localStorage.setItem('seq_x_history', JSON.stringify(this.historyLog));
+
+                            setTimeout(() => { const a = document.createElement('a'); a.href = url; a.download = resultObj.name; a.click(); }, 500);
+
+                        } catch (e) { console.error("Render Fail:", e); this.notify("Render Failed: Check Console"); }
+                        finally {
+                            if (this._ffmpeg) { try { this._ffmpeg.exit(); } catch(e){} this._ffmpeg = null; }
+                            if (i < this.batchSize) {
+                                this.processingState = 'cooldown';
+                                for (let t = 5; t > 0; t--) { this.cooldownTimer = t; await new Promise(r => setTimeout(r, 1000)); }
+                            }
+                        }
+                    }
+                    this.processingState = 'idle';
+                    this.notify("Batch Processing Done!");
+                },
+
+                async renderVideo(combo, idx, fetchFile) {
+                    const ffmpeg = this._ffmpeg;
+                    const inputs = [];
+                    const args = [];
+                    let filter = "";
+
+                    try { ffmpeg.FS('unlink', 'out.mp4'); } catch(e){}
+
+                    for(let i=0; i<combo.files.length; i++) {
+                        const name = `in${i}.mp4`;
+                        ffmpeg.FS('writeFile', name, await fetchFile(combo.files[i]));
+                        inputs.push(name);
+                        args.push('-i', name);
+                    }
+
+                    let hasBgm = false;
+                    if (this.bgmFiles.length > 0) {
+                        const bgmFile = this.bgmFiles[Math.floor(Math.random() * this.bgmFiles.length)];
+                        const bgmName = 'bgm.mp3';
+                        ffmpeg.FS('writeFile', bgmName, await fetchFile(bgmFile));
+                        args.push('-stream_loop', '-1', '-i', bgmName);
+                        hasBgm = true;
+                    }
+
+                    for (let i = 0; i < inputs.length; i++) {
+                        const cap = this.folders[i].caption;
+                        if(cap && cap.text && cap.text.trim() !== '') {
+                            const fontName = cap.font || 'Roboto-Black.ttf';
+                            try {
+                                const localRes = await fetch(`assets/fonts/${fontName}`);
+                                if(localRes.ok) {
+                                    const fontBuff = await localRes.arrayBuffer();
+                                    ffmpeg.FS('writeFile', fontName, new Uint8Array(fontBuff));
+                                } else {
+                                    const cdnRes = await fetch('https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Bold.ttf');
+                                    const cdnBuff = await cdnRes.arrayBuffer();
+                                    ffmpeg.FS('writeFile', fontName, new Uint8Array(cdnBuff));
+                                }
+                            } catch(e) {}
+                        }
+                    }
+
+                    const vCount = inputs.length;
+                    inputs.forEach((_, i) => {
+                        let chain = `[${i}:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30`;
+                        const cap = this.folders[i].caption;
+                        if(cap && cap.text && cap.text.trim() !== '') {
+                            const bx = (cap.x / 100) * 1080;
+                            const by = (cap.y / 100) * 1920;
+                            const bw = (cap.w / 100) * 1080;
+                            const bh = (cap.h / 100) * 1920;
+                            const fontColor = cap.color.replace('#', '') + 'FF';
+                            const boxColor = cap.bgColor === 'transparent' ? '0x00000000' : (cap.bgColor.replace('#', '') + '80');
+                            const fontFile = cap.font || 'Roboto-Black.ttf';
+
+                            const wrappedText = this.wrapText(cap.text, cap.size, bw);
+                            const textFileName = `text_${i}.txt`;
+                            ffmpeg.FS('writeFile', textFileName, wrappedText);
+
+                            if(cap.bgColor !== 'transparent') chain += `,drawbox=x=${bx}:y=${by}:w=${bw}:h=${bh}:color=${boxColor}:t=fill`;
+                            chain += `,drawtext=fontfile=${fontFile}:textfile=${textFileName}:x=${bx}+(${bw}-text_w)/2:y=${by}+(${bh}-text_h)/2:fontsize=${cap.size}:fontcolor=0x${fontColor}:line_spacing=10`;
+                        }
+                        chain += `[v${i}];`;
+                        filter += chain;
+                    });
+
+                    inputs.forEach((_, i) => filter += `[v${i}][${i}:a]`);
+                    filter += `concat=n=${vCount}:v=1:a=1[v_main][a_main];`;
+
+                    if (hasBgm) {
+                        filter += `[${vCount}:a]volume=${this.bgmVolume}[a_bgm];[a_main][a_bgm]amix=inputs=2:duration=first:dropout_transition=2[a_final]`;
+                    } else { filter += `[a_main]anull[a_final]`; }
+
+                    await ffmpeg.run(...args, '-filter_complex', filter, '-map', '[v_main]', '-map', '[a_final]', '-r', '30', '-c:v', 'libx264', '-preset', 'ultrafast', '-shortest', 'out.mp4');
+                    const data = ffmpeg.FS('readFile', 'out.mp4');
+                    return URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'}));
+                }
+            }
+        };
+
+        const app = createApp({
+            template: '#app-template',
+            ...AppLogic
+        });
+        app.mount('#view-app');
+
+        window.onload = () => {
+            if(window.lucide) window.lucide.createIcons();
+        }
+    </script>
+
+    <script>
+        async function loadFooter() {
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+                let html = await response.text();
+                const realYear = new Date().getFullYear();
+                html = html.replace('{YEAR}', realYear);
+                document.getElementById('global-footer').innerHTML = html;
+                if(window.lucide) window.lucide.createIcons();
+            } catch (e) {
+                const year = new Date().getFullYear();
+                document.getElementById('global-footer').innerHTML = `<div class="p-4 text-center text-gray-600 text-[10px] tracking-widest font-mono">FLOWORK SYSTEM © ${year}</div>`;
+            }
+        }
+        loadFooter();
+    </script>
+</body>
+</html>

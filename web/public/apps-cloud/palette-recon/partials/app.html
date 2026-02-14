@@ -1,0 +1,79 @@
+<div class="flex flex-col h-full bg-[#050505] font-[Rajdhani] relative overflow-hidden">
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative z-10">
+
+        <div class="w-full md:w-1/2 md:max-w-md bg-[#0f1016] border-b md:border-b-0 md:border-r border-gray-800 flex flex-col shrink-0 relative z-20">
+
+            <div class="relative w-full h-64 md:h-full group bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iIzE3MTkyNSIgZD0iTTAgMGgyMHYyMEgwVjB6Ii8+PHBhdGggZmlsbD0iIzE5M2EyNSIgZD0iTTAgMGgxMHYxMEgwVjB6bTEwIDEwaDEwdjEwSDEwVjEweiIvPjwvc3ZnPg==')]">
+
+                <input type="file" id="file-input" class="absolute inset-0 opacity-0 cursor-pointer z-50" accept="image/*">
+
+                <div id="upload-placeholder" class="absolute inset-0 flex flex-col items-center justify-center p-6 transition-opacity duration-300">
+                    <div class="w-20 h-20 rounded-full bg-[#f59e0b]/10 border border-[#f59e0b] flex items-center justify-center mb-4 animate-pulse">
+                        <i data-lucide="scan-eye" class="w-10 h-10 text-[#f59e0b]"></i>
+                    </div>
+                    <h3 class="text-white font-[Oswald] text-xl tracking-wider">UPLOAD THUMBNAIL</h3>
+                    <p class="text-gray-500 text-xs mt-2 font-mono text-center">TAP HERE TO SCAN PIXELS</p>
+                </div>
+
+                <div id="preview-container" class="w-full h-full flex items-center justify-center p-4 opacity-0 transition-opacity duration-500">
+                    </div>
+
+                <div class="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-[#0f1016] to-transparent pointer-events-none"></div>
+            </div>
+
+            <div class="px-6 py-4 bg-[#0f1016] border-t border-gray-800 flex justify-between items-center">
+                <div>
+                    <span class="text-[10px] text-gray-500 font-bold tracking-widest block">STATUS</span>
+                    <span id="scan-status" class="text-xs text-[#f59e0b] font-mono animate-pulse">WAITING INPUT...</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] text-gray-500 font-bold tracking-widest block">DEPTH</span>
+                    <span class="text-xs text-white font-mono">30 ZONES</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar bg-[#050505] relative">
+            <div class="p-4 md:p-8 pb-32"> <div id="result-section" class="hidden animate-fade-up">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-bold text-white font-[Oswald] flex items-center gap-2">
+                            <i data-lucide="grid" class="w-4 h-4 text-[#f59e0b]"></i> DOMINANT PALETTE
+                        </h2>
+                        <span class="px-2 py-1 rounded bg-gray-800 text-[10px] text-gray-400 border border-gray-700 font-mono">SORTED BY AREA</span>
+                    </div>
+
+                    <div id="palette-grid" class="grid grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                        </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="intel-panel" class="absolute bottom-0 left-0 w-full bg-[#12131c]/90 backdrop-blur-md border-t border-[#f59e0b] transform translate-y-full transition-transform duration-300 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div class="max-w-5xl mx-auto p-4 md:p-6 flex items-center gap-4 md:gap-8">
+
+            <div id="preview-color-box" class="w-16 h-16 md:w-20 md:h-20 rounded-lg shadow-lg border border-white/20 shrink-0 relative group cursor-pointer" onclick="AppCore.copyCurrentHex()">
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/40 text-white font-bold text-[10px]">COPY</div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+                <div class="flex items-baseline gap-3 mb-1">
+                    <h2 id="val-hex" class="text-3xl md:text-4xl font-[Oswald] font-black text-white tracking-tight cursor-pointer hover:text-[#f59e0b] transition truncate" onclick="AppCore.copyCurrentHex()">#------</h2>
+                    <span id="val-rgb" class="text-xs md:text-sm font-mono text-gray-500 hidden md:inline-block">rgb(-, -, -)</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="px-1.5 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] text-[10px] font-bold border border-[#f59e0b]/30">PSYCHOLOGY</span>
+                    <p id="val-vibe" class="text-xs md:text-sm text-gray-300 font-medium truncate">Tap a color to reveal intel...</p>
+                </div>
+            </div>
+
+            <button onclick="AppCore.copyCurrentHex()" class="md:hidden p-3 rounded-full bg-[#f59e0b] text-black shadow-lg active:scale-95 transition">
+                <i data-lucide="copy" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+
+</div>

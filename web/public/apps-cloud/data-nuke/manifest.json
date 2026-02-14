@@ -1,0 +1,16 @@
+{
+    "id": "data-nuke",
+    "name": "DATA NUKE - DIGITAL SHREDDER",
+    "version": "1.0.0",
+    "description": "Secure file erasure utility simulating DoD 5220.22-M standards. Irreversible data destruction.",
+    "author": "Flowork Black Ops",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "slug": "data-nuke",
+    "capabilities": ["binary_processing", "file_system_access"],
+    "tags": ["security", "privacy", "utility"],
+    "default_width": 1000,
+    "default_height": 800
+}

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Icon Tactical | Flowork Module</title>
+
+    <script>
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const forcedTheme = params.get('theme');
+                const cachedTheme = localStorage.getItem('flowork_theme');
+                const finalTheme = forcedTheme || cachedTheme || 'dark';
+                document.documentElement.setAttribute('data-theme', finalTheme);
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'flowork_theme') document.documentElement.setAttribute('data-theme', e.newValue);
+                });
+            } catch (e) { console.error("Theme Init Error", e); }
+        })();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        page: 'var(--bg-page)',
+                        surface: 'var(--bg-surface)',
+                        input: 'var(--bg-input)',
+                        main: 'var(--text-main)',
+                        muted: 'var(--text-muted)',
+                        brand: 'var(--brand-color)',
+                        border: 'var(--border-color)',
+                        accent: 'var(--accent-color)',
+                        glow: 'var(--glow-color)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DARK DEFAULT */
+            --bg-page: #171925;
+            --bg-surface: rgba(23, 25, 37, 0.95);
+            --bg-input: #2a2c3d;
+            --text-main: #e0f0ff;
+            --text-muted: #8a8d9f;
+            --brand-color: #54d7f6; /* Cyan */
+            --border-color: rgba(84, 215, 246, 0.2);
+            --accent-color: #706bf3; /* Purple */
+            --glow-color: rgba(84, 215, 246, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-page: #f0f2f5;
+            --bg-surface: #ffffff;
+            --bg-input: #e4e6eb;
+            --text-main: #1c1e21;
+            --text-muted: #65676b;
+            --brand-color: #0084ff;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #6200ea;
+            --glow-color: rgba(0, 132, 255, 0.1);
+        }
+
+        [data-theme="hacker"] {
+            --bg-page: #000000;
+            --bg-surface: #0a0a0a;
+            --bg-input: #111;
+            --text-main: #00ff00;
+            --text-muted: #008800;
+            --brand-color: #00ff00;
+            --border-color: #004400;
+            --accent-color: #ff00ff;
+            --glow-color: rgba(0, 255, 0, 0.2);
+        }
+
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background-color: var(--bg-page);
+            background-image: radial-gradient(at 100% 0%, var(--accent-color) 0px, transparent 50%),
+                              radial-gradient(at 0% 100%, var(--brand-color) 0px, transparent 50%);
+            opacity: 0.15;
+        }
+        body { -webkit-tap-highlight-color: transparent; overflow: hidden; user-select: none; }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--brand-color); border-radius: 4px; }
+
+        /* DOCK BUTTONS */
+        .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; cursor: pointer; transition: transform 0.1s; }
+        .tool-btn:active { transform: scale(0.95); }
+        .tool-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; }
+        .tool-btn.active .tool-icon { background: var(--brand-color); color: var(--bg-page); border-color: var(--brand-color); box-shadow: 0 0 15px var(--glow-color); }
+        .tool-btn.active .tool-label { color: var(--brand-color); }
+        .tool-label { font-size: 10px; font-weight: 700; color: var(--text-muted); font-family: 'Orbitron', sans-serif; letter-spacing: 0.5px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        /* Checkboard pattern for transparent bg */
+        .bg-checkboard {
+            background-image: linear-gradient(45deg, #808080 25%, transparent 25%), linear-gradient(-45deg, #808080 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #808080 75%), linear-gradient(-45deg, transparent 75%, #808080 75%);
+            background-size: 10px 10px;
+            background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body class="bg-page text-main font-sans h-screen w-screen flex flex-col overflow-hidden relative">
+
+    <div id="app" class="h-full flex flex-col">
+        <div class="mesh-bg"></div>
+
+        <div class="absolute top-0 left-0 w-full z-50 pt-[calc(env(safe-area-inset-top)+12px)] px-6 pointer-events-none flex justify-between items-center">
+            <div class="pointer-events-auto flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-brand/10 border border-brand/30 flex items-center justify-center text-brand animate-pulse">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold font-tech tracking-wider text-main">ICON <span class="text-brand">TACTICAL</span></h1>
+                    <div class="text-[9px] font-mono text-accent tracking-[0.2em] uppercase font-bold">Generator v1.0</div>
+                </div>
+            </div>
+            <button @click="closeApp" class="pointer-events-auto w-10 h-10 rounded-full bg-surface/50 backdrop-blur border border-border flex items-center justify-center hover:bg-red-500/20 hover:text-red-500 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <main class="flex-1 relative w-full flex flex-col items-center justify-center overflow-hidden bg-transparent cursor-grab active:cursor-grabbing"
+            @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd"
+            @mousedown="handleMouseDown" @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseUp" @wheel.prevent="handleWheel">
+
+            <div id="canvas-stage" class="absolute origin-center transition-transform duration-75 ease-out flex items-center justify-center"
+                :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})` }">
+
+                <div class="w-[900px] max-w-[95vw] grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+
+                    <div v-if="!hasImage" class="md:col-span-12 bg-surface/80 backdrop-blur-md border border-border p-10 rounded-3xl shadow-[0_0_30px_-10px_var(--glow-color)] flex flex-col items-center justify-center text-center min-h-[400px] cursor-pointer group hover:border-brand/50 transition-all"
+                         @click="triggerUpload" @dragover.prevent @drop.prevent="handleDrop">
+
+                        <div class="w-24 h-24 rounded-full bg-brand/10 flex items-center justify-center text-brand mb-6 group-hover:scale-110 transition-transform shadow-[0_0_30px_var(--glow-color)]">
+                            <i data-lucide="upload-cloud" class="w-10 h-10"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold font-tech text-main mb-2">DROP SOURCE LOGO</h3>
+                        <p class="text-sm text-muted font-mono tracking-wider max-w-sm">
+                            Format: PNG, JPG, WEBP (Min 512x512 recommended).<br>
+                            <span class="text-brand">Tap to browse files</span>
+                        </p>
+                        <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleUpload">
+                    </div>
+
+                    <template v-else>
+
+                        <div class="md:col-span-4 bg-surface/80 backdrop-blur-md border border-border p-5 rounded-2xl h-[500px] flex flex-col shadow-xl animate-fade-in">
+                            <div class="flex items-center gap-2 mb-4 text-brand border-b border-border pb-2">
+                                <i data-lucide="sliders" class="w-4 h-4"></i>
+                                <span class="text-xs font-bold font-tech tracking-widest">CONFIGURATION</span>
+                            </div>
+
+                            <div class="flex-1 space-y-6 overflow-y-auto custom-scroll pr-2">
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold text-muted mb-2 font-mono tracking-widest">
+                                        <span>PADDING</span>
+                                        <span class="text-brand">{{ config.padding }}%</span>
+                                    </div>
+                                    <input type="range" min="0" max="50" v-model="config.padding" class="w-full h-1.5 bg-input rounded-lg appearance-none cursor-pointer accent-brand">
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold text-muted mb-2 font-mono tracking-widest">
+                                        <span>ROUNDED</span>
+                                        <span class="text-brand">{{ config.radius }}%</span>
+                                    </div>
+                                    <input type="range" min="0" max="50" v-model="config.radius" class="w-full h-1.5 bg-input rounded-lg appearance-none cursor-pointer accent-brand">
+                                </div>
+
+                                <div>
+                                    <div class="text-[10px] font-bold text-muted mb-3 font-mono tracking-widest">BACKGROUND FILL</div>
+                                    <div class="grid grid-cols-5 gap-2">
+                                        <button @click="config.bg = 'transparent'" class="aspect-square rounded-lg border border-border bg-checkboard hover:border-brand transition" :class="{'ring-2 ring-brand': config.bg==='transparent'}"></button>
+                                        <button @click="config.bg = '#ffffff'" class="aspect-square rounded-lg border border-border bg-white hover:border-brand transition" :class="{'ring-2 ring-brand': config.bg==='#ffffff'}"></button>
+                                        <button @click="config.bg = '#000000'" class="aspect-square rounded-lg border border-border bg-black hover:border-brand transition" :class="{'ring-2 ring-brand': config.bg==='#000000'}"></button>
+                                        <button @click="config.bg = '#171925'" class="aspect-square rounded-lg border border-border bg-[#171925] hover:border-brand transition" :class="{'ring-2 ring-brand': config.bg==='#171925'}"></button>
+                                        <div class="relative aspect-square rounded-lg border border-border overflow-hidden">
+                                            <input type="color" v-model="config.bg" class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 bg-input rounded-xl border border-border flex items-center gap-3">
+                                    <img :src="sourcePreview" class="w-10 h-10 object-contain rounded bg-checkboard">
+                                    <div class="overflow-hidden">
+                                        <div class="text-[10px] text-muted font-bold">SOURCE IMAGE</div>
+                                        <div class="text-xs text-main truncate font-mono w-full">{{ fileName }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-8 bg-surface/80 backdrop-blur-md border border-border p-5 rounded-2xl h-[500px] flex flex-col shadow-xl animate-fade-in delay-75">
+                            <div class="flex items-center gap-2 mb-4 text-accent border-b border-border pb-2">
+                                <i data-lucide="grid" class="w-4 h-4"></i>
+                                <span class="text-xs font-bold font-tech tracking-widest">LIVE PREVIEW</span>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto custom-scroll bg-black/20 rounded-xl p-4">
+                                <div class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                    <div v-for="size in previewSizes" :key="size" class="bg-surface border border-border p-3 rounded-xl flex flex-col items-center gap-2 hover:border-brand transition-colors group">
+                                        <div class="bg-checkboard rounded-lg overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
+                                            <img :src="getPreviewUrl(size)" :style="{width: '64px', height: '64px'}" class="object-contain">
+                                        </div>
+                                        <span class="text-[10px] font-mono text-muted group-hover:text-brand">{{ size }}x{{ size }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+            </div>
+
+            <div class="absolute bottom-[140px] right-6 flex flex-col gap-2 z-40">
+                <button @click="resetView" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg mb-2"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                <button @click="adjustZoom(0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                <button @click="adjustZoom(-0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg"><i data-lucide="minus" class="w-5 h-5"></i></button>
+            </div>
+        </main>
+
+        <footer class="bg-surface/90 backdrop-blur-xl border-t border-border z-50 fixed bottom-0 w-full pb-[calc(env(safe-area-inset-bottom)+10px)] pt-3">
+            <div class="container mx-auto max-w-lg flex justify-center items-end gap-3 px-2">
+
+                <template v-if="hasImage">
+                    <button @click="resetApp" class="tool-btn group">
+                        <div class="tool-icon group-hover:border-red-500 group-hover:text-red-500">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </div>
+                        <span class="tool-label">RESET</span>
+                    </button>
+
+                    <div class="w-[1px] h-10 bg-border mx-2 mb-4"></div>
+
+                    <button @click="generateZip" class="tool-btn group transform -translate-y-4">
+                        <div class="tool-icon !w-16 !h-16 !bg-brand !border-brand shadow-[0_0_20px_var(--glow-color)] rounded-2xl group-active:scale-95 transition-all">
+                            <i v-if="isProcessing" data-lucide="loader" class="w-8 h-8 text-black animate-spin"></i>
+                            <i v-else data-lucide="download" class="w-8 h-8 text-black"></i>
+                        </div>
+                        <span class="tool-label text-brand">DOWNLOAD ZIP</span>
+                    </button>
+                </template>
+
+                <template v-else>
+                     <div class="text-[10px] text-muted font-mono italic mb-4">Menunggu input file...</div>
+                </template>
+
+            </div>
+        </footer>
+
+        <canvas ref="workCanvas" class="hidden"></canvas>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                // --- STATE ---
+                const fileInput = ref(null);
+                const hasImage = ref(false);
+                const sourceImage = ref(null); // Image Object
+                const sourcePreview = ref('');
+                const fileName = ref('');
+                const isProcessing = ref(false);
+                const workCanvas = ref(null);
+
+                const config = ref({
+                    padding: 0,
+                    radius: 0,
+                    bg: 'transparent'
+                });
+
+                // Target Sizes
+                const previewSizes = [16, 32, 64, 96, 120, 152, 180, 192, 512];
+                // Reactive URL cache for previews to avoid redrawing too often
+                const previewUrls = ref({});
+
+                // --- CANVAS PAN/ZOOM ---
+                const zoomLevel = ref(1.0);
+                const pan = ref({ x: 0, y: 0 });
+                let lastDist = 0, isDragging = false, startPan = {x:0, y:0};
+
+                // --- METHODS ---
+
+                const triggerUpload = () => fileInput.value.click();
+
+                const handleUpload = (e) => {
+                    const file = e.target.files[0];
+                    if(!file) return;
+                    processFile(file);
+                };
+
+                const handleDrop = (e) => {
+                    const file = e.dataTransfer.files[0];
+                    if(file && file.type.startsWith('image/')) processFile(file);
+                };
+
+                const processFile = (file) => {
+                    fileName.value = file.name;
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            sourceImage.value = img;
+                            sourcePreview.value = evt.target.result;
+                            hasImage.value = true;
+                            updatePreviews();
+                        };
+                        img.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                const resetApp = () => {
+                    hasImage.value = false;
+                    sourceImage.value = null;
+                    sourcePreview.value = '';
+                    config.value = { padding: 0, radius: 0, bg: 'transparent' };
+                    previewUrls.value = {};
+                    resetView();
+                };
+
+                // --- DRAWING LOGIC ---
+                const drawIcon = (ctx, size) => {
+                    const w = size;
+                    const h = size;
+                    ctx.clearRect(0, 0, w, h);
+
+                    // 1. Background & Radius
+                    if (config.value.bg !== 'transparent') {
+                        ctx.fillStyle = config.value.bg;
+                        if (config.value.radius > 0) {
+                            drawRoundedRect(ctx, 0, 0, w, h, (w * config.value.radius / 100) / 2);
+                            ctx.fill();
+                            ctx.clip(); // Clip subsequent drawing
+                        } else {
+                            ctx.fillRect(0, 0, w, h);
+                        }
+                    } else if (config.value.radius > 0) {
+                         // Transparent but mask rounded
+                        drawRoundedRect(ctx, 0, 0, w, h, (w * config.value.radius / 100) / 2);
+                        ctx.clip();
+                    }
+
+                    // 2. Padding calculation
+                    const pad = (w * (config.value.padding / 100)) / 2;
+                    const drawW = w - (pad * 2);
+                    const drawH = h - (pad * 2);
+
+                    // 3. Aspect Ratio Center
+                    const img = sourceImage.value;
+                    const ratio = img.width / img.height;
+                    let finalW = drawW;
+                    let finalH = drawH;
+
+                    if (ratio > 1) finalH = drawW / ratio;
+                    else finalW = drawH * ratio;
+
+                    const offsetX = pad + (drawW - finalW) / 2;
+                    const offsetY = pad + (drawH - finalH) / 2;
+
+                    ctx.drawImage(img, 0, 0, img.width, img.height, offsetX, offsetY, finalW, finalH);
+                };
+
+                const drawRoundedRect = (ctx, x, y, w, h, r) => {
+                    ctx.beginPath();
+                    ctx.moveTo(x + r, y);
+                    ctx.lineTo(x + w - r, y);
+                    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                    ctx.lineTo(x + w, y + h - r);
+                    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                    ctx.lineTo(x + r, y + h);
+                    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                    ctx.lineTo(x, y + r);
+                    ctx.quadraticCurveTo(x, y, x + r, y);
+                    ctx.closePath();
+                };
+
+                // Generate DataURLs for previews (Debounced essentially by Vue reactivity if using watch properly)
+                const updatePreviews = () => {
+                    if(!sourceImage.value) return;
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    previewSizes.forEach(size => {
+                        canvas.width = size;
+                        canvas.height = size;
+                        drawIcon(ctx, size);
+                        previewUrls.value[size] = canvas.toDataURL('image/png');
+                    });
+                };
+
+                // Watch config changes to redraw
+                watch(config, () => {
+                    if(hasImage.value) {
+                         requestAnimationFrame(updatePreviews);
+                    }
+                }, { deep: true });
+
+                // Watch HAS IMAGE to re-trigger icons
+                watch([hasImage, isProcessing], () => {
+                    nextTick(() => lucide.createIcons());
+                });
+
+                const getPreviewUrl = (size) => previewUrls.value[size] || '';
+
+                // --- ZIP GENERATION ---
+                const generateZip = async () => {
+                    if(!hasImage.value || isProcessing.value) return;
+                    isProcessing.value = true;
+
+                    // Delay slightly to show loading spinner
+                    setTimeout(async () => {
+                        const zip = new JSZip();
+                        const imgFolder = zip.folder("icons");
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // Standard Manifest Targets
+                        const targets = [
+                            { w: 16, h: 16, n: 'favicon-16x16.png' },
+                            { w: 32, h: 32, n: 'favicon-32x32.png' },
+                            { w: 96, h: 96, n: 'favicon-96x96.png' },
+                            { w: 120, h: 120, n: 'apple-icon-120x120.png' },
+                            { w: 152, h: 152, n: 'apple-icon-152x152.png' },
+                            { w: 180, h: 180, n: 'apple-icon-180x180.png' },
+                            { w: 192, h: 192, n: 'android-icon-192x192.png' },
+                            { w: 512, h: 512, n: 'android-icon-512x512.png' },
+                            { w: 512, h: 512, n: 'playstore-icon.png' }
+                        ];
+
+                        const promises = targets.map(t => new Promise(resolve => {
+                            canvas.width = t.w;
+                            canvas.height = t.h;
+                            drawIcon(ctx, t.w);
+                            canvas.toBlob(blob => {
+                                imgFolder.file(t.n, blob);
+                                resolve();
+                            });
+                        }));
+
+                        await Promise.all(promises);
+                        const content = await zip.generateAsync({type:"blob"});
+                        saveAs(content, "flowork-icons.zip");
+                        isProcessing.value = false;
+                    }, 500);
+                };
+
+                // --- CANVAS CONTROLS (ZOOM/PAN) ---
+                const adjustZoom = (d) => zoomLevel.value = Math.min(Math.max(zoomLevel.value + d, 0.5), 3.0);
+                const resetView = () => { zoomLevel.value = 1.0; pan.value = { x: 0, y: 0 }; };
+
+                const handleTouchStart = (e) => {
+                    if (e.touches.length === 2) {
+                        lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    } else if (e.touches.length === 1 && !['INPUT','BUTTON'].includes(e.target.tagName)) {
+                        isDragging = true;
+                        startPan = { x: e.touches[0].clientX - pan.value.x, y: e.touches[0].clientY - pan.value.y };
+                    }
+                };
+                const handleTouchMove = (e) => {
+                    if (e.touches.length === 2) {
+                        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        adjustZoom((dist - lastDist) * 0.005); lastDist = dist;
+                    } else if (isDragging) {
+                        e.preventDefault();
+                        pan.value = { x: e.touches[0].clientX - startPan.x, y: e.touches[0].clientY - startPan.y };
+                    }
+                };
+                const handleTouchEnd = () => isDragging = false;
+
+                const handleMouseDown = (e) => {
+                    if(['INPUT','BUTTON'].includes(e.target.tagName)) return;
+                    isDragging = true; startPan = { x: e.clientX - pan.value.x, y: e.clientY - pan.value.y };
+                };
+                const handleMouseMove = (e) => {
+                    if(isDragging) { e.preventDefault(); pan.value = { x: e.clientX - startPan.x, y: e.clientY - startPan.y }; }
+                };
+                const handleMouseUp = () => isDragging = false;
+                const handleWheel = (e) => adjustZoom(e.deltaY * -0.001);
+
+                const closeApp = () => { if(window.parent) window.parent.postMessage({ type: 'CLOSE_APP' }, '*'); };
+
+                onMounted(() => { lucide.createIcons(); });
+
+                return {
+                    hasImage, fileInput, config, previewSizes, getPreviewUrl, isProcessing, sourcePreview, fileName, workCanvas,
+                    zoomLevel, pan,
+                    triggerUpload, handleUpload, handleDrop, resetApp, generateZip,
+                    adjustZoom, resetView, handleTouchStart, handleTouchMove, handleTouchEnd, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel,
+                    closeApp
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

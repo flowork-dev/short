@@ -1,0 +1,112 @@
+<div id="vue-root" class="h-full">
+    <v-app theme="dark" style="background: transparent;">
+        <v-main class="h-full flex flex-col p-0 overflow-hidden">
+
+            <div class="flex justify-between items-center p-3 md:p-4 border-b border-gray-800 bg-[#171925] z-10 shrink-0">
+                <div class="flex items-center gap-2 md:gap-3">
+                    <v-icon icon="mdi-shield-key" color="red-accent-3" size="24" class="md:text-4xl"></v-icon>
+                    <div>
+                        <h1 class="orbitron text-lg md:text-xl font-bold text-white m-0 leading-none tracking-widest">
+                            PASS <span class="text-red-500">FORGE</span>
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex gap-2 md:gap-4 items-center">
+                    <div class="hidden md:block text-[10px] text-gray-500 font-bold border border-gray-800 px-3 py-1 rounded bg-black">
+                        MODE: <span class="text-green-400">CSPRNG SECURE</span>
+                    </div>
+
+                    <button onclick="window.appCore.switchTab('lander')" class="text-[10px] md:text-xs text-gray-500 hover:text-white border-l border-gray-700 pl-3 md:pl-4 flex items-center gap-1">
+                        <v-icon size="small">mdi-arrow-left</v-icon> BACK
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+
+                <div class="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col bg-[#12141d] p-4 md:p-6 gap-4 md:gap-6 overflow-y-auto custom-scrollbar shrink-0 h-1/2 md:h-auto">
+
+                    <div class="bg-black/40 border border-gray-700 p-4 rounded-xl">
+                        <div class="flex justify-between text-[10px] text-gray-500 font-bold mb-2">
+                            <span>LENGTH</span>
+                            <span class="text-white">{{ length }} CHARS</span>
+                        </div>
+                        <input type="range" min="8" max="64" v-model="length" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-red-500" @input="generate">
+                        <div class="flex justify-between text-[9px] text-gray-600 mt-2 font-mono">
+                            <span>WEAK (8)</span>
+                            <span>GODLIKE (64)</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <label class="text-[10px] text-gray-500 font-bold block orbitron tracking-widest border-b border-gray-800 pb-1">CHARACTER SET</label>
+
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 cursor-pointer group p-3 md:p-2 rounded bg-[#1a1a24] md:bg-transparent hover:bg-white/5 transition border border-gray-800 md:border-transparent">
+                                <input type="checkbox" v-model="useUpper" class="accent-red-500 w-5 h-5 md:w-4 md:h-4 cursor-pointer" @change="generate">
+                                <span class="text-xs text-gray-300 group-hover:text-white font-bold md:font-normal">A-Z Uppercase</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group p-3 md:p-2 rounded bg-[#1a1a24] md:bg-transparent hover:bg-white/5 transition border border-gray-800 md:border-transparent">
+                                <input type="checkbox" v-model="useLower" class="accent-red-500 w-5 h-5 md:w-4 md:h-4 cursor-pointer" @change="generate">
+                                <span class="text-xs text-gray-300 group-hover:text-white font-bold md:font-normal">a-z Lowercase</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group p-3 md:p-2 rounded bg-[#1a1a24] md:bg-transparent hover:bg-white/5 transition border border-gray-800 md:border-transparent">
+                                <input type="checkbox" v-model="useNumbers" class="accent-red-500 w-5 h-5 md:w-4 md:h-4 cursor-pointer" @change="generate">
+                                <span class="text-xs text-gray-300 group-hover:text-white font-bold md:font-normal">0-9 Numbers</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group p-3 md:p-2 rounded bg-[#1a1a24] md:bg-transparent hover:bg-white/5 transition border border-gray-800 md:border-transparent">
+                                <input type="checkbox" v-model="useSymbols" class="accent-red-500 w-5 h-5 md:w-4 md:h-4 cursor-pointer" @change="generate">
+                                <span class="text-xs text-gray-300 group-hover:text-white font-bold md:font-normal">!@# Symbols</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button @click="generate" class="w-full bg-red-900/40 hover:bg-red-800/60 text-red-400 border border-red-500 py-4 rounded font-bold text-xs tracking-widest transition-all shadow-[0_0_15px_rgba(255,0,60,0.2)] flex items-center justify-center gap-2 mt-auto active:scale-95">
+                        <v-icon icon="mdi-refresh" size="small"></v-icon> REGENERATE KEY
+                    </button>
+
+                </div>
+
+                <div class="flex-1 bg-[#0f111a] p-4 md:p-10 flex flex-col items-center justify-center relative overflow-hidden h-1/2 md:h-auto">
+
+                    <div class="absolute inset-0 opacity-10 pointer-events-none"
+                         style="background-image: radial-gradient(#3a3962 1px, transparent 1px); background-size: 20px 20px;">
+                    </div>
+
+                    <div class="w-full max-w-2xl z-10">
+                        <div class="group mb-4 md:mb-8 relative">
+                            <div class="bg-black/60 border border-red-500/50 p-6 md:p-8 rounded-xl text-center backdrop-blur-md relative overflow-hidden transition-all group-hover:border-red-400 group-hover:shadow-[0_0_30px_rgba(255,0,60,0.2)]" @click="copyPass">
+                                <div class="font-mono text-xl md:text-4xl font-bold text-white break-all tracking-wider leading-relaxed select-all">
+                                    {{ generatedPass }}
+                                </div>
+
+                                <div class="absolute inset-0 bg-black/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
+                                    <div class="text-white font-bold flex items-center gap-2 border border-white/20 px-4 py-2 md:px-6 md:py-3 rounded-full bg-white/10 hover:bg-white/20 transition transform hover:scale-105 text-xs md:text-base">
+                                        <v-icon icon="mdi-content-copy" size="small"></v-icon> CLICK TO COPY
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 bg-gray-800 h-1 w-full rounded overflow-hidden">
+                                <div class="h-full transition-all duration-500" :style="{width: strength.score+'%', background: strength.color}"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] mt-2">
+                                <span class="text-gray-500 font-bold">ENTROPY STRENGTH</span>
+                                <span class="font-bold tracking-widest font-orbitron" :style="{color: strength.color}">{{ strength.label }}</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center opacity-40">
+                            <v-icon icon="mdi-fingerprint" size="48" class="md:text-6xl mb-2 text-gray-600"></v-icon>
+                            <p class="text-[9px] md:text-[10px] mono text-gray-500 tracking-wider">
+                                CRYPTOGRAPHICALLY SECURE PSEUDO-RANDOM NUMBER GENERATOR
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </v-main>
+    </v-app>
+</div>

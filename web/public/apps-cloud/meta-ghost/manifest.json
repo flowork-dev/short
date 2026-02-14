@@ -1,0 +1,28 @@
+{
+    "id": "meta-ghost",
+    "name": "HAPUS LOKASI GPS DARI FOTO SEBELUM DI-UPLOAD (ANTI STALKER)",
+    "version": "1.0.0",
+    "description": "Hati-hati! Fotomu mengandung data lokasi rumah. Gunakan alat ini untuk melihat dan menghapus metadata EXIF tersembunyi demi privasi. Jangan biarkan stalker melacakmu.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "meta-ghost",
+    "capabilities": [
+        "exif_extraction",
+        "geospatial_mapping",
+        "privacy_scrubbing"
+    ],
+    "tags": [
+        "forensics",
+        "metadata",
+        "exif",
+        "privacy",
+        "security",
+        "gps"
+    ],
+    "required_variables": []
+}

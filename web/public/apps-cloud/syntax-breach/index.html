@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Syntax Breach | Data Converter</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-core: #171925;
+            --surface-1: #1f2233;
+            --primary: #bc13fe;
+            --accent: #54d7f6;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: #e0f0ff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden; /* Lock Body */
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        textarea { resize: none !important; }
+
+        /* Glass Header */
+        .glass-header {
+            background: rgba(23, 25, 37, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col bg-[#171925]">
+
+    <div id="vue-root" class="h-full flex flex-col">
+        <v-app theme="dark" style="background: transparent;">
+
+            <div class="glass-header h-16 shrink-0 flex items-center justify-between px-4 z-50">
+                <div class="flex items-center gap-3">
+                    <div class="bg-purple-900/20 p-1.5 rounded border border-purple-500/30">
+                        <v-icon icon="mdi-code-braces" color="purple-accent-2" size="24"></v-icon>
+                    </div>
+                    <div>
+                        <h1 class="orbitron text-lg font-bold leading-none tracking-widest text-white">
+                            SYNTAX <span class="text-purple-400">BREACH</span>
+                        </h1>
+                        <div class="text-[9px] font-bold text-gray-500 tracking-[0.3em] mt-0.5">DATA CONVERTER</div>
+                    </div>
+                </div>
+                <div class="px-2 py-1 rounded bg-black/40 border border-gray-800 flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-[9px] font-mono text-gray-400">READY</span>
+                </div>
+            </div>
+
+            <div class="shrink-0 bg-[#0f111a] border-b border-gray-800 py-2 px-4 overflow-x-auto custom-scroll flex gap-2 no-scrollbar">
+                <button @click="mode = 'json'" :class="mode === 'json' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-[#1a1d2d] text-gray-400 border border-gray-800'" class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-wider transition-all whitespace-nowrap active:scale-95">
+                    JSON FORMAT
+                </button>
+                <button @click="mode = 'csv'" :class="mode === 'csv' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-[#1a1d2d] text-gray-400 border border-gray-800'" class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-wider transition-all whitespace-nowrap active:scale-95">
+                    JSON > CSV
+                </button>
+                <button @click="mode = 'base64'" :class="mode === 'base64' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-[#1a1d2d] text-gray-400 border border-gray-800'" class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-wider transition-all whitespace-nowrap active:scale-95">
+                    BASE64
+                </button>
+                <button @click="mode = 'url'" :class="mode === 'url' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-[#1a1d2d] text-gray-400 border border-gray-800'" class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-wider transition-all whitespace-nowrap active:scale-95">
+                    URL ENCODE
+                </button>
+            </div>
+
+            <v-main class="flex-1 flex flex-col overflow-hidden relative">
+
+                <div class="flex-1 flex flex-col min-h-0 relative border-b border-gray-800 bg-[#12141d]">
+                    <div class="absolute top-0 left-0 w-full p-2 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none px-4">
+                        <span class="text-[9px] font-bold text-gray-500 tracking-widest bg-black/50 px-2 py-1 rounded backdrop-blur">INPUT STREAM</span>
+                        <button @click="inputVal=''" class="pointer-events-auto text-[9px] text-red-400 bg-red-900/10 px-2 py-1 rounded hover:bg-red-900/30 transition flex items-center gap-1 border border-red-900/20">
+                            <v-icon icon="mdi-trash-can-outline" size="x-small"></v-icon> CLEAR
+                        </button>
+                    </div>
+                    <textarea v-model="inputVal"
+                        class="w-full h-full bg-transparent p-4 pt-10 text-xs md:text-sm text-gray-300 font-mono focus:outline-none placeholder-gray-700 custom-scroll leading-relaxed"
+                        placeholder="Paste raw data here..."></textarea>
+                </div>
+
+                <div class="flex-1 flex flex-col min-h-0 relative bg-[#0f111a]">
+                    <div class="absolute top-0 left-0 w-full p-2 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none px-4">
+                        <span class="text-[9px] font-bold text-purple-400 tracking-widest bg-purple-900/10 px-2 py-1 rounded backdrop-blur border border-purple-500/20">OUTPUT DATA</span>
+                        <div class="flex gap-2 pointer-events-auto">
+                            <button v-if="mode === 'csv' && outputVal && !outputVal.startsWith('ERROR')" @click="downloadCSV" class="text-[9px] text-green-400 bg-green-900/10 px-2 py-1 rounded hover:bg-green-900/30 transition flex items-center gap-1 border border-green-900/20">
+                                <v-icon icon="mdi-download" size="x-small"></v-icon> SAVE .CSV
+                            </button>
+                            <button @click="copyOut" class="text-[9px] text-purple-300 bg-purple-900/10 px-2 py-1 rounded hover:bg-purple-900/30 transition flex items-center gap-1 border border-purple-500/20">
+                                <v-icon icon="mdi-content-copy" size="x-small"></v-icon> COPY
+                            </button>
+                        </div>
+                    </div>
+                    <textarea readonly
+                        class="w-full h-full bg-transparent p-4 pt-10 text-xs md:text-sm text-green-400 font-mono focus:outline-none placeholder-gray-800 custom-scroll leading-relaxed"
+                        :value="outputVal"
+                        placeholder="Result will appear here..."></textarea>
+                </div>
+
+                <div id="global-footer" class="shrink-0 bg-[#0f111a] border-t border-gray-800"></div>
+
+            </v-main>
+
+            <v-snackbar v-model="snackbar" :timeout="1500" color="#1f2233" location="bottom center" class="mb-8">
+                <div class="flex items-center gap-3 justify-center w-full">
+                    <v-icon icon="mdi-check-circle" color="purple-accent-2" size="small"></v-icon>
+                    <span class="text-white font-bold text-[10px] tracking-widest orbitron">ACTION COMPLETE</span>
+                </div>
+            </v-snackbar>
+
+        </v-app>
+    </div>
+
+    <script>
+        // 1. FOOTER INJECTOR
+        async function loadFooter() {
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+                let html = await response.text();
+                const realYear = new Date().getFullYear();
+                html = html.replace('{YEAR}', realYear);
+                document.getElementById('global-footer').innerHTML = html;
+                if(window.lucide) window.lucide.createIcons();
+            } catch (e) {
+                console.warn("Footer fallback");
+                document.getElementById('global-footer').innerHTML =
+                    `<div class="p-4 text-center text-gray-600 font-mono text-[10px]">© ${new Date().getFullYear()} FLOWORK</div>`;
+            }
+        }
+        loadFooter();
+
+        // 2. VUE LOGIC
+        const { createApp, ref, computed } = Vue;
+        const { createVuetify } = Vuetify;
+        const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+        createApp({
+            setup() {
+                const mode = ref('json');
+                const inputVal = ref('');
+                const snackbar = ref(false);
+
+                const outputVal = computed(() => {
+                    if(!inputVal.value) return '';
+                    try {
+                        // JSON FORMATTER
+                        if(mode.value === 'json') {
+                            return JSON.stringify(JSON.parse(inputVal.value), null, 2);
+                        }
+                        // BASE64
+                        if(mode.value === 'base64') {
+                            try { return atob(inputVal.value); } catch { return btoa(inputVal.value); }
+                        }
+                        // URL ENCODE
+                        if(mode.value === 'url') {
+                            try { return decodeURIComponent(inputVal.value); } catch { return encodeURIComponent(inputVal.value); }
+                        }
+                        // JSON TO CSV
+                        if(mode.value === 'csv') {
+                            const json = JSON.parse(inputVal.value);
+                            const arr = Array.isArray(json) ? json : [json];
+                            if(arr.length === 0) return '';
+                            const keys = Object.keys(arr[0]);
+                            const csv = [keys.join(',')];
+                            arr.forEach(row => csv.push(keys.map(k => {
+                                const val = row[k] === null || row[k] === undefined ? '' : row[k];
+                                return JSON.stringify(val);
+                            }).join(',')));
+                            return csv.join('\n');
+                        }
+                    } catch(e) {
+                        return "ERROR: Invalid Input Format. Please check your source data.";
+                    }
+                });
+
+                const copyOut = () => {
+                    if(!outputVal.value) return;
+                    navigator.clipboard.writeText(outputVal.value).then(() => {
+                        snackbar.value = true;
+                    });
+                };
+
+                const downloadCSV = () => {
+                    if (mode.value !== 'csv' || !outputVal.value || outputVal.value.startsWith('ERROR')) return;
+                    const blob = new Blob([outputVal.value], { type: "text/csv;charset=utf-8" });
+                    saveAs(blob, "syntax_export.csv");
+                    snackbar.value = true;
+                };
+
+                return {
+                    mode, inputVal, outputVal, snackbar,
+                    copyOut, downloadCSV
+                };
+            }
+        }).use(vuetify).mount('#vue-root');
+    </script>
+</body>
+</html>

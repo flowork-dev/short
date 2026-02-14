@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Screen Intel | Studio Capture Unit</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        [v-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0f111a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+        body { background: #171925; color: #e0f0ff; font-family: 'Chakra Petch', sans-serif; overflow: hidden; height: 100dvh; }
+        .glass-panel { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .touch-none { touch-action: none; }
+        .select-none { user-select: none; -webkit-user-select: none; }
+    </style>
+</head>
+<body>
+
+    <main class="w-full h-full relative flex flex-col">
+        <div id="view-app" class="w-full h-full overflow-hidden"></div>
+    </main>
+
+    <script src="js/avatar-core.js"></script>
+    <script src="js/themes/theme-aura.js"></script>
+    <script src="js/themes/theme-ninja.js"></script>
+    <script src="js/themes/theme-magical.js"></script>
+    <script src="js/themes/theme-mecha.js"></script>
+    <script src="js/themes/theme-manga.js"></script>
+    <script src="js/themes/theme-inferno.js"></script>
+    <script src="js/themes/theme-vinyl.js"></script>
+    <script src="js/themes/theme-poly.js"></script>
+    <script src="js/themes/theme-retro.js"></script>
+    <script src="js/themes/theme-mystic.js"></script>
+    <script src="js/themes/theme-atom.js"></script>
+    <script src="js/themes/theme-coding.js"></script>
+    <script src="js/themes/theme-focus.js"></script>
+    <script src="js/themes/theme-glitch-pro.js"></script>
+    <script src="js/themes/theme-glitch.js"></script>
+    <script src="js/themes/theme-hacker.js"></script>
+    <script src="js/themes/theme-hud.js"></script>
+    <script src="js/themes/theme-matrix.js"></script>
+    <script src="js/themes/theme-neon.js"></script>
+    <script src="js/themes/theme-portal.js"></script>
+    <script src="js/themes/theme-spectrum.js"></script>
+
+    <script>
+        const AppCore = {
+            async init() {
+                await this.loadPartial('view-app', 'partials/app.html');
+                this.initVue();
+            },
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    if(res.ok) document.getElementById(id).innerHTML = await res.text();
+                } catch(e) { console.error("Partial Load Error:", e); }
+            },
+            initVue() {
+                const { createApp, ref, reactive, watch, nextTick } = Vue;
+                const { createVuetify } = Vuetify;
+                const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+                const app = createApp({
+                    setup() {
+                        const showSidebar = ref(false);
+                        const isRecording = ref(false);
+                        const isProcessing = ref(false);
+                        const isPreviewing = ref(false);
+                        const isCountingDown = ref(false);
+                        const countdownValue = ref(5);
+                        const isStopping = ref(false);
+                        const stopCountdownValue = ref(5);
+
+                        const config = reactive({
+                            mic: true, systemAudio: true, pipMode: 'none',
+                            avatarTheme: 'neon', resolution: '1080p'
+                        });
+
+                        const pipState = reactive({
+                            x: 0.75, y: 0.70, size: 0.25, isDragging: false
+                        });
+
+                        const background = reactive({
+                            type: 'color', element: null, fileUrl: null
+                        });
+
+                        const handleBackgroundUpload = (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const url = URL.createObjectURL(file);
+                            background.fileUrl = url;
+                            if (file.type.startsWith('video')) {
+                                background.type = 'video';
+                                const vid = document.createElement('video');
+                                vid.src = url; vid.loop = true; vid.muted = true; vid.play();
+                                background.element = vid;
+                            } else {
+                                background.type = 'image';
+                                const img = new Image();
+                                img.src = url;
+                                img.onload = () => { background.element = img; };
+                            }
+                            enablePreview();
+                        };
+
+                        const resetBackground = () => {
+                            background.fileUrl = null; background.element = null; background.type = 'color';
+                        };
+
+                        // --- TELEPROMPTER V2 (RESTORED) ---
+                        const prompter = reactive({
+                            show: false,
+                            text: "Paste script kamu disini...\n\n- Geser header: Pindah\n- Tarik pojok kanan bawah: Resize",
+                            fontSize: 24, speed: 1.5, isPlaying: false,
+                            x: 50, y: 50, width: 300, height: 350,
+                            isDragging: false, isResizing: false
+                        });
+
+                        let dragOffset = { x:0, y:0 };
+                        let resizeStart = { w:0, h:0, x:0, y:0 };
+
+                        const startPrompterDrag = (e) => {
+                            if(prompter.isResizing) return;
+                            prompter.isDragging = true;
+                            const pos = getClientPos(e);
+                            dragOffset.x = pos.x - prompter.x;
+                            dragOffset.y = pos.y - prompter.y;
+                            addMoveListeners();
+                        };
+                        const onPrompterDrag = (e) => {
+                            if(!prompter.isDragging) return;
+                            if(e.cancelable) e.preventDefault();
+                            const pos = getClientPos(e);
+                            prompter.x = pos.x - dragOffset.x;
+                            prompter.y = pos.y - dragOffset.y;
+                        };
+                        const stopPrompterDrag = () => { prompter.isDragging = false; removeMoveListeners(); };
+                        const addMoveListeners = () => { document.addEventListener('mousemove', onPrompterDrag); document.addEventListener('mouseup', stopPrompterDrag); document.addEventListener('touchmove', onPrompterDrag, {passive:false}); document.addEventListener('touchend', stopPrompterDrag); };
+                        const removeMoveListeners = () => { document.removeEventListener('mousemove', onPrompterDrag); document.removeEventListener('mouseup', stopPrompterDrag); document.removeEventListener('touchmove', onPrompterDrag); document.removeEventListener('touchend', stopPrompterDrag); };
+
+                        const startPrompterResize = (e) => {
+                            prompter.isResizing = true;
+                            resizeStart.w = prompter.width;
+                            resizeStart.h = prompter.height;
+                            const pos = getClientPos(e);
+                            resizeStart.x = pos.x; resizeStart.y = pos.y;
+                            addResizeListeners();
+                        };
+                        const onPrompterResize = (e) => {
+                            if(!prompter.isResizing) return;
+                            if(e.cancelable) e.preventDefault();
+                            const pos = getClientPos(e);
+                            const deltaX = pos.x - resizeStart.x;
+                            const deltaY = pos.y - resizeStart.y;
+                            prompter.width = Math.max(200, resizeStart.w + deltaX);
+                            prompter.height = Math.max(200, resizeStart.h + deltaY);
+                        };
+                        const stopPrompterResize = () => { prompter.isResizing = false; removeResizeListeners(); };
+                        const addResizeListeners = () => { document.addEventListener('mousemove', onPrompterResize); document.addEventListener('mouseup', stopPrompterResize); document.addEventListener('touchmove', onPrompterResize, {passive:false}); document.addEventListener('touchend', stopPrompterResize); };
+                        const removeResizeListeners = () => { document.removeEventListener('mousemove', onPrompterResize); document.removeEventListener('mouseup', stopPrompterResize); document.removeEventListener('touchmove', onPrompterResize); document.removeEventListener('touchend', stopPrompterResize); };
+
+                        let scrollReq = null;
+                        const togglePrompterPlay = () => { prompter.isPlaying = !prompter.isPlaying; if(prompter.isPlaying) startAutoScroll(); else cancelAnimationFrame(scrollReq); };
+                        const startAutoScroll = () => { const loop = () => { if(!prompter.isPlaying) return; const el = document.getElementById('prompter-scroll-area'); if(el) el.scrollTop += (prompter.speed * 0.4); scrollReq = requestAnimationFrame(loop); }; loop(); };
+
+                        watch(() => prompter.show, (val) => {
+                            if(!val) { prompter.isPlaying = false; cancelAnimationFrame(scrollReq); }
+                            else {
+                                const container = document.getElementById('canvas-container');
+                                if(container && prompter.x === 50) {
+                                    prompter.x = (container.clientWidth / 2) - 150;
+                                    prompter.y = (container.clientHeight / 2) - 175;
+                                }
+                            }
+                        });
+
+                        const themeList = ref([]);
+                        if(window.AvatarManager) themeList.value = window.AvatarManager.getThemes();
+
+                        const avatarData = reactive({ imgObj: null, previewUrl: null });
+                        const handleAvatarUpload = (e) => {
+                            const file = e.target.files[0];
+                            if(!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                                avatarData.imgObj = new Image();
+                                avatarData.imgObj.src = evt.target.result;
+                                avatarData.previewUrl = evt.target.result;
+                                config.pipMode = 'avatar';
+                                enablePreview();
+                            };
+                            reader.readAsDataURL(file);
+                        };
+
+                        const setMode = (mode) => {
+                            config.pipMode = mode;
+                            if (mode !== 'none') enablePreview(); else disablePreview();
+                        };
+
+                        const timer = ref(0);
+                        const lastUrl = ref(null);
+                        const fileName = ref('');
+                        let mediaRecorder = null;
+                        let chunks = [];
+                        let timerInterval = null;
+                        let streams = { screen: null, mic: null, webcam: null, camEl: null, videoEl: null };
+                        let audioCtx = null, audioDest = null, analyser = null, dataArray = null;
+                        let animationFrameId = null;
+
+                        let renderCanvas = document.createElement('canvas');
+                        let renderCtx = renderCanvas.getContext('2d');
+                        renderCanvas.width = 1920; renderCanvas.height = 1080;
+
+                        const renderLoop = () => {
+                            if (background.element && (background.type === 'image' || (background.type === 'video' && background.element.readyState >= 2))) {
+                                const cvsW = renderCanvas.width;
+                                const cvsH = renderCanvas.height;
+                                const mediaW = background.type === 'video' ? background.element.videoWidth : background.element.width;
+                                const mediaH = background.type === 'video' ? background.element.videoHeight : background.element.height;
+                                const scale = Math.max(cvsW / mediaW, cvsH / mediaH);
+                                const x = (cvsW - (mediaW * scale)) / 2;
+                                const y = (cvsH - (mediaH * scale)) / 2;
+                                renderCtx.drawImage(background.element, x, y, mediaW * scale, mediaH * scale);
+                            } else {
+                                renderCtx.fillStyle = '#000';
+                                renderCtx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+                                renderCtx.strokeStyle = '#333'; renderCtx.lineWidth = 1;
+                                renderCtx.beginPath(); renderCtx.moveTo(renderCanvas.width/2, 0); renderCtx.lineTo(renderCanvas.width/2, renderCanvas.height); renderCtx.stroke();
+                                renderCtx.beginPath(); renderCtx.moveTo(0, renderCanvas.height/2); renderCtx.lineTo(renderCanvas.width, renderCanvas.height/2); renderCtx.stroke();
+                            }
+
+                            if(streams.screen && streams.videoEl && streams.videoEl.videoWidth > 0) {
+                                const v = streams.videoEl;
+                                const scale = Math.min(renderCanvas.width / v.videoWidth, renderCanvas.height / v.videoHeight);
+                                const w = v.videoWidth * scale;
+                                const h = v.videoHeight * scale;
+                                const x = (renderCanvas.width - w) / 2;
+                                const y = (renderCanvas.height - h) / 2;
+                                renderCtx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, x, y, w, h);
+                            }
+
+                            if (config.pipMode !== 'none') {
+                                const size = renderCanvas.width * pipState.size;
+                                const x = pipState.x * renderCanvas.width;
+                                const y = pipState.y * renderCanvas.height;
+
+                                if (config.pipMode === 'webcam' && streams.camEl) {
+                                    renderCtx.save();
+                                    renderCtx.strokeStyle = '#00f3ff'; renderCtx.lineWidth = 5;
+                                    renderCtx.strokeRect(x, y, size, size * 0.75);
+                                    renderCtx.drawImage(streams.camEl, x, y, size, size * 0.75);
+                                    renderCtx.restore();
+                                }
+                                else if (config.pipMode === 'avatar' && window.AvatarManager) {
+                                    let vol = 0;
+                                    if(analyser) { analyser.getByteFrequencyData(dataArray); let sum = 0; for(let i=0; i<dataArray.length; i++) sum += dataArray[i]; vol = sum / dataArray.length; }
+                                    window.AvatarManager.activeThemeId = config.avatarTheme;
+                                    window.AvatarManager.render(renderCtx, x + (size/2), y + (size/2), size, avatarData.imgObj, vol);
+
+                                    if(isPreviewing.value) {
+                                        renderCtx.save();
+                                        renderCtx.strokeStyle = pipState.isDragging ? 'cyan' : 'yellow';
+                                        renderCtx.lineWidth = 4;
+                                        renderCtx.setLineDash([10,10]);
+                                        renderCtx.strokeRect(x, y, size, size);
+                                        renderCtx.restore();
+                                    }
+                                }
+                            }
+
+                            const prevCvs = document.getElementById('preview-canvas');
+                            if(prevCvs) {
+                                const pCtx = prevCvs.getContext('2d');
+                                if(prevCvs.width !== prevCvs.clientWidth) prevCvs.width = prevCvs.clientWidth;
+                                if(prevCvs.height !== prevCvs.clientHeight) prevCvs.height = prevCvs.clientHeight;
+                                pCtx.drawImage(renderCanvas, 0, 0, prevCvs.width, prevCvs.height);
+                            }
+
+                            if(isPreviewing.value || isRecording.value || isCountingDown.value || isStopping.value) {
+                                animationFrameId = requestAnimationFrame(renderLoop);
+                            }
+                        };
+
+                        const getClientPos = (e) => { if(e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY }; return { x: e.clientX, y: e.clientY }; }
+                        const handleCanvasInputStart = (e) => {
+                            if(!isPreviewing.value && !isRecording.value) return;
+                            const rect = e.target.getBoundingClientRect();
+                            const pos = getClientPos(e);
+                            const pX = (pos.x - rect.left) / rect.width; const pY = (pos.y - rect.top) / rect.height;
+                            const boxX = pipState.x; const boxY = pipState.y; const boxW = pipState.size; const boxH = config.pipMode === 'webcam' ? boxW * 0.75 : boxW;
+                            if (pX > boxX && pX < boxX + boxW && pY > boxY && pY < boxY + boxH) { pipState.isDragging = true; e.preventDefault(); }
+                        };
+                        const handleCanvasInputMove = (e) => {
+                            if(!pipState.isDragging) return;
+                            if(e.cancelable) e.preventDefault();
+                            const rect = e.target.getBoundingClientRect();
+                            const pos = getClientPos(e);
+                            const pX = (pos.x - rect.left) / rect.width; const pY = (pos.y - rect.top) / rect.height;
+                            const boxW = pipState.size; const boxH = config.pipMode === 'webcam' ? boxW * 0.75 : boxW;
+                            pipState.x = Math.max(0, Math.min(1 - boxW, pX - (boxW / 2))); pipState.y = Math.max(0, Math.min(1 - boxH, pY - (boxH / 2)));
+                        };
+                        const handleCanvasInputEnd = () => { pipState.isDragging = false; };
+
+                        const initAudio = async () => {
+                            if(!audioCtx) {
+                                audioCtx = new (window.AudioContext || window.webkitAudioContext)(); audioDest = audioCtx.createMediaStreamDestination();
+                                analyser = audioCtx.createAnalyser(); analyser.fftSize = 64; dataArray = new Uint8Array(analyser.frequencyBinCount);
+                                const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); g.gain.value=0.001; o.connect(g).connect(audioDest); o.start();
+                            }
+                            if(audioCtx.state === 'suspended') await audioCtx.resume();
+                        };
+
+                        const enablePreview = async () => {
+                            if(isPreviewing.value) return;
+                            await initAudio();
+                            if(config.pipMode === 'webcam' && !streams.webcam) {
+                                try { streams.webcam = await navigator.mediaDevices.getUserMedia({ video: { width: 320, facingMode: 'user' } }); streams.camEl = document.createElement('video'); streams.camEl.srcObject = streams.webcam; streams.camEl.muted = true; streams.camEl.setAttribute('playsinline',''); await streams.camEl.play(); }
+                                catch(e) { config.pipMode = 'none'; alert('Webcam Blocked/Not Found'); }
+                            }
+                            isPreviewing.value = true; renderLoop();
+                        };
+
+                        const disablePreview = () => {
+                            isPreviewing.value = false;
+                            if(streams.webcam && !isRecording.value) { streams.webcam.getTracks().forEach(t=>t.stop()); streams.webcam = null; }
+                            cancelAnimationFrame(animationFrameId);
+                        };
+
+                        // --- START RECORDING (SUNTIKAN NATIVE BRIGDE) ---
+                        // Ganti blok startRecording lo dengan ini (Full Code Logic)
+                    const startRecording = async () => {
+                            try {
+                                isProcessing.value = true;
+
+                                // Deteksi API secara agresif
+                                const devices = navigator.mediaDevices || {};
+                                const getDisplay = devices.getDisplayMedia ||
+                                                   navigator.getDisplayMedia ||
+                                                   navigator.webkitGetDisplayMedia;
+
+                                if (!getDisplay) {
+                                    throw new Error("API Rekam Layar tetap tidak terdeteksi. Silakan buka Play Store dan UPDATE 'Android System WebView'.");
+                                }
+
+                                if (!background.fileUrl) {
+                                    // Panggil API dengan scope yang benar
+                                    streams.screen = await getDisplay.call(navigator.mediaDevices, {
+                                        video: { frameRate: 60 },
+                                        audio: config.systemAudio
+                                    });
+                                    streams.videoEl = document.createElement('video');
+                                    streams.videoEl.srcObject = streams.screen;
+                                    await streams.videoEl.play();
+                                }
+                            // --- SISA LOGIC STUDIO LO (RESTORED) ---
+                            let targetH = 1080;
+                            if(config.resolution === '4k') targetH = 2160;
+                            else if(config.resolution === '2k') targetH = 1440;
+                            else if(config.resolution === '720p') targetH = 720;
+
+                            await initAudio();
+                            if(streams.screen && streams.screen.getAudioTracks().length) {
+                                audioCtx.createMediaStreamSource(streams.screen).connect(audioDest);
+                            }
+                            if(config.mic) {
+                                try {
+                                    streams.mic = await navigator.mediaDevices.getUserMedia({audio:true});
+                                    audioCtx.createMediaStreamSource(streams.mic).connect(audioDest);
+                                } catch(e) { config.mic = false; }
+                            }
+
+                            renderCanvas.height = targetH;
+                            renderCanvas.width = Math.round(targetH * (16/9));
+
+                            isProcessing.value = false;
+                            isCountingDown.value = true;
+                            countdownValue.value = 5;
+                            showSidebar.value = false;
+                            renderLoop();
+
+                            const intv = setInterval(() => {
+                                countdownValue.value--;
+                                if(countdownValue.value <= 0) {
+                                    clearInterval(intv);
+                                    isCountingDown.value = false;
+                                    beginRecorder();
+                                }
+                            }, 1000);
+
+                        } catch (e) {
+                            console.error(e);
+                            isProcessing.value = false;
+                            alert("Hardware Blocked: " + e.message);
+                        }
+                    };
+
+                        const beginRecorder = () => {
+                            const stream = renderCanvas.captureStream(60);
+                            if(audioDest) stream.addTrack(audioDest.stream.getAudioTracks()[0]);
+                            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                            mediaRecorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+                            mediaRecorder.onstop = () => {
+                                lastUrl.value = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
+                                fileName.value = `INTEL-${Date.now()}.webm`;
+                                fullCleanup();
+                            };
+                            mediaRecorder.start(1000);
+                            isRecording.value = true;
+                            if(prompter.show) { prompter.isPlaying = true; startAutoScroll(); }
+                        };
+
+                        const stopRecording = () => {
+                            if(isStopping.value) return;
+                            isStopping.value = true;
+                            stopCountdownValue.value = 5;
+                            const stopIntv = setInterval(() => {
+                                stopCountdownValue.value--;
+                                if(stopCountdownValue.value <= 0) {
+                                    clearInterval(stopIntv);
+                                    isStopping.value = false;
+                                    if (mediaRecorder) mediaRecorder.stop();
+                                    isRecording.value = false;
+                                    showSidebar.value = true;
+                                }
+                            }, 1000);
+                        };
+
+                        const fullCleanup = () => {
+                            cancelAnimationFrame(animationFrameId);
+                            if(streams.screen) streams.screen.getTracks().forEach(t=>t.stop());
+                            if(streams.mic) streams.mic.getTracks().forEach(t=>t.stop());
+                            if(streams.webcam) streams.webcam.getTracks().forEach(t=>t.stop());
+                            streams = { screen: null, mic: null, webcam: null, camEl: null, videoEl: null };
+                        };
+
+                        return {
+                            showSidebar, isRecording, isProcessing, isPreviewing, isCountingDown, countdownValue,
+                            isStopping, stopCountdownValue, config, themeList, avatarData, handleAvatarUpload, setMode, pipState,
+                            timer: ref(0), lastUrl, fileName, handleRecordingAction: () => isRecording.value ? stopRecording() : startRecording(),
+                            togglePreview: () => isPreviewing.value ? disablePreview() : enablePreview(),
+                            prompter, togglePrompterPlay, startPrompterDrag, startPrompterResize,
+                            handleCanvasMouseDown: handleCanvasInputStart, handleCanvasMouseMove: handleCanvasInputMove, handleCanvasMouseUp: handleCanvasInputEnd,
+                            handleCanvasTouchStart: handleCanvasInputStart, handleCanvasTouchMove: handleCanvasInputMove, handleCanvasTouchEnd: handleCanvasInputEnd,
+                            background, handleBackgroundUpload, resetBackground
+                        };
+                    }
+                });
+                app.use(vuetify).mount('#vue-root');
+            }
+        };
+
+        async function loadFooter() {
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+                let html = await response.text();
+                document.getElementById('global-footer').innerHTML = html.replace('{YEAR}', new Date().getFullYear());
+            } catch (e) { document.getElementById('global-footer').innerHTML = `<div class="p-8 text-center text-gray-600 font-mono text-xs">© 2026 FLOWORK</div>`; }
+        }
+
+        window.appCore = AppCore;
+        window.onload = () => { AppCore.init(); loadFooter(); };
+    </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<div class="animate__animated animate__fadeIn h-full">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full p-4 md:p-8">
+
+        <div class="lg:col-span-1">
+            <div class="tactical-border p-6 sticky top-4">
+                <h2 class="orbitron text-[var(--neon-cyan)] text-lg mb-6 flex items-center">
+                    <i class="mdi mdi-console-line mr-2"></i> COMMAND INPUT
+                </h2>
+
+                <div class="mb-2">
+                    <div class="v-field v-field--variant-outlined v-theme--dark v-locale--is-ltr cyber-input mb-2">
+                        <div class="v-field__overlay"></div>
+                        <div class="v-field__loader"><div class="v-progress-linear v-theme--dark v-locale--is-ltr" role="progressbar" aria-hidden="true" style="height: 0px;"><div class="v-progress-linear__background" style="width: 100%;"></div><div class="v-progress-linear__buffer" style="width: 100%;"></div><div class="v-progress-linear__determinate" style="width: 0%;"></div></div></div>
+                        <div class="v-field__field" data-no-activator="">
+                            <div class="v-field__prepend-inner"><i class="mdi-target mdi v-icon notranslate v-theme--dark v-icon--size-default" aria-hidden="true"></i></div>
+                            <label class="v-label v-field-label" for="input-query">TARGET KEYWORD</label>
+                            <input size="1" type="text" id="input-query" placeholder="e.g. Toko Bangunan" class="v-field__input" value="">
+                        </div>
+                        <div class="v-field__outline"><div class="v-field__outline__start"></div><div class="v-field__outline__notch"><label class="v-label v-field-label v-field-label--floating" aria-hidden="true" for="input-query">TARGET KEYWORD</label></div><div class="v-field__outline__end"></div></div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="v-field v-field--variant-outlined v-theme--dark v-locale--is-ltr cyber-input">
+                        <div class="v-field__overlay"></div>
+                        <div class="v-field__loader"><div class="v-progress-linear v-theme--dark v-locale--is-ltr" role="progressbar" aria-hidden="true" style="height: 0px;"><div class="v-progress-linear__background" style="width: 100%;"></div><div class="v-progress-linear__buffer" style="width: 100%;"></div><div class="v-progress-linear__determinate" style="width: 0%;"></div></div></div>
+                        <div class="v-field__field" data-no-activator="">
+                            <div class="v-field__prepend-inner"><i class="mdi-map-marker-radius mdi v-icon notranslate v-theme--dark v-icon--size-default" aria-hidden="true"></i></div>
+                            <label class="v-label v-field-label" for="input-location">SECTOR / LOCATION</label>
+                            <input size="1" type="text" id="input-location" placeholder="e.g. Bandung" class="v-field__input" value="">
+                        </div>
+                        <div class="v-field__outline"><div class="v-field__outline__start"></div><div class="v-field__outline__notch"><label class="v-label v-field-label v-field-label--floating" aria-hidden="true" for="input-location">SECTOR / LOCATION</label></div><div class="v-field__outline__end"></div></div>
+                    </div>
+                </div>
+
+                <button onclick="window.appCore.initiateScan()" id="btn-scan" class="btn-scan w-full py-4 orbitron font-bold text-lg uppercase flex justify-center items-center gap-2 group relative overflow-hidden">
+                    <span class="relative z-10" id="btn-text">INITIATE SCAN</span>
+                    <i id="btn-icon" class="mdi mdi-radar relative z-10"></i>
+                    <div class="absolute inset-0 bg-[var(--neon-cyan)] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 opacity-20"></div>
+                </button>
+
+                <div id="error-message" class="mt-4 p-3 border border-red-500 bg-red-900/20 text-red-400 text-xs text-center font-bold animate__animated animate__headShake hidden">
+                    </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-800 text-center">
+                    <div id="result-stats" class="hidden">
+                        <div class="text-4xl text-[var(--neon-cyan)] font-bold mono" id="result-count">0</div>
+                        <div class="text-xs tracking-widest text-gray-500 uppercase">Targets Acquired</div>
+                    </div>
+                    <div id="radar-anim" class="flex justify-center opacity-50"><div class="radar-sweep"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 flex flex-col h-full">
+            <div class="flex justify-between items-center mb-4 flex-none">
+                <h2 class="orbitron text-[var(--neon-cyan)] text-lg">TARGET FEED</h2>
+                <button id="btn-export" onclick="window.appCore.exportCSV()" class="hidden text-xs font-bold bg-cyan-900/50 border border-cyan-500 text-cyan-400 px-4 py-2 rounded hover:bg-cyan-500 hover:text-black transition flex items-center gap-2 orbitron">
+                    <i class="mdi mdi-download"></i> EXPORT CSV
+                </button>
+            </div>
+
+            <div class="feed-container" id="feed-container">
+                <div id="feed-empty" class="h-64 flex flex-col items-center justify-center text-gray-600 border border-dashed border-gray-800 rounded">
+                    <i class="mdi mdi-crosshairs-gps text-5xl mb-2 opacity-50"></i>
+                    <p class="mono text-xs">NO DATA IN BUFFER. INITIATE SCAN.</p>
+                </div>
+                </div>
+        </div>
+
+    </div>
+</div>

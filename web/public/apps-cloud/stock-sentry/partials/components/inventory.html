@@ -1,0 +1,71 @@
+<div v-if="currentView === 'inventory'" class="flex-1 flex flex-col p-4 overflow-hidden animate_animated animate_fadeIn">
+
+    <div class="flex gap-3 overflow-x-auto pb-2 mb-2 shrink-0">
+        <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#54d7f6] min-w-[140px] shadow">
+            <div class="text-[10px] text-gray-400">TOTAL ASSET</div>
+            <div class="text-md font-bold font-['Orbitron']">{{ formatRupiah(financials.totalAssets) }}</div>
+        </div>
+        <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#ff2a6d] min-w-[140px] shadow">
+            <div class="text-[10px] text-gray-400">LOW STOCK</div>
+            <div class="text-md font-bold text-[#ff2a6d] font-['Orbitron']">{{ deadStockItems.length }} ITEMS</div>
+        </div>
+    </div>
+
+    <div class="flex gap-2 sticky top-0 z-10 py-2 shrink-0">
+            <input v-model="searchQuery" placeholder="Search SKU / Name..." class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded px-3 text-sm outline-none focus:border-[#54d7f6]">
+            <button @click="openScanner('inventory')" class="bg-[#222538] border border-[#54d7f6] text-[#54d7f6] px-3 rounded hover:bg-[#54d7f6] hover:text-[#171925]"><i class="mdi mdi-qrcode-scan"></i></button>
+            <button @click="showAddModal = true" class="bg-[#54d7f6] text-[#171925] px-3 rounded font-bold text-sm shadow flex items-center gap-1 whitespace-nowrap"><i class="mdi mdi-plus"></i> NEW</button>
+    </div>
+
+    <div class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden flex flex-col">
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-[#222538] text-xs uppercase text-gray-400 sticky top-0 z-10 shadow">
+                    <tr>
+                        <th class="p-3">ITEM</th>
+                        <th class="p-3 text-right">STOCK</th>
+                        <th class="p-3 text-right hidden md:table-cell">AI PREDICTION</th>
+                        <th class="p-3 text-center">ACTION</th> </tr>
+                </thead>
+                <tbody class="divide-y divide-[#3a3962]">
+                    <tr v-for="item in filteredInventory" :key="item.id" class="hover:bg-[#1e2130]">
+                        <td class="p-3">
+                            <div class="font-bold text-white flex flex-wrap items-center gap-2">{{ item.name }} <span v-if="item.type === 'bundle'" class="px-1 bg-[#9d4edd] text-white text-[9px] rounded font-bold">PAKET</span></div>
+                            <div class="text-xs text-[#54d7f6]">{{ item.sku }}</div>
+                        </td>
+
+                        <td class="p-3 text-right">
+                            <div class="text-lg font-['Orbitron']" :class="item.stock <= item.minStock ? 'text-[#ff2a6d]' : 'text-white'">{{ item.stock }}</div>
+                            <div v-if="item.stock <= item.minStock" class="text-[9px] text-[#ff2a6d] cursor-pointer hover:underline bg-[#ff2a6d]/10 px-1 rounded inline-block mt-1" @click="WhatsAppService.orderSupplier(item)"><i class="mdi mdi-whatsapp"></i> ORDER</div>
+                        </td>
+
+                        <td class="p-3 text-right hidden md:table-cell">
+                            <span v-if="getDaysLeft(item) < 7" class="text-[#ff2a6d] font-bold text-xs">Habis {{ getDaysLeft(item) }} Hari</span>
+                            <span v-else-if="getDaysLeft(item) > 100" class="text-gray-500 text-xs">Aman</span>
+                            <span v-else class="text-[#ff9f1c] text-xs">{{ getDaysLeft(item) }} Hari lagi</span>
+                        </td>
+
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-4">
+
+                                <button @click="openAdjustModal(item)" class="text-gray-400 hover:text-[#ff9f1c] transition-colors" title="Edit Stok (Tambah/Kurang)">
+                                    <i class="mdi mdi-clipboard-edit-outline text-xl"></i>
+                                </button>
+
+                                <button @click="InventoryService.toggleArchive(item)" class="text-gray-400 hover:text-red-500 transition-colors" title="Arsipkan Barang">
+                                    <i class="mdi mdi-archive-arrow-down-outline text-xl"></i>
+                                </button>
+
+                                <button @click="InventoryService.printLabel(item)" class="text-gray-400 hover:text-[#54d7f6] transition-colors" title="Print Label">
+                                    <i class="mdi mdi-printer text-xl"></i>
+                                </button>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

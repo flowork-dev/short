@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glitch Armor | Anti-AI Image Protection</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* FLOWORK PALETTE */
+            --bg-core: #171925;
+            --neon-cyan: #54d7f6;
+            --neon-purple: #706bf3;
+            --input-bg: #3a3962;
+            --text-white: #e0f0ff;
+            --glass: rgba(23, 25, 37, 0.95);
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-white);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            margin: 0; padding: 0;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .hidden-view { display: none !important; }
+
+        /* Custom Scroll */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--input-bg); border-radius: 3px; }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
+
+        /* UI Elements */
+        .glass { background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(84, 215, 246, 0.1); }
+        .nav-btn { font-family: 'Orbitron'; letter-spacing: 2px; font-size: 0.8rem; opacity: 0.5; transition: 0.3s; color: white; border-bottom: 2px solid transparent; }
+        .nav-btn.active { opacity: 1; color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); text-shadow: 0 0 10px rgba(84, 215, 246, 0.5); }
+
+        /* Background Grid */
+        .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(var(--input-bg) 1px, transparent 1px), linear-gradient(90deg, var(--input-bg) 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; z-index: -1; pointer-events: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <div class="bg-grid"></div>
+
+    <header class="glass h-16 shrink-0 flex items-center justify-between px-6 z-50">
+        <div class="flex items-center gap-3">
+            <div class="p-1.5 border border-cyan-500/50 rounded bg-cyan-900/20">
+                <i class="mdi mdi-shield-bug text-cyan-400 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="orbitron text-lg font-bold leading-none tracking-widest text-white">GLITCH <span class="text-cyan-400">ARMOR</span></h1>
+                <div class="text-[9px] text-purple-400 tracking-[0.3em] font-bold mt-0.5">ANTI-AI DEFENSE</div>
+            </div>
+        </div>
+        <div class="flex h-full gap-6">
+            <button id="tab-app" class="nav-btn h-full flex items-center active cursor-default">ENGINE</button>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full relative overflow-hidden">
+        <div id="view-app" class="w-full h-full"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            isLoggedIn: false,
+            sessionKey: 'flowork_glitch_armor_session',
+            vueApp: null,
+
+            async init() {
+                console.log("BOOTING GLITCH ARMOR...");
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                // Directly init Vue App
+                if (!this.vueApp) this.initVueApp();
+            },
+
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    const html = await res.text();
+                    document.getElementById(id).innerHTML = html;
+                } catch(e) { console.error("Load Failed:", e); }
+            },
+
+            // switchTab function removed as it is no longer needed
+
+            // --- VUE APP LOGIC ---
+            initVueApp() {
+                const { createApp, ref, nextTick } = Vue;
+
+                this.vueApp = createApp({
+                    setup() {
+                        const fileInput = ref(null);
+                        const filePreview = ref(null);
+                        const intensity = ref(25);
+                        const mode = ref('pixel');
+                        const isProcessing = ref(false);
+                        const resultImage = ref(null);
+                        const canvasRef = ref(null);
+
+                        const triggerUpload = () => fileInput.value && fileInput.value.click();
+
+                        const handleFile = (e) => {
+                            const file = e.target.files[0];
+                            if(!file) return;
+
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { filePreview.value = ev.target.result; resultImage.value = null; };
+                            reader.readAsDataURL(file);
+                        };
+
+                        const executePoison = async () => {
+                            if(!filePreview.value) return;
+                            isProcessing.value = true;
+
+                            // Simulate minimal delay for UX
+                            await new Promise(r => setTimeout(r, 500));
+
+                            const canvas = canvasRef.value;
+                            const ctx = canvas.getContext('2d');
+                            const img = new Image();
+
+                            img.onload = async () => {
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                ctx.drawImage(img, 0, 0);
+
+                                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                                const data = imageData.data;
+                                const lvl = parseInt(intensity.value);
+
+                                // CLIENT SIDE POISONING ALGORITHM
+                                for (let i = 0; i < data.length; i += 4) {
+                                    if(mode.value === 'pixel') {
+                                        // Invisible Noise
+                                        const noise = (Math.random() - 0.5) * lvl;
+                                        data[i] += noise;
+                                        data[i+1] += noise;
+                                        data[i+2] += noise;
+                                    } else if (mode.value === 'chroma') {
+                                        // Color Shift
+                                        if(i % (100 - lvl) === 0) {
+                                            data[i] = data[i+2]; // Swap R-B
+                                        }
+                                    }
+                                }
+
+                                ctx.putImageData(imageData, 0, 0);
+                                resultImage.value = canvas.toDataURL('image/png');
+                                isProcessing.value = false;
+
+                                // Telemetry
+                                fetch('/api/v1/glitch-armor/poison', {
+                                    method: 'POST',
+                                    body: JSON.stringify({ size: data.length, level: lvl, mode: mode.value })
+                                }).catch(() => {});
+                            };
+                            img.src = filePreview.value;
+                        };
+
+                        return {
+                            fileInput, filePreview, intensity, mode, isProcessing, resultImage, canvasRef,
+                            triggerUpload, handleFile, executePoison
+                        };
+                    }
+                }).mount('#app-mount-point');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

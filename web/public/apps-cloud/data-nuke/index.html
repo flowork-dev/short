@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DATA NUKE | CYBERPUNK</title>
+
+    <script src="../../assets/js/auto-tracker.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-yellow: #fcee0a;
+            --bg-deep: #09090b;
+            --glass: rgba(10, 10, 15, 0.7);
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #e0f0ff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden; /* App-like feel */
+        }
+
+        .font-cyber { font-family: 'Orbitron', sans-serif; }
+
+        /* MOVING GRID BACKGROUND */
+        .cyber-grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image:
+                linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            animation: grid-move 10s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes grid-move {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
+
+        /* UTILS */
+        .hidden-view { display: none !important; }
+        .text-glow { text-shadow: 0 0 10px currentColor; }
+        .border-glow { box-shadow: 0 0 15px -3px currentColor; }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col relative overflow-hidden">
+
+    <div class="cyber-grid"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent z-0 pointer-events-none"></div>
+
+    <nav class="relative z-50 flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[#09090b]/80 backdrop-blur-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 flex items-center justify-center bg-cyan-500/10 border border-cyan-400 rounded-lg shadow-[0_0_15px_rgba(0,243,255,0.3)]">
+                <i data-lucide="biohazard" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+            <div class="flex flex-col">
+                <h1 class="font-cyber font-black text-lg tracking-wider text-white leading-none">
+                    DATA<span class="text-cyan-400">NUKE</span>
+                </h1>
+                <span class="text-[9px] text-pink-500 font-bold tracking-[0.2em] animate-pulse">SYSTEM READY</span>
+            </div>
+        </div>
+
+        <div class="flex bg-black/50 rounded-lg p-1 border border-white/10">
+            <button id="tab-app" class="px-3 py-1.5 text-[10px] font-bold rounded bg-cyan-500/20 text-cyan-400 shadow-sm transition uppercase flex items-center gap-1 cursor-default">
+                Tool <i data-lucide="lock" class="w-3 h-3"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-grow relative z-10 w-full overflow-hidden">
+        <div id="view-app" class="w-full h-full absolute inset-0 overflow-y-auto pb-20"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+                if(window.lucide) lucide.createIcons();
+            },
+
+            async loadPartial(id, url) {
+                try {
+                    const res = await fetch(url);
+                    const html = await res.text();
+                    document.getElementById(id).innerHTML = html;
+                } catch(e) { console.error(e); }
+            },
+
+            // switchTab function removed as it is no longer needed
+
+            // --- LOGIC APLIKASI (SIMULASI) ---
+            processFile(file) {
+                if(!file) return;
+                document.getElementById('ui-idle').classList.add('hidden');
+                document.getElementById('ui-processing').classList.remove('hidden');
+                this.log('TARGET LOCKED: ' + file.name, 'warn');
+
+                let p = 0;
+                const int = setInterval(() => {
+                    p += 2;
+                    if(p>100) { clearInterval(int); this.finish(file.name); }
+                    else this.updateBar(p);
+                }, 50);
+            },
+
+            updateBar(p) {
+                document.getElementById('prog-bar').style.width = p+'%';
+                document.getElementById('prog-text').innerText = p+'%';
+            },
+
+            finish(name) {
+                document.getElementById('ui-processing').classList.add('hidden');
+                document.getElementById('ui-result').classList.remove('hidden');
+                this.log('STRUCTURE DESTROYED.', 'success');
+                this.processedName = name;
+            },
+
+            log(msg, type) {
+                const term = document.getElementById('terminal');
+                const color = type === 'warn' ? 'text-yellow-400' : (type === 'success' ? 'text-green-400' : 'text-cyan-400');
+                term.innerHTML += `<div class="mb-1 border-l-2 border-white/10 pl-2"><span class="opacity-50 text-[10px]">${new Date().toLocaleTimeString()}</span> <span class="${color}">${msg}</span></div>`;
+                term.scrollTop = term.scrollHeight;
+            },
+
+            download() {
+                const blob = new Blob(['00101010101 CORRUPTED 0101010'], {type:'application/octet-stream'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'DESTROYED_' + (this.processedName || 'file.bin');
+                a.click();
+            }
+        };
+
+        window.appCore = AppCore;
+        window.resetApp = () => {
+            document.getElementById('ui-result').classList.add('hidden');
+            document.getElementById('ui-idle').classList.remove('hidden');
+            document.getElementById('file-input').value = '';
+            document.getElementById('prog-bar').style.width = '0%';
+            document.getElementById('terminal').innerHTML = '<div class="text-gray-500 italic">System Idle... Waiting for input.</div>';
+        };
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

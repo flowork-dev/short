@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Keyword Mixer | Flowork Module</title>
+
+    <script>
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const forcedTheme = params.get('theme');
+                const cachedTheme = localStorage.getItem('flowork_theme');
+                const finalTheme = forcedTheme || cachedTheme || 'dark';
+                document.documentElement.setAttribute('data-theme', finalTheme);
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'flowork_theme') document.documentElement.setAttribute('data-theme', e.newValue);
+                });
+            } catch (e) { console.error("Theme Init Error", e); }
+        })();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        page: 'var(--bg-page)',
+                        surface: 'var(--bg-surface)',
+                        input: 'var(--bg-input)',
+                        main: 'var(--text-main)',
+                        muted: 'var(--text-muted)',
+                        brand: 'var(--brand-color)',
+                        border: 'var(--border-color)',
+                        accent: 'var(--accent-color)',
+                        glow: 'var(--glow-color)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DARK DEFAULT */
+            --bg-page: #171925;
+            --bg-surface: rgba(23, 25, 37, 0.95);
+            --bg-input: #2a2c3d;
+            --text-main: #e0f0ff;
+            --text-muted: #8a8d9f;
+            --brand-color: #54d7f6; /* Cyan */
+            --border-color: rgba(84, 215, 246, 0.2);
+            --accent-color: #706bf3; /* Purple */
+            --glow-color: rgba(84, 215, 246, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-page: #f0f2f5;
+            --bg-surface: #ffffff;
+            --bg-input: #e4e6eb;
+            --text-main: #1c1e21;
+            --text-muted: #65676b;
+            --brand-color: #0084ff;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --accent-color: #6200ea;
+            --glow-color: rgba(0, 132, 255, 0.1);
+        }
+
+        [data-theme="hacker"] {
+            --bg-page: #000000;
+            --bg-surface: #0a0a0a;
+            --bg-input: #111;
+            --text-main: #00ff00;
+            --text-muted: #008800;
+            --brand-color: #00ff00;
+            --border-color: #004400;
+            --accent-color: #ff00ff;
+            --glow-color: rgba(0, 255, 0, 0.2);
+        }
+
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background-color: var(--bg-page);
+            background-image: radial-gradient(at 100% 0%, var(--accent-color) 0px, transparent 50%),
+                              radial-gradient(at 0% 100%, var(--brand-color) 0px, transparent 50%);
+            opacity: 0.15;
+        }
+        body { -webkit-tap-highlight-color: transparent; overflow: hidden; user-select: none; }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--brand-color); border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: var(--bg-input); }
+
+        /* DOCK BUTTONS */
+        .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; cursor: pointer; transition: transform 0.1s; }
+        .tool-btn:active { transform: scale(0.95); }
+        .tool-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; }
+        .tool-btn.active .tool-icon { background: var(--brand-color); color: var(--bg-page); border-color: var(--brand-color); box-shadow: 0 0 15px var(--glow-color); }
+        .tool-btn.active .tool-label { color: var(--brand-color); }
+        .tool-label { font-size: 10px; font-weight: 700; color: var(--text-muted); font-family: 'Orbitron', sans-serif; letter-spacing: 0.5px; }
+
+        /* TOAST ANIMATION */
+        .toast-enter-active, .toast-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-20px); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    </style>
+</head>
+<body class="bg-page text-main font-sans h-screen w-screen flex flex-col overflow-hidden relative">
+
+    <div id="app" class="h-full flex flex-col">
+        <div class="mesh-bg"></div>
+
+        <transition name="toast">
+            <div v-if="notification.show" class="fixed top-24 left-0 w-full flex justify-center z-[100] pointer-events-none">
+                <div class="bg-surface/90 backdrop-blur-xl border px-6 py-3 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center gap-3"
+                     :class="notification.type === 'error' ? 'border-red-500 text-red-400' : 'border-brand text-brand'">
+
+                    <div class="p-1 rounded-full" :class="notification.type === 'error' ? 'bg-red-500/20' : 'bg-brand/20'">
+                        <i v-if="notification.type === 'error'" data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        <i v-else data-lucide="check" class="w-4 h-4"></i>
+                    </div>
+
+                    <span class="text-xs font-bold font-tech tracking-wider uppercase">{{ notification.message }}</span>
+                </div>
+            </div>
+        </transition>
+
+        <div class="absolute top-0 left-0 w-full z-50 pt-[calc(env(safe-area-inset-top)+12px)] px-6 pointer-events-none flex justify-between items-center bg-page/80 backdrop-blur-sm border-b border-border pb-2">
+            <div class="pointer-events-auto flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+                    <i data-lucide="shuffle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold font-tech tracking-wider text-main">KEYWORD <span class="text-brand">MIXER</span></h1>
+                    <div class="text-[9px] font-mono text-accent tracking-[0.2em] uppercase font-bold">SEO Engine v1.0</div>
+                </div>
+            </div>
+            <button @click="closeApp" class="pointer-events-auto w-10 h-10 rounded-full bg-surface/50 backdrop-blur border border-border flex items-center justify-center hover:bg-red-500/20 hover:text-red-500 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <main class="flex-1 relative w-full flex flex-col items-center justify-center overflow-hidden bg-transparent cursor-grab active:cursor-grabbing pt-24"
+            @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd"
+            @mousedown="handleMouseDown" @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseUp" @wheel.prevent="handleWheel">
+
+            <div id="canvas-stage" class="absolute origin-center transition-transform duration-75 ease-out flex items-center justify-center"
+                :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})` }">
+
+                <div class="w-[1000px] bg-transparent p-4 grid grid-cols-1 gap-6 cursor-default">
+
+                    <template v-if="mode === 'mixer'">
+                        <div class="grid grid-cols-12 gap-6">
+
+                            <div class="col-span-12 lg:col-span-8 grid grid-cols-3 gap-4 h-[500px]">
+                                <div class="bg-surface/80 backdrop-blur border border-border rounded-xl flex flex-col shadow-lg overflow-hidden h-full">
+                                    <div class="p-3 border-b border-border bg-brand/10 text-brand text-[10px] font-bold font-tech tracking-widest text-center uppercase">COL A (ACTION)</div>
+                                    <textarea v-model="colA"
+                                        @mousedown.stop @touchstart.stop @wheel.stop
+                                        class="flex-1 bg-transparent p-3 text-sm font-mono resize-none focus:outline-none custom-scroll placeholder-muted/30 text-main" placeholder="Jual&#10;Beli&#10;Promo"></textarea>
+                                    <div class="bg-input/50 p-1 text-[9px] text-muted text-center font-mono border-t border-border">{{ countLines(colA) }} lines</div>
+                                </div>
+
+                                <div class="bg-surface/80 backdrop-blur border border-border rounded-xl flex flex-col shadow-lg overflow-hidden h-full">
+                                    <div class="p-3 border-b border-border bg-accent/10 text-accent text-[10px] font-bold font-tech tracking-widest text-center uppercase">COL B (ENTITY)</div>
+                                    <textarea v-model="colB"
+                                        @mousedown.stop @touchstart.stop @wheel.stop
+                                        class="flex-1 bg-transparent p-3 text-sm font-mono resize-none focus:outline-none custom-scroll placeholder-muted/30 text-main" placeholder="Sepatu&#10;Laptop&#10;Jasa SEO"></textarea>
+                                    <div class="bg-input/50 p-1 text-[9px] text-muted text-center font-mono border-t border-border">{{ countLines(colB) }} lines</div>
+                                </div>
+
+                                <div class="bg-surface/80 backdrop-blur border border-border rounded-xl flex flex-col shadow-lg overflow-hidden h-full">
+                                    <div class="p-3 border-b border-border bg-green-500/10 text-green-500 text-[10px] font-bold font-tech tracking-widest text-center uppercase">COL C (MODIFIER)</div>
+                                    <textarea v-model="colC"
+                                        @mousedown.stop @touchstart.stop @wheel.stop
+                                        class="flex-1 bg-transparent p-3 text-sm font-mono resize-none focus:outline-none custom-scroll placeholder-muted/30 text-main" placeholder="Jakarta&#10;Murah&#10;Online"></textarea>
+                                    <div class="bg-input/50 p-1 text-[9px] text-muted text-center font-mono border-t border-border">{{ countLines(colC) }} lines</div>
+                                </div>
+                            </div>
+
+                            <div class="col-span-12 lg:col-span-4 flex flex-col gap-4 h-[500px]">
+                                <div class="bg-surface/80 backdrop-blur border border-border p-4 rounded-xl shadow-lg flex-none">
+                                    <div class="flex gap-2 mb-4">
+                                        <button @mousedown.stop @touchstart.stop @click="matchTypes.broad = !matchTypes.broad" :class="matchTypes.broad ? 'bg-brand text-black border-brand' : 'border-border text-muted'" class="flex-1 py-2 text-[10px] font-bold border rounded transition uppercase">Broad</button>
+                                        <button @mousedown.stop @touchstart.stop @click="matchTypes.phrase = !matchTypes.phrase" :class="matchTypes.phrase ? 'bg-brand text-black border-brand' : 'border-border text-muted'" class="flex-1 py-2 text-[10px] font-bold border rounded transition uppercase">"Phrase"</button>
+                                        <button @mousedown.stop @touchstart.stop @click="matchTypes.exact = !matchTypes.exact" :class="matchTypes.exact ? 'bg-brand text-black border-brand' : 'border-border text-muted'" class="flex-1 py-2 text-[10px] font-bold border rounded transition uppercase">[Exact]</button>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[10px] font-mono text-muted">
+                                        <span>Total Combinations:</span>
+                                        <span class="text-brand font-bold text-sm">{{ resultCount }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 bg-surface/80 backdrop-blur border border-border rounded-xl flex flex-col overflow-hidden shadow-lg">
+                                    <div class="p-2 bg-input/50 border-b border-border flex justify-between items-center flex-none">
+                                        <span class="text-[10px] font-bold text-brand font-tech ml-2">OUTPUT RESULT</span>
+                                        <button @mousedown.stop @touchstart.stop @click="copyResult" class="px-2 py-1 bg-brand/10 hover:bg-brand/20 border border-brand/20 rounded text-[9px] text-brand transition font-bold flex items-center gap-1">
+                                            <i data-lucide="copy" class="w-3 h-3"></i> COPY
+                                        </button>
+                                    </div>
+                                    <textarea readonly
+                                        @mousedown.stop @touchstart.stop @wheel.stop
+                                        class="flex-1 bg-transparent p-4 font-mono text-sm resize-none outline-none custom-scroll text-main whitespace-pre leading-relaxed"
+                                        :value="generatedResult"
+                                        placeholder="Hasil akan muncul di sini..."></textarea>
+                                </div>
+                            </div>
+
+                        </div>
+                    </template>
+
+                    <template v-else>
+                        <div class="grid grid-cols-12 gap-6">
+
+                            <div class="col-span-12 lg:col-span-8 flex flex-col h-[500px]">
+                                <div class="bg-surface/80 backdrop-blur border border-border rounded-xl flex flex-col h-full shadow-lg overflow-hidden">
+                                    <div class="p-3 border-b border-border bg-brand/10 text-brand text-[10px] font-bold font-tech tracking-widest uppercase flex items-center gap-2 flex-none">
+                                        <i data-lucide="file-text" class="w-4 h-4"></i> TARGET CONTENT
+                                    </div>
+                                    <textarea v-model="densityText"
+                                        @mousedown.stop @touchstart.stop @wheel.stop
+                                        class="flex-1 bg-transparent p-4 text-sm text-main focus:outline-none custom-scroll resize-none placeholder-muted/30 font-mono leading-relaxed"
+                                        placeholder="Paste artikel atau konten website lo di sini buat diaudit..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-span-12 lg:col-span-4 flex flex-col gap-4 h-[500px]">
+                                <div class="bg-surface/80 backdrop-blur border border-border p-4 rounded-xl shadow-lg flex flex-col gap-2 flex-none h-[180px]">
+                                    <div class="text-[10px] font-bold text-accent font-tech tracking-widest uppercase flex-none">TARGET KEYWORDS</div>
+                                    <textarea v-model="densityKeywords"
+                                        @mousedown.stop @touchstart.stop @wheel.stop
+                                        class="flex-1 bg-input border border-border rounded p-3 text-xs text-main font-mono resize-none focus:border-accent outline-none custom-scroll" placeholder="Keyword per baris..."></textarea>
+                                </div>
+
+                                <div class="flex-1 bg-surface/80 backdrop-blur border border-border rounded-xl flex flex-col overflow-hidden shadow-lg">
+                                    <div class="p-2 border-b border-border bg-input/50 flex justify-between items-center flex-none">
+                                        <span class="text-[10px] font-bold text-muted font-tech tracking-widest uppercase ml-2">ANALYSIS REPORT</span>
+                                        <button @mousedown.stop @touchstart.stop @click="copyDensityReport" class="px-2 py-1 bg-accent/10 hover:bg-accent/20 border border-accent/20 rounded text-[9px] text-accent transition font-bold flex items-center gap-1">
+                                            <i data-lucide="copy" class="w-3 h-3"></i> COPY
+                                        </button>
+                                    </div>
+                                    <div class="flex-1 overflow-y-auto custom-scroll p-2 space-y-2"
+                                         @mousedown.stop @touchstart.stop @wheel.stop>
+                                        <div v-if="densityAnalysis.length === 0" class="text-center text-muted text-xs mt-10 italic">Belum ada data analisis.</div>
+                                        <div v-for="item in densityAnalysis" :key="item.word" class="flex justify-between items-center text-xs p-3 rounded bg-input/30 border border-border hover:border-accent transition group">
+                                            <span class="text-main font-bold uppercase truncate w-32 group-hover:text-accent" :title="item.word">{{ item.word }}</span>
+                                            <div class="flex gap-3 items-center">
+                                                <span class="text-brand font-mono font-bold">{{ item.count }}x</span>
+                                                <span class="font-mono w-12 text-right px-1.5 py-0.5 rounded border text-[10px]" :class="getDensityColor(item.percent)">{{ item.percent }}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </template>
+
+                </div>
+            </div>
+
+            <div class="absolute bottom-[140px] right-6 flex flex-col gap-2 z-40">
+                <button @mousedown.stop @touchstart.stop @click="resetView" class="w-10 h-10 rounded-full bg-brand/10 backdrop-blur border border-brand/50 flex items-center justify-center text-brand active:scale-90 transition shadow-lg mb-2"><i data-lucide="maximize" class="w-4 h-4"></i></button>
+                <button @mousedown.stop @touchstart.stop @click="adjustZoom(0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                <button @mousedown.stop @touchstart.stop @click="adjustZoom(-0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg"><i data-lucide="minus" class="w-5 h-5"></i></button>
+            </div>
+        </main>
+
+        <footer class="bg-surface/90 backdrop-blur-xl border-t border-border z-50 fixed bottom-0 w-full pb-[calc(env(safe-area-inset-bottom)+10px)] pt-3">
+            <div class="container mx-auto max-w-lg flex justify-center items-end gap-3 px-2">
+
+                <button @click="mode = 'mixer'" class="tool-btn group" :class="{ 'active': mode === 'mixer' }">
+                    <div class="tool-icon"><i data-lucide="shuffle" class="w-5 h-5"></i></div>
+                    <span class="tool-label">MIXER</span>
+                </button>
+
+                <button @click="mode = 'density'" class="tool-btn group" :class="{ 'active': mode === 'density' }">
+                    <div class="tool-icon"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></div>
+                    <span class="tool-label">DENSITY</span>
+                </button>
+
+                <button @click="clearAll" class="tool-btn group">
+                    <div class="tool-icon group-hover:border-red-500 group-hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></div>
+                    <span class="tool-label">RESET</span>
+                </button>
+
+                <div class="w-[1px] h-10 bg-border mx-2 mb-4"></div>
+
+                <button @click="executeMain" class="tool-btn group transform -translate-y-4">
+                    <div class="tool-icon !w-16 !h-16 shadow-[0_0_20px_var(--glow-color)] rounded-2xl group-active:scale-95 transition-all"
+                        :class="mode === 'density' ? '!bg-accent !border-accent shadow-[0_0_20px_var(--accent-color)]' : '!bg-brand !border-brand'">
+                        <i v-if="loading" data-lucide="loader" class="w-8 h-8 text-black animate-spin"></i>
+                        <i v-else data-lucide="zap" class="w-8 h-8 text-black"></i>
+                    </div>
+                    <span class="tool-label" :class="mode === 'density' ? 'text-accent' : 'text-brand'">EXECUTE</span>
+                </button>
+
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                // --- STATE ---
+                const mode = ref('mixer');
+                const loading = ref(false);
+                const notification = reactive({ show: false, message: '', type: 'success' });
+
+                // MIXER DATA
+                const colA = ref("Jual\nBeli\nPromo");
+                const colB = ref("Sepatu\nTas\nBaju");
+                const colC = ref("Jakarta\nMurah\nOnline");
+                const matchTypes = reactive({ broad: true, phrase: false, exact: false });
+                const generatedResult = ref("");
+
+                // DENSITY DATA
+                const densityText = ref("");
+                const densityKeywords = ref("");
+                const densityAnalysis = ref([]);
+
+                // --- CANVAS ZOOM/PAN STATE ---
+                const zoomLevel = ref(1.0);
+                const pan = ref({ x: 0, y: 0 });
+                let lastDist = 0, isDragging = false, startPan = {x:0, y:0};
+
+                // --- UTILS ---
+                const showNotify = (msg, type = 'success') => {
+                    notification.message = msg;
+                    notification.type = type;
+                    notification.show = true;
+                    nextTick(() => lucide.createIcons());
+                    setTimeout(() => notification.show = false, 3000);
+                };
+
+                const countLines = (text) => text.trim() ? text.trim().split('\n').length : 0;
+                const resultCount = computed(() => generatedResult.value ? generatedResult.value.split('\n').length : 0);
+
+                const clearAll = () => {
+                    if(mode.value === 'mixer') {
+                        colA.value = ''; colB.value = ''; colC.value = ''; generatedResult.value = '';
+                    } else {
+                        densityText.value = ''; densityKeywords.value = ''; densityAnalysis.value = [];
+                    }
+                    showNotify("All fields reset!", "success");
+                };
+
+                // --- CORE LOGIC ---
+                const processMixer = () => {
+                    loading.value = true;
+                    setTimeout(() => {
+                        try {
+                            const arrA = colA.value.split('\n').filter(x => x.trim());
+                            const arrB = colB.value.split('\n').filter(x => x.trim());
+                            const arrC = colC.value.split('\n').filter(x => x.trim());
+
+                            let results = [];
+                            if(arrA.length && arrB.length) {
+                                arrA.forEach(a => {
+                                    arrB.forEach(b => {
+                                        if(arrC.length) { arrC.forEach(c => results.push(`${a} ${b} ${c}`)); }
+                                        else { results.push(`${a} ${b}`); }
+                                    });
+                                });
+                            }
+
+                            let final = [];
+                            results.forEach(r => {
+                                if(matchTypes.broad) final.push(r.trim());
+                                if(matchTypes.phrase) final.push(`"${r.trim()}"`);
+                                if(matchTypes.exact) final.push(`[${r.trim()}]`);
+                            });
+
+                            generatedResult.value = final.join('\n');
+                            if(final.length > 0) showNotify("Generated Successfully!", "success");
+                            else showNotify("No combinations generated", "error");
+                        } catch(e) {
+                            showNotify("Error generating combinations", "error");
+                        } finally {
+                            loading.value = false;
+                        }
+                    }, 500);
+                };
+
+                const processDensity = () => {
+                    if(!densityText.value) {
+                        showNotify("Please input target content!", "error");
+                        return;
+                    }
+                    loading.value = true;
+                    setTimeout(() => {
+                        try {
+                            const text = densityText.value.toLowerCase();
+                            const words = text.match(/\b\w+\b/g) || [];
+                            const totalWords = words.length;
+
+                            const targets = densityKeywords.value.toLowerCase().split('\n').filter(k => k.trim());
+
+                            let analysis = [];
+                            if (targets.length > 0) {
+                                targets.forEach(k => {
+                                    const kTrim = k.trim();
+                                    const escapedK = kTrim.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    const count = (text.match(new RegExp(`\\b${escapedK}\\b`, 'gi')) || []).length;
+                                    analysis.push({
+                                        word: kTrim,
+                                        count: count,
+                                        percent: totalWords ? ((count / totalWords) * 100).toFixed(2) : 0
+                                    });
+                                });
+                            } else {
+                                const freq = {};
+                                words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+                                const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]).slice(0, 50);
+                                analysis = sorted.map(([w, c]) => ({
+                                    word: w,
+                                    count: c,
+                                    percent: ((c / totalWords) * 100).toFixed(2)
+                                }));
+                            }
+
+                            densityAnalysis.value = analysis;
+                            showNotify("Analysis Complete!", "success");
+                        } catch(e) {
+                            showNotify("Analysis Failed", "error");
+                        } finally {
+                            loading.value = false;
+                        }
+                    }, 500);
+                };
+
+                const executeMain = () => {
+                    if(mode.value === 'mixer') processMixer();
+                    else processDensity();
+                };
+
+                const copyResult = () => {
+                    if(!generatedResult.value) return showNotify("Nothing to copy!", "error");
+                    navigator.clipboard.writeText(generatedResult.value);
+                    showNotify("Mixer Result Copied!");
+                };
+
+                const copyDensityReport = () => {
+                    if(densityAnalysis.value.length === 0) return showNotify("No report available", "error");
+                    let text = "WORD | COUNT | DENSITY\n----------------------\n";
+                    densityAnalysis.value.forEach(item => {
+                        text += `${item.word} | ${item.count} | ${item.percent}%\n`;
+                    });
+                    navigator.clipboard.writeText(text);
+                    showNotify("Report Copied!");
+                };
+
+                const getDensityColor = (p) => {
+                    const val = parseFloat(p);
+                    if (val > 5) return 'text-red-500 border-red-500/30 bg-red-500/10';
+                    if (val > 2) return 'text-brand border-brand/30 bg-brand/10';
+                    return 'text-muted border-border bg-input';
+                };
+
+                const closeApp = () => { if(window.parent) window.parent.postMessage({ type: 'CLOSE_APP' }, '*'); };
+
+                // --- CANVAS ZOOM/PAN LOGIC ---
+                const adjustZoom = (d) => zoomLevel.value = Math.min(Math.max(zoomLevel.value + d, 0.2), 4.0);
+                const resetView = () => {
+                    const containerW = 1000;
+                    const screenW = window.innerWidth;
+                    const fitScale = (screenW - 40) / containerW;
+                    zoomLevel.value = Math.min(1.0, Math.max(fitScale, 0.3));
+                    pan.value = { x: 0, y: 0 };
+                };
+
+                const handleTouchStart = (e) => {
+                    if (e.touches.length === 2) {
+                        lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    } else if (e.touches.length === 1 && !['INPUT','BUTTON','TEXTAREA'].includes(e.target.tagName)) {
+                        isDragging = true;
+                        startPan = { x: e.touches[0].clientX - pan.value.x, y: e.touches[0].clientY - pan.value.y };
+                    }
+                };
+                const handleTouchMove = (e) => {
+                    if (e.touches.length === 2) {
+                        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        adjustZoom((dist - lastDist) * 0.005); lastDist = dist;
+                    } else if (isDragging) {
+                        e.preventDefault();
+                        pan.value = { x: e.touches[0].clientX - startPan.x, y: e.touches[0].clientY - startPan.y };
+                    }
+                };
+                const handleTouchEnd = () => isDragging = false;
+
+                const handleMouseDown = (e) => {
+                    if(['INPUT','BUTTON','TEXTAREA'].includes(e.target.tagName)) return;
+                    isDragging = true; startPan = { x: e.clientX - pan.value.x, y: e.clientY - pan.value.y };
+                };
+                const handleMouseMove = (e) => {
+                    if(isDragging) { e.preventDefault(); pan.value = { x: e.clientX - startPan.x, y: e.clientY - startPan.y }; }
+                };
+                const handleMouseUp = () => isDragging = false;
+                const handleWheel = (e) => adjustZoom(e.deltaY * -0.001);
+
+                onMounted(() => {
+                    lucide.createIcons();
+                    nextTick(() => resetView());
+                });
+
+                return {
+                    mode, loading, notification,
+                    colA, colB, colC, matchTypes, generatedResult, resultCount,
+                    densityText, densityKeywords, densityAnalysis,
+                    zoomLevel, pan,
+                    processMixer, processDensity, executeMain, countLines, clearAll, copyResult, copyDensityReport, getDensityColor, closeApp,
+                    adjustZoom, resetView, handleTouchStart, handleTouchMove, handleTouchEnd, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

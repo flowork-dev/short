@@ -1,0 +1,26 @@
+{
+    "id": "dedupe-list",
+    "name": "HAPUS DUPLIKAT BARIS & TEXT SORTER",
+    "version": "1.0.0",
+    "description": "Cara cepat menghapus data ganda dari list panjang. Sort a-z, case insensitive, dan pembersih spasi.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "dedupe-list",
+    "capabilities": [
+        "client_side_processing",
+        "text_manipulation",
+        "offline_capable"
+    ],
+    "tags": [
+        "productivity",
+        "data-cleaner",
+        "developer-tools",
+        "seo-tools"
+    ],
+    "required_variables": []
+}

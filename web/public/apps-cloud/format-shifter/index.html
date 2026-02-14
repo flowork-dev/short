@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Format Shifter | Flowork Tactical Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root {
+            --bg-core: #171925;
+            --neon-cyan: #54d7f6;
+            --neon-purple: #706bf3;
+            --input-bg: #3a3962;
+            --text-holo: #e0f0ff;
+            --glass-border: rgba(84, 215, 246, 0.2);
+            --glass-surface: rgba(58, 57, 98, 0.4);
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-holo);
+            font-family: 'Inter', sans-serif;
+            overflow-y: auto;
+        }
+
+        /* TACTICAL SCROLLBAR & UTILS */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-core); }
+        ::-webkit-scrollbar-thumb { background: var(--input-bg); border-radius: 4px; border: 1px solid var(--bg-core); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-purple); }
+
+        .hidden-view { display: none !important; }
+        .glass-panel { background: var(--glass-surface); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); }
+
+        .cyber-btn {
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan)); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
+        }
+        .cyber-btn:hover { box-shadow: 0 0 20px rgba(84, 215, 246, 0.6); transform: translateY(-2px); }
+
+        .tactical-article h2 { color: var(--neon-cyan); font-size: 1.5rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--input-bg); padding-bottom: 0.5rem; }
+        .tactical-article p { margin-bottom: 1.5rem; line-height: 1.8; color: #bdc1c6; text-align: justify; }
+        .tactical-article ul { list-style: none; margin-bottom: 1.5rem; padding-left: 1rem; }
+        .tactical-article li { margin-bottom: 0.5rem; position: relative; padding-left: 1.5rem; }
+        .tactical-article li::before { content: '►'; color: var(--neon-purple); position: absolute; left: 0; font-size: 0.8rem; top: 4px; }
+
+        .drag-active { border-color: var(--neon-cyan) !important; background: rgba(84, 215, 246, 0.15) !important; transform: scale(1.02); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen selection:bg-[--neon-cyan] selection:text-black">
+
+    <nav class="w-full h-16 border-b border-[--glass-border] flex items-center justify-between px-4 md:px-8 bg-[#171925]/95 sticky top-0 z-50 backdrop-blur-md">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+            <div class="w-2 h-2 rounded-full bg-[--neon-cyan] animate-ping"></div>
+            <span class="font-bold tracking-widest text-lg md:text-xl font-mono">FORMAT<span class="text-[--neon-purple]">SHIFTER</span></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="nav-app" class="text-xs md:text-sm font-bold text-[--neon-cyan] border-b-2 border-[--neon-cyan] pb-1 cursor-default">INTELLIGENCE</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8">
+        <div id="view-app" class="w-full"></div>
+    </main>
+
+    <footer class="text-center py-8 text-xs text-gray-600 border-t border-gray-900 mt-auto">
+        <p>FLOWORK CYBER DIVISION // V3.4 SYSTEM</p>
+    </footer>
+
+    <script>
+        const AppCore = {
+            isLoggedIn: false,
+
+            async init() {
+                // 1. Load Partials (Lander removed)
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                // 2. Default State
+                this.setupDragDrop();
+
+                console.log("SYSTEM READY");
+            },
+
+            async loadPartial(containerId, url) {
+                try {
+                    const res = await fetch(url);
+                    if(!res.ok) throw new Error("Partial Load Failed");
+                    document.getElementById(containerId).innerHTML = await res.text();
+                } catch(e) { console.error(e); }
+            },
+
+            // switchTab function removed
+
+            // --- ENGINE CORE ---
+
+            setupDragDrop() {
+                const dropZone = document.getElementById('drop-zone');
+                if(!dropZone) return;
+
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+                });
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-active'), false);
+                });
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-active'), false);
+                });
+                dropZone.addEventListener('drop', (e) => this.handleFiles(e.dataTransfer.files), false);
+            },
+
+            async handleFiles(files) {
+                if(files.length === 0) return;
+
+                // SERVER AUTHORIZATION CHECK (Anti-Scrape Logic)
+                // Kita panggil API dulu sebelum proses. Kalau API mati/diblok, app gak jalan.
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'init_convert');
+                    formData.append('count', files.length);
+
+                    const authReq = await fetch('/api/v1/format-shifter/process', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const authRes = await authReq.json();
+                    if(!authRes.success) throw new Error("Security Check Failed");
+
+                } catch(e) {
+                    alert("SECURITY ALERT: Gagal terhubung ke server otorisasi. Pastikan Anda online dan menggunakan aplikasi resmi.");
+                    console.error(e);
+                    return; // Stop process
+                }
+
+                // If Auth Success, Proceed Local Processing
+                const resultArea = document.getElementById('result-area');
+                resultArea.classList.remove('hidden');
+                ([...files]).forEach(f => this.processFile(f));
+            },
+
+            processFile(file) {
+                if (!file.type.match('image.*')) return;
+                const id = Math.random().toString(36).substr(2, 9);
+                const fileList = document.getElementById('file-list');
+
+                const itemHTML = `
+                    <div id="${id}" class="glass-panel p-4 rounded-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-pulse border-l-2 border-gray-600">
+                        <div class="flex items-center gap-4 w-full md:w-auto">
+                            <div class="w-12 h-12 bg-gray-800 rounded-md overflow-hidden relative shrink-0">
+                                <img id="img-${id}" class="w-full h-full object-cover opacity-50 grayscale">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-bold text-white truncate max-w-[200px]">${file.name}</div>
+                                <div class="text-[10px] font-mono text-gray-400">
+                                    ORIG: <span class="text-gray-300">${(file.size/1024).toFixed(1)} KB</span> &rarr;
+                                    <span id="stat-${id}" class="text-[--neon-cyan]">PROCESSING...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <a id="btn-${id}" class="hidden w-full md:w-auto text-center text-xs font-bold bg-[--input-bg] border border-[--neon-cyan] text-[--neon-cyan] hover:bg-[--neon-cyan] hover:text-black px-6 py-2 rounded transition-colors uppercase tracking-wider" download>DOWNLOAD WEBP</a>
+                    </div>`;
+
+                fileList.insertAdjacentHTML('afterbegin', itemHTML);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        canvas.toBlob((blob) => {
+                            const url = URL.createObjectURL(blob);
+                            const card = document.getElementById(id);
+                            const thumb = document.getElementById(`img-${id}`);
+                            const btn = document.getElementById(`btn-${id}`);
+                            const stat = document.getElementById(`stat-${id}`);
+                            const spinner = thumb.nextElementSibling;
+
+                            card.classList.remove('animate-pulse');
+                            card.classList.replace('border-gray-600', 'border-[--neon-cyan]');
+                            thumb.src = url;
+                            thumb.classList.remove('opacity-50', 'grayscale');
+                            if(spinner) spinner.remove();
+
+                            const newSize = (blob.size/1024).toFixed(1);
+                            const savingBytes = file.size - blob.size;
+                            const savingPercent = ((savingBytes / file.size) * 100).toFixed(0);
+
+                            if(savingBytes > 0) {
+                                stat.innerHTML = `${newSize} KB <span class="text-green-400 font-bold ml-1">(-${savingPercent}%)</span>`;
+                            } else {
+                                stat.innerHTML = `${newSize} KB <span class="text-yellow-500 font-bold ml-1">(OPTIMIZED)</span>`;
+                            }
+
+                            btn.href = url;
+                            btn.download = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+                            btn.classList.remove('hidden');
+                        }, 'image/webp', 0.80);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            },
+
+            resetApp() {
+                document.getElementById('file-list').innerHTML = '';
+                document.getElementById('result-area').classList.add('hidden');
+                document.getElementById('file-input').value = '';
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+
+        // EXTERNAL LISTENER (Parent)
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                AppCore.isLoggedIn = true;
+            }
+        });
+    </script>
+</body>
+</html>

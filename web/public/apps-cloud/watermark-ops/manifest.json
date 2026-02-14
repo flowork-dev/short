@@ -1,0 +1,24 @@
+{
+    "id": "watermark-ops",
+    "name": "Watermark Ops - Mass Protection",
+    "version": "1.0.0",
+    "description": "Lindungi aset foto produk dari pencuri konten! Tempel logo atau teks hak cipta ke ratusan foto sekaligus dalam satu klik. 100% Proses lokal.",
+    "author": "Flowork Security Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "slug": "watermark-ops",
+    "capabilities": [
+        "local_processing",
+        "batch_processing",
+        "file_io"
+    ],
+    "tags": [
+        "watermark",
+        "batch",
+        "copyright",
+        "business",
+        "security"
+    ]
+}

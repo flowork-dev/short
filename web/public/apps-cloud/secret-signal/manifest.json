@@ -1,0 +1,28 @@
+{
+    "id": "secret-signal",
+    "name": "ENKRIPSI PESAN RAHASIA KE AUDIO & VIDEO (STEGANOGRAPHY)",
+    "version": "2.0.0",
+    "description": "Tools intelijen untuk menyisipkan pesan teks tersembunyi ke dalam gelombang suara (Audio/Video). Tidak terdeteksi telinga manusia, hanya bisa dibaca mesin.",
+    "author": "Flowork Intelligence Ops",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 10,
+    "slug": "secret-signal",
+    "capabilities": [
+        "audio_synthesis",
+        "frequency_analysis",
+        "steganography",
+        "local_execution",
+        "offline_capable"
+    ],
+    "tags": [
+        "security",
+        "crypto",
+        "audio",
+        "tools",
+        "privacy"
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "id": "business_canvas",
+    "name": "Business Model Canvas - RANCANG BISNIS JADI UNICORN (BMC PRO)",
+    "version": "1.1.0",
+    "description": "JANGAN MULAI BISNIS TANPA INI! Peta harta karun para CEO untuk merancang strategi cuan. Buat Business Model Canvas profesional, bisa Save Offline & Export PNG HD. Tools wajib biar startup gak boncos!",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 8,
+    "slug": "business-model-canvas",
+    "capabilities": ["hybrid_save", "export_png", "local_storage"],
+    "tags": ["productivity", "business", "planning", "canvas", "startup", "strategy"]
+}

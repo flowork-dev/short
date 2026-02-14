@@ -1,0 +1,26 @@
+{
+    "id": "yt-intel",
+    "name": "Intip Youtube Competitor",
+    "version": "3.0.0",
+    "description": "Intip strategi yang di gunakan kompetitor",
+    "author": "Flowork Cyber Division",
+    "tier": "login",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "yt-intel",
+    "capabilities": ["internet_access", "cloud_sync", "d1_database_access"],
+    "tags": ["youtube", "analytics", "serverless", "cyberpunk", "intel"],
+
+    "required_variables": [
+        {
+            "name": "YOUTUBE_API_KEY",
+            "label": "YouTube Data API Key",
+            "description": "Required to access YouTube Data API v3 via Cloudflare Functions.",
+            "type": "secret",
+            "required": true
+        }
+    ]
+}

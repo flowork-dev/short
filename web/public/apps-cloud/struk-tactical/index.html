@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Struk Tactical | Flowork Edition</title>
+
+    <script>
+        (function() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const forcedTheme = params.get('theme');
+                const cachedTheme = localStorage.getItem('flowork_theme');
+                const finalTheme = forcedTheme || cachedTheme || 'dark';
+                document.documentElement.setAttribute('data-theme', finalTheme);
+                localStorage.setItem('flowork_theme', finalTheme);
+            } catch (e) { console.error("Theme Error", e); }
+        })();
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=VT323&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        page: 'var(--bg-page)',
+                        surface: 'var(--bg-surface)',
+                        input: 'var(--bg-input)',
+                        main: 'var(--text-main)',
+                        muted: 'var(--text-muted)',
+                        brand: 'var(--brand-color)',
+                        border: 'var(--border-color)',
+                        accent: 'var(--accent-color)',
+                        danger: 'var(--danger-color)',
+                        glow: 'var(--glow-color)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['VT323', 'monospace']
+                    },
+                    boxShadow: {
+                        'up': '0 -4px 20px -5px rgba(0, 0, 0, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DEFAULT (DARK) */
+            --bg-page: #050505;
+            --bg-surface: rgba(18, 18, 18, 0.85);
+            --bg-input: rgba(30, 30, 30, 0.9);
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --brand-color: #54d7f6;
+            --border-color: rgba(255,255,255,0.1);
+            --accent-color: #fbbf24;
+            --danger-color: #ff2a6d;
+            --glow-color: rgba(84, 215, 246, 0.15);
+        }
+
+        [data-theme="light"] {
+            --bg-page: #f2f2f7;
+            --bg-surface: rgba(255, 255, 255, 0.9);
+            --bg-input: rgba(240, 240, 245, 0.9);
+            --text-main: #000000;
+            --text-muted: #666666;
+            --brand-color: #007aff;
+            --border-color: rgba(0,0,0,0.1);
+            --accent-color: #ff9500;
+            --danger-color: #ff3b30;
+            --glow-color: rgba(0, 122, 255, 0.05);
+        }
+
+        [data-theme="hacker"] {
+            --bg-page: #000000;
+            --bg-surface: rgba(10, 10, 10, 0.95);
+            --bg-input: #001a00;
+            --text-main: #00ff00;
+            --text-muted: #008800;
+            --brand-color: #00ff00;
+            --border-color: #004400;
+            --accent-color: #00ff00;
+            --danger-color: #ff0000;
+            --glow-color: rgba(0, 255, 0, 0.2);
+        }
+
+        .mesh-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;
+            background-color: var(--bg-page);
+            background-image:
+                radial-gradient(at 0% 0%, var(--glow-color) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, var(--glow-color) 0px, transparent 50%);
+            transition: background-color 0.3s ease;
+        }
+
+        body { -webkit-tap-highlight-color: transparent; user-select: none; overscroll-behavior: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .snap-x-mandatory { scroll-snap-type: x mandatory; }
+        .snap-center { scroll-snap-align: center; }
+        * { transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease; }
+
+        .font-struk { font-family: 'VT323', monospace; }
+
+        .tool-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            min-width: 60px; scroll-snap-align: center;
+        }
+        .tool-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-main); transition: all 0.1s;
+        }
+        .tool-btn:active .tool-icon { transform: scale(0.9); border-color: var(--brand-color); color: var(--brand-color); }
+        .tool-btn.active .tool-icon { border-color: var(--brand-color); color: var(--brand-color); background-color: var(--bg-surface); }
+        .tool-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: capitalize; }
+
+        /* SVG Utilities */
+        .icon-svg { width: 20px; height: 20px; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .icon-svg-lg { width: 24px; height: 24px; stroke-width: 2; }
+        .icon-svg-sm { width: 16px; height: 16px; stroke-width: 2; }
+
+        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-fade-in { animation: fade-in 0.2s ease-out; }
+    </style>
+</head>
+<body class="bg-page text-main font-sans h-screen w-screen flex flex-col overflow-hidden relative">
+
+    <div id="app" class="h-full flex flex-col">
+        <div class="mesh-bg"></div>
+
+        <div class="absolute top-0 left-0 w-full z-50 pt-[calc(env(safe-area-inset-top)+10px)] px-4 pointer-events-none flex justify-center">
+            <div class="w-full max-w-md flex justify-between items-center">
+                <button @click="closeApp" class="pointer-events-auto w-9 h-9 rounded-full bg-surface/60 backdrop-blur-md border border-border flex items-center justify-center text-main active:scale-90 transition-transform">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+                <div class="pointer-events-auto bg-brand/10 backdrop-blur px-3 py-1 rounded-full border border-brand/20 flex items-center gap-2">
+                    <svg class="icon-svg-sm text-brand" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+                    <span class="text-xs font-bold text-brand tracking-widest">STRUK TACTICAL</span>
+                </div>
+                <div class="w-9"></div> </div>
+        </div>
+
+        <main
+            class="flex-1 relative w-full flex flex-col items-center justify-center overflow-hidden bg-transparent cursor-grab active:cursor-grabbing"
+            @touchstart="handleTouchStart"
+            @touchmove="handleTouchMove"
+            @touchend="handleTouchEnd"
+            @mousedown="handleMouseDown"
+            @mousemove="handleMouseMove"
+            @mouseup="handleMouseUp"
+            @mouseleave="handleMouseUp"
+            @wheel.prevent="handleWheel"
+        >
+            <div
+                id="receipt-preview"
+                class="absolute origin-center transition-transform duration-75 ease-out bg-white text-black p-6 shadow-2xl"
+                :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})` }"
+            >
+                <div class="font-struk w-[300px] text-sm leading-tight uppercase select-none relative">
+
+                    <div class="text-center mb-4">
+                        <h2 class="text-xl font-bold mb-1">{{ storeName }}</h2>
+                        <p>{{ storeAddress }}</p>
+                        <p class="mt-2 text-xs border-b border-black pb-2 border-dashed block w-full"></p>
+                    </div>
+
+                    <div class="mb-2 flex justify-between">
+                        <span>{{ currentDate }}</span>
+                        <span>{{ currentTime }}</span>
+                    </div>
+                    <div class="mb-2 flex justify-between">
+                        <span>ID: {{ txId }}</span>
+                        <span>CS: {{ cashierName }}</span>
+                    </div>
+                    <div class="border-b border-black border-dashed mb-2"></div>
+
+                    <div class="mb-2">
+                        <div v-for="(item, index) in items" :key="index" class="mb-1">
+                            <div class="flex justify-between font-bold">
+                                <span>{{ item.name }}</span>
+                                <span>{{ formatPrice(item.total) }}</span>
+                            </div>
+                            <div class="text-xs text-gray-600 pl-2">
+                                <span>{{ item.qty }} x {{ formatPrice(item.price) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-b border-black border-dashed mb-2"></div>
+
+                    <div class="flex justify-between mb-1">
+                        <span>Subtotal</span>
+                        <span>{{ formatPrice(subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Pajak ({{ taxRate }}%)</span>
+                        <span>{{ formatPrice(tax) }}</span>
+                    </div>
+                    <div v-if="discount > 0" class="flex justify-between mb-1 text-black/70">
+                        <span>Diskon</span>
+                        <span>-{{ formatPrice(discount) }}</span>
+                    </div>
+
+                    <div class="border-b border-black border-dashed mb-2 mt-1"></div>
+
+                    <div class="flex justify-between font-bold text-lg mt-2 mb-4">
+                        <span>TOTAL</span>
+                        <span>{{ formatPrice(total) }}</span>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p>{{ footerText }}</p>
+                    </div>
+
+                    <div class="mt-6 flex justify-center opacity-90" v-html="barcodeSvg"></div>
+                    <div class="text-center text-[10px] tracking-widest mt-1">{{ txId }}</div>
+
+                </div>
+            </div>
+
+            <div class="absolute bottom-[140px] right-4 flex flex-col gap-2 z-40">
+                <button @click="resetView" class="w-10 h-10 rounded-full bg-brand/20 backdrop-blur border border-brand/50 flex items-center justify-center text-brand active:scale-90 transition shadow-lg mb-2" title="Reset View">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                </button>
+                <button @click="adjustZoom(0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                </button>
+                <div class="bg-black/50 text-white text-[10px] py-1 rounded-md text-center font-mono border border-white/10">{{ Math.round(zoomLevel * 100) }}%</div>
+                <button @click="adjustZoom(-0.1)" class="w-10 h-10 rounded-full bg-surface/80 backdrop-blur border border-border flex items-center justify-center text-main active:scale-90 transition shadow-lg">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+                </button>
+            </div>
+
+        </main>
+
+        <footer class="bg-surface/95 backdrop-blur-xl border-t border-border z-50 fixed bottom-0 w-full pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-up">
+            <div class="w-full max-w-md mx-auto relative">
+                <div class="w-full flex justify-center py-2 cursor-pointer" @click="resetView">
+                    <div class="w-12 h-1 bg-muted/20 rounded-full hover:bg-brand/50 transition-colors"></div>
+                </div>
+
+                <div class="flex items-center w-full px-2 gap-1">
+                    <button @click="scrollMenu('left')" class="w-8 h-full flex items-center justify-center text-muted active:text-brand transition-colors shrink-0 z-10">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+
+                    <div id="tool-menu" class="flex-1 flex overflow-x-auto hide-scroll gap-3 snap-x-mandatory items-center px-1 pb-2">
+
+                        <button @click="generateReceipt" class="flex flex-col items-center gap-1 min-w-[60px] snap-center group">
+                            <div class="w-12 h-12 rounded-xl bg-brand text-black border border-brand/50 flex items-center justify-center group-active:scale-90 transition-all shadow-lg shadow-brand/20">
+                                <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            </div>
+                            <span class="text-[10px] font-bold text-brand">Save</span>
+                        </button>
+
+                        <div class="w-[1px] h-8 bg-border shrink-0"></div>
+
+                        <button @click="openModal('datetime')" class="tool-btn group">
+                            <div class="tool-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M15.5 15.5 17 17l2.5-2.5"/><path d="M22 17a5 5 0 1 1-10 0 5 5 0 0 1 10 0"/></svg>
+                            </div>
+                            <span class="tool-label">Date</span>
+                        </button>
+                        <button @click="openModal('store')" class="tool-btn group">
+                            <div class="tool-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M2 7l2.5 2.5a2.5 2.5 0 0 0 3 0L10 7l2.5 2.5a2.5 2.5 0 0 0 3 0L18 7l2.5 2.5a2.5 2.5 0 0 0 3 0L22 7"/></svg>
+                            </div>
+                            <span class="tool-label">Store</span>
+                        </button>
+                        <button @click="openModal('items_manager')" class="tool-btn group">
+                            <div class="tool-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                            </div>
+                            <span class="tool-label">Items</span>
+                        </button>
+                        <button @click="openModal('tx')" class="tool-btn group">
+                            <div class="tool-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
+                            </div>
+                            <span class="tool-label">Details</span>
+                        </button>
+                        <button @click="openModal('footer')" class="tool-btn group">
+                            <div class="tool-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <span class="tool-label">Message</span>
+                        </button>
+                        <button @click="resetData" class="tool-btn group">
+                            <div class="tool-icon !text-danger !border-danger/50">
+                                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            </div>
+                            <span class="tool-label text-danger">Reset</span>
+                        </button>
+
+                        <div class="w-2 shrink-0"></div>
+                    </div>
+
+                    <button @click="scrollMenu('right')" class="w-8 h-full flex items-center justify-center text-muted active:text-brand transition-colors shrink-0 z-10">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </footer>
+
+        <div v-if="activeModal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" @click.self="closeModal">
+
+            <div v-if="activeModal === 'items_manager'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up h-[70vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-brand font-bold text-lg flex items-center gap-2">
+                        <svg class="icon-svg text-brand" viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                        Manage Items
+                    </h3>
+                    <button @click="openItemModal(-1)" class="bg-brand text-black px-3 py-1 rounded-lg text-xs font-bold active:scale-95 transition">+ New</button>
+                </div>
+                <div class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scroll">
+                    <div v-if="items.length === 0" class="text-center text-muted py-10 text-sm">Belum ada barang.</div>
+                    <div v-for="(item, index) in items" :key="index" class="bg-input border border-border rounded-xl p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm text-main">{{ item.name }}</div>
+                            <div class="text-xs text-muted">{{ item.qty }} x {{ formatPrice(item.price) }}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="openItemModal(index)" class="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-brand active:scale-90">
+                                <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                            </button>
+                            <button @click="removeItem(index)" class="w-8 h-8 rounded-lg bg-surface border border-red-500/30 flex items-center justify-center text-red-500 active:scale-90">
+                                <svg class="icon-svg-sm" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button @click="closeModal" class="w-full bg-input border border-border text-muted py-3 rounded-xl mt-4 font-bold text-sm">TUTUP</button>
+            </div>
+
+            <div v-if="activeModal === 'item_form'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <h3 class="text-brand font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg class="icon-svg text-brand" viewBox="0 0 24 24" v-if="editingIndex === -1"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                    <svg class="icon-svg text-brand" viewBox="0 0 24 24" v-else><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    {{ editingIndex === -1 ? 'Tambah Barang' : 'Edit Barang' }}
+                </h3>
+                <div class="space-y-3">
+                    <div><label class="text-xs text-muted block mb-1">Nama Barang</label><input v-model="newItem.name" type="text" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand" placeholder="Contoh: Kopi Susu"></div>
+                    <div class="flex gap-2">
+                        <div class="w-1/3"><label class="text-xs text-muted block mb-1">Qty</label><input v-model.number="newItem.qty" type="number" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                        <div class="w-2/3"><label class="text-xs text-muted block mb-1">Harga</label><input v-model.number="newItem.price" type="number" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button @click="activeModal = 'items_manager'" class="w-1/3 bg-input text-muted font-bold py-3 rounded-xl active:scale-95">BATAL</button>
+                        <button @click="saveItem" class="w-2/3 bg-brand text-black font-bold py-3 rounded-xl active:scale-95 transition-transform">{{ editingIndex === -1 ? 'SIMPAN' : 'UPDATE' }}</button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'datetime'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <h3 class="text-brand font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg class="icon-svg text-brand" viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M15.5 15.5 17 17l2.5-2.5"/><path d="M22 17a5 5 0 1 1-10 0 5 5 0 0 1 10 0"/></svg>
+                    Atur Waktu
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-input p-3 rounded-lg border border-border">
+                        <span class="text-sm text-muted">Mode Otomatis</span>
+                        <div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" :class="isAutoTime ? 'bg-brand' : 'bg-gray-600'" @click="toggleAutoTime">
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" :class="isAutoTime ? 'translate-x-6' : 'translate-x-1'"></span>
+                        </div>
+                    </div>
+                    <div v-if="!isAutoTime" class="animate-fade-in space-y-3">
+                        <div><label class="text-xs text-muted block mb-1">Tanggal</label><input v-model="inputDate" type="date" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                        <div><label class="text-xs text-muted block mb-1">Jam</label><input v-model="inputTime" type="time" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                    </div>
+                    <button @click="saveDateTime" class="w-full bg-brand text-black font-bold py-3 rounded-xl mt-2 active:scale-95 transition-transform">{{ isAutoTime ? 'TUTUP' : 'TERAPKAN' }}</button>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'store'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <h3 class="text-brand font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg class="icon-svg text-brand" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M2 7l2.5 2.5a2.5 2.5 0 0 0 3 0L10 7l2.5 2.5a2.5 2.5 0 0 0 3 0L18 7l2.5 2.5a2.5 2.5 0 0 0 3 0L22 7"/></svg>
+                    Info Toko
+                </h3>
+                <div class="space-y-4">
+                    <div><label class="text-xs text-muted block mb-1">Nama Toko</label><input v-model="storeName" type="text" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand transition-colors"></div>
+                    <div><label class="text-xs text-muted block mb-1">Alamat</label><textarea v-model="storeAddress" rows="2" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand transition-colors"></textarea></div>
+                    <button @click="closeModal" class="w-full bg-brand text-black font-bold py-3 rounded-xl mt-2 active:scale-95 transition-transform">SIMPAN</button>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'tx'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <h3 class="text-brand font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg class="icon-svg text-brand" viewBox="0 0 24 24"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
+                    Detail Transaksi
+                </h3>
+                <div class="space-y-3">
+                    <div><label class="text-xs text-muted block mb-1">No. Transaksi</label><input v-model="txId" type="text" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                    <div><label class="text-xs text-muted block mb-1">Kasir</label><input v-model="cashierName" type="text" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                    <div class="flex gap-2">
+                        <div class="w-1/2"><label class="text-xs text-muted block mb-1">Pajak (%)</label><input v-model.number="taxRate" type="number" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></div>
+                        <div class="w-1/2"><label class="text-xs text-muted block mb-1 text-accent">Diskon (Rp)</label><input v-model.number="discount" type="number" class="w-full bg-input border border-accent/50 rounded-lg p-3 text-main outline-none focus:border-accent"></div>
+                    </div>
+                    <button @click="closeModal" class="w-full bg-brand text-black font-bold py-3 rounded-xl mt-2">UPDATE</button>
+                </div>
+            </div>
+
+            <div v-if="activeModal === 'footer'" class="w-full max-w-sm bg-surface border border-border rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
+                <h3 class="text-brand font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg class="icon-svg text-brand" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Pesan Bawah
+                </h3>
+                <textarea v-model="footerText" rows="3" class="w-full bg-input border border-border rounded-lg p-3 text-main outline-none focus:border-brand"></textarea>
+                <button @click="closeModal" class="w-full bg-brand text-black font-bold py-3 rounded-xl mt-4">SIMPAN</button>
+            </div>
+        </div>
+
+        <div v-if="alertData.show" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md px-4 animate-fade-in" @click.self="closeAlert">
+            <div class="w-full max-w-xs bg-black border border-accent rounded-2xl p-6 shadow-[0_0_30px_rgba(251,191,36,0.2)] text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-tr from-accent/10 to-transparent pointer-events-none"></div>
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 mb-4 text-accent">
+                    <svg v-if="alertData.icon === 'loader'" class="w-6 h-6 animate-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <svg v-else-if="alertData.icon === 'check-circle'" class="w-6 h-6" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <svg v-else-if="alertData.icon === 'x-circle'" class="w-6 h-6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
+                    <svg v-else-if="alertData.icon === 'trash-2'" class="w-6 h-6" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <svg v-else class="w-6 h-6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-accent mb-2 tracking-wide">{{ alertData.title }}</h3>
+                <p class="text-sm text-gray-300 mb-6 leading-relaxed">{{ alertData.message }}</p>
+                <button @click="closeAlert" class="w-full rounded-xl bg-accent py-3 text-sm font-bold text-black shadow-lg active:scale-95 transition-transform hover:bg-yellow-400">OK, SIAP</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const storeName = ref("STARBUCKS COFFEE");
+                const storeAddress = ref("Mall Grand Indonesia, West Mall, Lantai Ground. Jl. M.H. Thamrin No.1");
+                const cashierName = ref("Budi Santoso");
+                const txId = ref("TX-9928371");
+                const footerText = ref("Terima kasih atas kunjungan Anda. Layanan Pelanggan: 0812-3456-7890");
+                const taxRate = ref(10);
+                const discount = ref(0);
+                const zoomLevel = ref(1.0);
+                const pan = ref({ x: 0, y: 0 });
+
+                const isAutoTime = ref(true);
+                const currentDate = ref("");
+                const currentTime = ref("");
+                const inputDate = ref("");
+                const inputTime = ref("");
+
+                const activeModal = ref(null);
+                const editingIndex = ref(-1);
+
+                const items = ref([
+                    { name: "Caramel Macchiato", qty: 1, price: 55000, total: 55000 },
+                    { name: "Asian Dolce Latte", qty: 2, price: 48000, total: 96000 }
+                ]);
+                const newItem = ref({ name: "", qty: 1, price: 0 });
+                const alertData = ref({ show: false, title: "", message: "", icon: "info" });
+
+                const subtotal = computed(() => items.value.reduce((sum, item) => sum + item.total, 0));
+                const tax = computed(() => subtotal.value * (taxRate.value / 100));
+                const total = computed(() => Math.max(0, subtotal.value + tax.value - discount.value));
+
+                const barcodeSvg = computed(() => {
+                    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="40" viewBox="0 0 200 40" preserveAspectRatio="none">`;
+                    let x = 0;
+                    while(x < 200) {
+                        const width = Math.random() > 0.7 ? 3 : 1;
+                        if(Math.random() > 0.3) { svg += `<rect x="${x}" y="0" width="${width}" height="40" fill="black" />`; }
+                        x += width + (Math.random() > 0.5 ? 1 : 2);
+                    }
+                    svg += `</svg>`;
+                    return svg;
+                });
+
+                const showAlert = (title, message, icon = "info") => {
+                    if(navigator.vibrate) navigator.vibrate(20);
+                    alertData.value = { show: true, title, message, icon };
+                };
+                const closeAlert = () => alertData.value.show = false;
+                const openModal = (type) => {
+                    activeModal.value = type;
+                    if(type === 'datetime') {
+                        const now = new Date();
+                        inputDate.value = now.toISOString().split('T')[0];
+                        inputTime.value = now.toTimeString().slice(0,5);
+                    }
+                };
+                const closeModal = () => activeModal.value = null;
+
+                const openItemModal = (index = -1) => {
+                    editingIndex.value = index;
+                    if (index === -1) { newItem.value = { name: "", qty: 1, price: 0 }; }
+                    else { newItem.value = { ...items.value[index] }; }
+                    activeModal.value = 'item_form';
+                };
+
+                const saveItem = () => {
+                    if (!newItem.value.name || newItem.value.price <= 0) { showAlert("Error Data", "Isi nama dan harga!", "alert-circle"); return; }
+                    const itemData = { ...newItem.value, total: newItem.value.qty * newItem.value.price };
+                    if (editingIndex.value === -1) { items.value.push(itemData); showAlert("Sukses", "Item ditambahkan.", "check-circle"); }
+                    else { items.value[editingIndex.value] = itemData; showAlert("Sukses", "Data diperbarui.", "check-circle"); }
+                    activeModal.value = 'items_manager';
+                };
+
+                const removeItem = (index) => { items.value.splice(index, 1); showAlert("Terhapus", "Item dihapus.", "trash-2"); };
+                const resetData = () => { items.value = []; discount.value = 0; showAlert("Reset", "Data dibersihkan.", "trash-2"); };
+                const formatPrice = (value) => "Rp " + value.toLocaleString('id-ID');
+
+                const updateTime = () => {
+                    if (!isAutoTime.value) return;
+                    const now = new Date();
+                    currentDate.value = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    currentTime.value = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                };
+                const toggleAutoTime = () => { isAutoTime.value = !isAutoTime.value; if(isAutoTime.value) updateTime(); };
+                const saveDateTime = () => {
+                    if (isAutoTime.value) { closeModal(); return; }
+                    if (!inputDate.value || !inputTime.value) { showAlert("Error", "Isi tanggal dan jam!", "alert-circle"); return; }
+                    const [y, m, d] = inputDate.value.split('-');
+                    currentDate.value = `${d}/${m}/${y}`;
+                    currentTime.value = inputTime.value;
+                    closeModal();
+                    showAlert("Waktu Diatur", "Mode manual aktif.", "clock");
+                };
+
+                const scrollMenu = (direction) => {
+                    const container = document.getElementById('tool-menu');
+                    const scrollAmount = 150;
+                    if (direction === 'left') container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                    else container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                };
+
+                // ZOOM & PAN ENGINE
+                const adjustZoom = (d) => zoomLevel.value = Math.min(Math.max(zoomLevel.value + d, 0.5), 3.0);
+                const resetView = () => { zoomLevel.value = 1.0; pan.value = { x: 0, y: 0 }; };
+
+                let lastDist = 0, isDragging = false, startPan = {x:0, y:0};
+
+                const handleTouchStart = (e) => {
+                    if (e.touches.length === 2) {
+                        lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                    } else if (e.touches.length === 1) {
+                        isDragging = true;
+                        startPan = { x: e.touches[0].clientX - pan.value.x, y: e.touches[0].clientY - pan.value.y };
+                    }
+                };
+                const handleTouchMove = (e) => {
+                    e.preventDefault();
+                    if (e.touches.length === 2) {
+                        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                        adjustZoom((dist - lastDist) * 0.005);
+                        lastDist = dist;
+                    } else if (isDragging) {
+                        pan.value = { x: e.touches[0].clientX - startPan.x, y: e.touches[0].clientY - startPan.y };
+                    }
+                };
+                const handleTouchEnd = () => isDragging = false;
+                const handleMouseDown = (e) => { isDragging = true; startPan = { x: e.clientX - pan.value.x, y: e.clientY - pan.value.y }; };
+                const handleMouseMove = (e) => { if(isDragging) { e.preventDefault(); pan.value = { x: e.clientX - startPan.x, y: e.clientY - startPan.y }; } };
+                const handleMouseUp = () => isDragging = false;
+
+                const handleWheel = (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY * -0.001;
+                    adjustZoom(delta);
+                };
+
+                const generateReceipt = async () => {
+                    showAlert("Memproses", "Sedang mencetak struk...", "loader");
+                    setTimeout(async () => {
+                        try {
+                            const element = document.getElementById('receipt-preview');
+                            const oldZoom = zoomLevel.value;
+                            const oldPan = { ...pan.value };
+
+                            zoomLevel.value = 1;
+                            pan.value = { x: 0, y: 0 };
+                            await nextTick();
+
+                            const canvas = await html2canvas(element, { scale: 2, backgroundColor: null, logging: false });
+                            const link = document.createElement('a');
+                            link.download = `STRUK-${Date.now()}.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+
+                            zoomLevel.value = oldZoom;
+                            pan.value = oldPan;
+                            closeAlert();
+                            setTimeout(() => showAlert("Berhasil", "Struk tersimpan.", "check-circle"), 300);
+                        } catch (err) {
+                            console.error(err);
+                            closeAlert();
+                            setTimeout(() => showAlert("Gagal", "Error sistem.", "x-circle"), 300);
+                        }
+                    }, 500);
+                };
+
+                const initBridge = () => {
+                    if (window.parent) window.parent.postMessage({ type: 'APP_READY' }, '*');
+
+                    // SYNC & SAVE THEME
+                    window.addEventListener('message', (event) => {
+                        const data = event.data;
+                        if (!data) return;
+                        if (['FLOWORK_THEME_UPDATE', 'THEME_UPDATE', 'setTheme', 'THEME_CHANGE'].includes(data.type)) {
+                            let theme = data.theme || data.payload || data.value;
+                            if (theme && typeof theme === 'string') {
+                                let cleanTheme = theme.toLowerCase();
+                                document.documentElement.setAttribute('data-theme', cleanTheme);
+                                localStorage.setItem('flowork_theme', cleanTheme);
+                            }
+                        }
+                    });
+                };
+                const closeApp = () => { if (window.parent) window.parent.postMessage({ type: 'CLOSE_APP' }, '*'); };
+
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                    initBridge();
+                });
+
+                return {
+                    storeName, storeAddress, cashierName, txId, footerText, taxRate, discount,
+                    items, newItem, subtotal, tax, total, currentDate, currentTime, barcodeSvg,
+                    activeModal, alertData, zoomLevel, pan, isAutoTime, inputDate, inputTime, editingIndex,
+                    openModal, closeModal, openItemModal, saveItem, removeItem,
+                    resetData, formatPrice, showAlert, closeAlert, generateReceipt, scrollMenu,
+                    handleTouchStart, handleTouchMove, handleTouchEnd, adjustZoom, resetView, closeApp,
+                    toggleAutoTime, saveDateTime, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel
+                };
+            }
+        }).mount('#app');
+    </script>
+
+    <style>
+        /* SCROLL BAR HIDDEN BUT FUNCTIONAL */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: var(--bg-input); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    </style>
+</body>
+</html>

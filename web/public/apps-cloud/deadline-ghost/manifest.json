@@ -1,0 +1,28 @@
+{
+    "id": "deadline-ghost",
+    "name": "SUARA HACKER MISTERIUS + VISUALIZER TOPENG",
+    "version": "3.2.0",
+    "description": "Mau spill tea tapi takut ketahuan? Ubah suara cempreng jadi Deep Voice ala Hacker. Lengkap dengan topeng visualizer yang gerak real-time. Privasi aman, konten menyala!",
+    "author": "Flowork Neural Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "deadline-ghost",
+    "capabilities": [
+        "local_processing",
+        "audio_manipulation",
+        "video_rendering",
+        "microphone_access"
+    ],
+    "tags": [
+        "voice-changer",
+        "content-creator",
+        "privacy-tool",
+        "hacker-style",
+        "audio-visualizer"
+    ],
+    "required_variables": []
+}

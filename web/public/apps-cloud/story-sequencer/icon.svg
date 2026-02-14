@@ -1,0 +1,25 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="cyber_grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00f5ff" />
+            <stop offset="1" stop-color="#ff4081" />
+        </linearGradient>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="10" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+
+    <rect x="146" y="80" width="220" height="320" rx="20" transform="rotate(-15 256 256)" fill="#1a1a2e" stroke="#333" stroke-width="8" opacity="0.6"/>
+
+    <rect x="146" y="80" width="220" height="320" rx="20" transform="rotate(-7 256 256)" fill="#0f111a" stroke="#555" stroke-width="8" opacity="0.8"/>
+
+    <rect x="146" y="96" width="220" height="320" rx="20" fill="#050507" stroke="url(#cyber_grad)" stroke-width="12" filter="url(#glow)"/>
+
+    <path d="M220 220 L320 256 L220 292 V220Z" fill="url(#cyber_grad)" stroke="white" stroke-width="4" stroke-linejoin="round"/>
+
+    <rect x="176" y="340" width="160" height="8" rx="4" fill="#333"/>
+    <rect x="176" y="360" width="100" height="8" rx="4" fill="#333"/>
+
+    <circle cx="330" cy="130" r="8" fill="#00f5ff" filter="url(#glow)"/>
+</svg>

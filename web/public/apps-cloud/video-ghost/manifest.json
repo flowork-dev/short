@@ -1,0 +1,24 @@
+{
+    "id": "video-ghost",
+    "name": "SEMBUNYIKAN FILE RAHASIA DI DALAM VIDEO MP4",
+    "version": "3.4.0",
+    "description": "Level lanjut dari Ghost Pixel. Sisipkan file ZIP atau dokumen rahasia ke dalam video biasa yang tetap bisa diputar. Kapasitas simpan besar & aman.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "video-ghost",
+    "capabilities": [
+        "local_processing"
+    ],
+    "tags": [
+        "steganography",
+        "privacy",
+        "client-side",
+        "polyglot"
+    ],
+    "required_variables": []
+}

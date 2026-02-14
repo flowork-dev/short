@@ -1,0 +1,206 @@
+<div id="vue-root" class="h-full flex flex-col bg-[#0f111a]">
+    <v-app theme="dark" style="background: transparent;">
+        <v-main class="h-full flex flex-col md:flex-row p-0 overflow-hidden relative">
+
+            <div class="order-2 md:order-1 flex-1 md:flex-none w-full md:w-80 bg-[#12141d] border-t md:border-t-0 md:border-r border-gray-800 flex flex-col overflow-hidden z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] md:shadow-none h-[55%] md:h-full">
+
+                <div class="hidden md:flex justify-between items-center p-4 border-b border-gray-800 bg-[#171925] shrink-0">
+                    <div class="flex items-center gap-2">
+                        <v-icon icon="mdi-monitor-shimmer" color="cyan-accent-2"></v-icon>
+                        <h1 class="text-lg font-bold tracking-widest text-white orbitron">SCREEN <span class="text-cyan-400">INTEL</span></h1>
+                    </div>
+                </div>
+
+                <div class="flex md:hidden justify-center items-center p-2 border-b border-gray-800 bg-[#171925] shrink-0">
+                    <div class="w-12 h-1.5 rounded-full bg-gray-700"></div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6">
+
+                    <div>
+                        <div class="text-[10px] font-bold text-cyan-400 tracking-widest border-b border-gray-700 pb-2 mb-3">STUDIO CONFIG</div>
+
+                        <div class="space-y-2 mb-4">
+                            <label class="flex justify-between items-center bg-black/30 p-3 rounded border border-gray-700 cursor-pointer hover:border-cyan-500/50 transition">
+                                <span class="text-xs font-bold text-gray-300">MICROPHONE</span>
+                                <input type="checkbox" v-model="config.mic" class="accent-cyan-500 w-4 h-4">
+                            </label>
+                            <label class="flex justify-between items-center bg-black/30 p-3 rounded border border-gray-700 cursor-pointer hover:border-cyan-500/50 transition">
+                                <span class="text-xs font-bold text-gray-300">SYSTEM AUDIO</span>
+                                <input type="checkbox" v-model="config.systemAudio" class="accent-cyan-500 w-4 h-4">
+                            </label>
+                        </div>
+
+                        <div class="space-y-2 mb-4 pt-2 border-t border-gray-800">
+                            <label class="text-[9px] text-gray-500 font-bold block mb-2">OUTPUT RESOLUTION</label>
+                            <div class="grid grid-cols-4 gap-1">
+                                <button v-for="res in ['720p','1080p','2k','4k']" :key="res"
+                                    @click="config.resolution = res"
+                                    :class="['py-2 text-[9px] font-bold rounded border transition', config.resolution === res ? 'bg-cyan-900 border-cyan-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'border-gray-700 text-gray-500 hover:border-gray-500']">
+                                    {{ res }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-gray-800 mb-4">
+                            <label class="text-[9px] text-gray-500 font-bold block mb-2">BACKGROUND SOURCE</label>
+                            <label class="flex flex-col items-center justify-center border border-dashed border-gray-600 bg-black/20 rounded cursor-pointer hover:bg-gray-800 transition p-3 relative overflow-hidden group">
+                                <div v-if="!background.fileUrl" class="text-center">
+                                    <v-icon color="cyan" size="small">mdi-image-plus</v-icon>
+                                    <div class="text-[9px] text-gray-400 font-bold mt-1">UPLOAD GAMBAR/VIDEO</div>
+                                    <div class="text-[8px] text-gray-600">(SS Chat / Game / Video)</div>
+                                </div>
+                                <div v-else class="w-full h-16 relative flex items-center justify-center">
+                                    <img v-if="background.type === 'image'" :src="background.fileUrl" class="h-full w-full object-contain">
+                                    <video v-else :src="background.fileUrl" class="h-full w-full object-contain" muted></video>
+                                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                        <span class="text-[9px] font-bold text-white">GANTI</span>
+                                    </div>
+                                </div>
+                                <input type="file" accept="image/*,video/*" @change="handleBackgroundUpload" class="hidden">
+                            </label>
+                            <button v-if="background.fileUrl" @click="resetBackground" class="w-full mt-2 py-1 bg-red-900/30 border border-red-800 text-red-500 text-[9px] font-bold rounded hover:bg-red-900/50 transition">
+                                RESET TO BLACK
+                            </button>
+                        </div>
+
+                        <div class="pt-2 border-t border-gray-800 mb-4">
+                            <label class="text-[9px] text-gray-500 font-bold block mb-2">PIP MODE</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button @click="setMode('none')" :class="['py-2 text-[9px] font-bold rounded border transition', config.pipMode === 'none' ? 'bg-gray-700 text-white' : 'border-gray-700 text-gray-500']">OFF</button>
+                                <button @click="setMode('webcam')" :class="['py-2 text-[9px] font-bold rounded border transition', config.pipMode === 'webcam' ? 'bg-purple-900/50 border-purple-500 text-white' : 'border-gray-700 text-gray-500']">WEBCAM</button>
+                                <button @click="setMode('avatar')" :class="['py-2 text-[9px] font-bold rounded border transition', config.pipMode === 'avatar' ? 'bg-cyan-900/50 border-cyan-500 text-white' : 'border-gray-700 text-gray-500']">AVATAR</button>
+                            </div>
+
+                            <div v-if="config.pipMode !== 'none'" class="bg-black/40 border border-gray-700 rounded p-3 mt-2 space-y-3">
+                                <div class="text-[9px] text-gray-400 font-bold mb-1 border-b border-gray-700 pb-1 flex justify-between">
+                                    <span>PIP SIZE</span><span class="text-cyan-500 text-[8px]">DRAG SCREEN</span>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[9px] text-cyan-300 mb-1">
+                                        <span>SCALE</span><span>{{ Math.round(pipState.size * 100) }}%</span>
+                                    </div>
+                                    <input type="range" v-model.number="pipState.size" min="0.1" max="0.8" step="0.01" class="w-full h-1 bg-gray-700 rounded-lg accent-cyan-500">
+                                </div>
+                            </div>
+
+                            <div v-if="config.pipMode === 'avatar'" class="bg-cyan-900/10 border border-cyan-500/30 rounded p-3 mt-2 animate-fade-in space-y-3">
+                                <div>
+                                    <label class="text-[8px] text-cyan-300 font-bold block mb-1">THEME</label>
+                                    <select v-model="config.avatarTheme" class="w-full bg-black/50 border border-cyan-500/50 text-white text-[10px] p-2 rounded outline-none">
+                                        <option v-for="t in themeList" :key="t.value" :value="t.value">{{ t.title }}</option>
+                                    </select>
+                                </div>
+                                <label class="flex flex-col items-center justify-center border-2 border-dashed border-cyan-500/30 rounded cursor-pointer hover:bg-cyan-500/10 transition p-4 h-24">
+                                    <div v-if="!avatarData.previewUrl" class="text-center"><v-icon color="cyan" size="small">mdi-upload</v-icon><div class="text-[9px] text-cyan-400 font-bold mt-1">UPLOAD PNG</div></div>
+                                    <img v-else :src="avatarData.previewUrl" class="max-h-full max-w-full object-contain">
+                                    <input type="file" accept="image/png,image/jpeg" @change="handleAvatarUpload" class="hidden">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-gray-700">
+                             <label class="flex justify-between items-center cursor-pointer mb-2">
+                                <span class="text-[10px] font-bold text-orange-400 tracking-widest orbitron">TELEPROMPTER</span>
+                                <v-switch v-model="prompter.show" color="orange" density="compact" hide-details inset></v-switch>
+                             </label>
+                             <div v-if="prompter.show" class="space-y-3 animate-fade-in bg-black/20 p-2 rounded border border-orange-500/20">
+                                 <div><div class="flex justify-between text-[9px] text-gray-400 mb-1 font-bold"><span>SPEED: {{ prompter.speed }}x</span></div><input type="range" v-model.number="prompter.speed" min="0.5" max="10" step="0.5" class="w-full h-1 bg-gray-700 rounded-lg accent-orange-500"></div>
+                                 <textarea v-model="prompter.text" rows="5" class="w-full bg-black/50 text-gray-300 text-xs p-2 rounded border border-gray-700 focus:border-orange-500 focus:outline-none placeholder-gray-600 custom-scrollbar"></textarea>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-800 space-y-2">
+                         <button @click="togglePreview" :class="['w-full py-2 text-[10px] font-bold rounded border transition flex items-center justify-center gap-2', isPreviewing ? 'bg-green-900/50 border-green-500 text-green-400' : 'border-gray-700 text-gray-400']">
+                            <v-icon size="small">{{ isPreviewing ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon> {{ isPreviewing ? 'STOP PREVIEW' : 'TEST CAM' }}
+                         </button>
+                        <button @click="handleRecordingAction" :disabled="isProcessing || isCountingDown || isStopping"
+                            :class="['w-full py-4 text-sm font-black tracking-widest uppercase transition rounded shadow-lg flex items-center justify-center gap-2 orbitron',
+                            isRecording ? (isStopping ? 'bg-orange-500 text-black' : 'bg-red-600 text-white animate-pulse') : (isCountingDown ? 'bg-yellow-500 text-black' : 'bg-cyan-400 text-black hover:bg-cyan-300')]">
+                            <v-icon v-if="!isProcessing && !isCountingDown && !isStopping">{{ isRecording ? 'mdi-stop' : 'mdi-record-rec' }}</v-icon>
+                            <v-progress-circular v-else indeterminate size="20" color="black"></v-progress-circular>
+                            <span>{{ isRecording ? (isStopping ? 'SAVING...' : 'STOP') : (isCountingDown ? 'READY...' : 'START REC') }}</span>
+                        </button>
+                    </div>
+
+                    <div id="global-footer" class="pt-8 text-center pb-8"></div>
+
+                </div>
+            </div>
+
+            <div class="order-1 md:order-2 h-[45%] md:h-full md:flex-1 bg-[#0f111a] flex items-center justify-center relative p-0 overflow-hidden border-b md:border-b-0 border-gray-700" id="canvas-container">
+
+                <div v-if="!isRecording && !lastUrl && !isCountingDown && !isPreviewing && !background.fileUrl" class="text-center opacity-50 z-0 pointer-events-none select-none px-4">
+                    <v-icon icon="mdi-monitor-dashboard" size="60" class="md:text-[80px]" color="cyan"></v-icon>
+                    <div class="text-cyan-400 font-bold tracking-widest mt-4 text-xs md:text-sm orbitron">STUDIO IDLE</div>
+                    <p class="text-[10px] text-gray-400 mt-2 bg-black/50 px-2 py-1 rounded hidden md:block">Pilih Mode "AVATAR" atau Upload Background</p>
+                </div>
+
+                <canvas id="preview-canvas" class="absolute inset-0 w-full h-full object-contain pointer-events-auto z-10"
+                        style="display: block; object-fit: contain;"
+                        @mousedown="handleCanvasMouseDown"
+                        @mousemove="handleCanvasMouseMove"
+                        @mouseup="handleCanvasMouseUp"
+                        @mouseleave="handleCanvasMouseUp"
+                        @touchstart="handleCanvasTouchStart"
+                        @touchmove="handleCanvasTouchMove"
+                        @touchend="handleCanvasMouseUp"></canvas>
+
+                <div v-if="isCountingDown" class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in pointer-events-none">
+                    <div class="text-center">
+                        <div class="text-[80px] md:text-[150px] font-black text-cyan-400 orbitron animate-ping">{{ countdownValue }}</div>
+                        <div class="text-white tracking-[0.5em] font-bold animate-pulse mt-4">GET READY</div>
+                    </div>
+                </div>
+
+                <div v-if="isStopping" class="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in pointer-events-none">
+                    <div class="text-center">
+                        <v-progress-circular indeterminate color="red" size="60" width="6"></v-progress-circular>
+                        <div class="text-red-500 text-2xl font-black mt-2 orbitron">SAVING...</div>
+                    </div>
+                </div>
+
+                <div v-if="prompter.show && !lastUrl"
+                        class="fixed z-50 flex flex-col items-center shadow-2xl"
+                        :style="{ top: prompter.y + 'px', left: prompter.x + 'px', width: prompter.width + 'px', height: prompter.height + 'px' }">
+                    <div class="w-full h-full glass-panel relative flex flex-col overflow-hidden border-2 border-orange-500/50 shadow-[0_0_50px_rgba(255,140,0,0.2)] bg-black/90 rounded-xl">
+                        <div class="bg-orange-900/80 p-2 flex justify-between items-center border-b border-orange-500/30 shrink-0 select-none cursor-move touch-none"
+                                @mousedown="startPrompterDrag"
+                                @touchstart="startPrompterDrag">
+                            <div class="flex items-center gap-2">
+                                <v-icon icon="mdi-drag-variant" size="small" color="orange"></v-icon>
+                                <span class="text-[10px] font-black text-orange-400 tracking-widest orbitron">PROMPTER</span>
+                            </div>
+                            <button @click="togglePrompterPlay" class="w-6 h-6 rounded hover:bg-white/10 flex items-center justify-center transition">
+                                <v-icon size="x-small" :color="prompter.isPlaying ? 'yellow' : 'white'">{{ prompter.isPlaying ? 'mdi-pause' : 'mdi-play' }}</v-icon>
+                            </button>
+                        </div>
+                        <div id="prompter-scroll-area" class="flex-1 overflow-y-auto p-3 text-center relative no-scrollbar scroll-smooth">
+                            <div class="h-[40%] w-full"></div>
+                            <p class="font-bold text-white leading-relaxed whitespace-pre-wrap transition-all duration-300 font-mono drop-shadow-md" :style="{ fontSize: prompter.fontSize + 'px' }">{{ prompter.text }}</p>
+                            <div class="h-[40%] w-full"></div>
+                            <div class="absolute top-1/2 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent pointer-events-none z-10 opacity-70"></div>
+                        </div>
+                        <div class="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize flex items-end justify-end p-1 z-50 touch-none bg-orange-500/20 rounded-tl-xl hover:bg-orange-500/50 transition"
+                                @mousedown.stop.prevent="startPrompterResize"
+                                @touchstart.stop.prevent="startPrompterResize">
+                            <v-icon size="small" color="orange" class="pointer-events-none">mdi-resize-bottom-right</v-icon>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="lastUrl" class="absolute inset-0 z-50 bg-[#12141d] flex flex-col p-4 animate-fade-in">
+                    <div class="flex-1 min-h-0 bg-black rounded border border-gray-800 overflow-hidden flex items-center justify-center relative">
+                        <video :src="lastUrl" controls class="max-w-full max-h-full object-contain"></video>
+                    </div>
+                    <div class="flex gap-2 mt-4 shrink-0">
+                        <a :href="lastUrl" :download="fileName" class="flex-1 bg-cyan-500 text-black font-black py-3 rounded text-center hover:bg-white transition text-xs md:text-sm orbitron">DOWNLOAD VIDEO</a>
+                        <button @click="lastUrl = null" class="px-4 border border-red-500 text-red-500 rounded font-bold text-xs">CLOSE</button>
+                    </div>
+                </div>
+
+            </div>
+        </v-main>
+    </v-app>
+</div>

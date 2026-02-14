@@ -1,0 +1,59 @@
+<div class="grid grid-cols-1 gap-8 pb-20 max-w-4xl mx-auto">
+
+    <div class="bg-flowork-surface border border-gray-800 p-8 rounded-xl shadow-lg relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-flowork-pink/10 rounded-full blur-3xl"></div>
+
+        <h3 class="font-orbitron text-white mb-6 text-center text-lg tracking-widest">
+            <i class="mdi mdi-radar mr-2 text-flowork-pink"></i> TARGET ACQUISITION
+        </h3>
+
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-grow relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="mdi mdi-web text-gray-500"></i>
+                </div>
+                <input
+                    type="text"
+                    id="in-url"
+                    placeholder="https://www.awwwards.com"
+                    class="w-full pl-10 p-4 cyber-input rounded text-white font-mono text-sm placeholder-gray-700"
+                    onkeypress="if(event.key === 'Enter') window.startScan()"
+                >
+            </div>
+            <button
+                onclick="window.startScan()"
+                class="md:w-48 py-4 bg-flowork-pink text-black font-black font-orbitron tracking-widest hover:bg-white transition shadow-lg shadow-pink-500/30 clip-path-btn flex justify-center items-center gap-2"
+            >
+                <span id="btn-text">SCAN URL</span>
+                <i class="mdi mdi-magnify"></i>
+            </button>
+        </div>
+
+        <p class="text-center text-[10px] text-gray-500 mt-4 font-mono">
+            *Engine will extract HEX codes from HTML/CSS source code.
+        </p>
+    </div>
+
+    <div id="result-area" class="hidden animate-fade-in">
+
+        <div class="flex justify-between items-center mb-4 px-2">
+            <div class="text-xs font-mono text-gray-400">
+                FOUND: <span id="count-found" class="text-flowork-pink font-bold">0</span> COLORS
+            </div>
+            <button onclick="window.downloadJSON()" class="text-xs font-bold text-flowork-cyan hover:underline flex items-center gap-1">
+                <i class="mdi mdi-code-json"></i> EXPORT JSON
+            </button>
+        </div>
+
+        <div id="color-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+            </div>
+
+    </div>
+
+    <div id="loader" class="hidden py-20 text-center">
+        <div class="inline-block w-16 h-16 border-4 border-flowork-pink border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-flowork-pink font-orbitron animate-pulse">EXTRACTING VISUAL DATA...</p>
+        <p class="text-xs text-gray-600 font-mono mt-2">Bypassing CORS... Parsing CSS...</p>
+    </div>
+
+</div>

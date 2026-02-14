@@ -1,0 +1,13 @@
+{
+    "id": "mockup-ops",
+    "name": "Mockup Ops - Pro Visuals",
+    "version": "1.0.0",
+    "description": "Bikin mockup sekarang gartis dan mudah tingal draag and drop, ngak perlu langanan tools mahal",
+    "author": "Flowork Creative Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "capabilities": ["canvas_blending", "image_compositing"],
+    "tags": ["design", "branding", "mockup", "product"]
+}

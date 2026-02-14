@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mockup Ops Protocol</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <style>
+        :root { --bg-deep: #171925; --primary: #8b5cf6; --secondary: #ec4899; --panel: #2a2a40; --text: #e0f0ff; }
+        body { background-color: var(--bg-deep); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow: hidden; touch-action: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0a0a0a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--panel); border-radius: 4px; }
+        .hidden-view { display: none !important; }
+        .cat-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
+        .canvas-viewport { overflow: hidden; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(#333 1px, transparent 1px); background-size: 20px 20px; cursor: grab; touch-action: none; }
+        .canvas-viewport:active { cursor: grabbing; }
+
+        #loader-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); transition: opacity 0.3s; }
+        #loader-overlay.hidden { opacity: 0; pointer-events: none; }
+    </style>
+
+    <script>
+        window.MOCKUP_REGISTRY = [];
+        window.registerMockup = function(category, data) {
+            data.forEach(item => { item.category = category; window.MOCKUP_REGISTRY.push(item); });
+        };
+    </script>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <nav class="h-14 border-b border-[#333] flex items-center justify-between px-4 md:px-6 bg-[#0f1016] z-40 shrink-0 font-[Oswald]">
+        <div class="font-bold text-lg tracking-wider text-[#8b5cf6]">MOCKUP<span class="text-white">OPS</span></div>
+        <div class="flex gap-4 text-sm font-bold">
+            <button id="tab-app" class="opacity-100 text-[#8b5cf6] cursor-default">STUDIO</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 relative w-full h-full overflow-hidden p-0">
+        <div id="view-app" class="w-full h-full overflow-y-auto custom-scrollbar"></div>
+    </main>
+
+    <script src="themes/fashion.js"></script>
+    <script src="themes/tech.js"></script>
+    <script src="themes/packaging.js"></script>
+
+    <script>
+        const AppCore = {
+            resources: { base: null, mask: null, bg: null },
+            texts: [], activeTemplate: null, designImg: null, activeTextId: null,
+
+            config: {
+                scale: 1, rotate: 0, x: 0, y: 0, blendMode: 'multiply', texture: 0.7, foldContrast: 2.0, bgColor: '#171925',
+                ft: 0, fb: 0, fl: 0, fr: 0, ctl: 0, ctr: 0, cbl: 0, cbr: 0, // PADDING (Blur)
+                dt: 0, db: 0, dl: 0, dr: 0, dctl: 0, dctr: 0, dcbl: 0, dcbr: 0 // DELETE (Hard)
+            },
+
+            zoomLevel: 0.5, isDragging: false, isPanning: false, lastMouseX: 0, lastMouseY: 0, showMaskOnly: false,
+            renderPending: false, isLoading: false, dragTarget: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('app', 'partials/app.html');
+                lucide.createIcons();
+                this.templates = window.MOCKUP_REGISTRY || [];
+
+                this.initCategories();
+                if(this.templates.length > 0) this.selectCategory(this.templates[0].category);
+                this.setZoom(0.5);
+            },
+
+            // switchTab function removed
+
+            // --- TEXT SYSTEM ---
+            addText() {
+                const text = prompt("Masukkan Teks:", "FLOWORK");
+                if(text) {
+                    const id = Date.now();
+                    this.texts.push({ id: id, text: text, x: 0, y: 0, color: '#ffffff', size: 100, font: 'Oswald' });
+                    this.activeTextId = id;
+                    this.requestRender();
+                    this.renderTextControls();
+                }
+            },
+            updateText(id, key, val) { const idx = this.texts.findIndex(t => t.id == id); if(idx > -1) { this.texts[idx][key] = (key==='size')?parseInt(val):val; this.requestRender(); } },
+            selectText(id) { this.activeTextId = id; this.renderTextControls(); },
+            deleteText(id) { this.texts = this.texts.filter(t => t.id != id); if(this.activeTextId == id) this.activeTextId = null; this.requestRender(); this.renderTextControls(); },
+            renderTextControls() {
+                const container = document.getElementById('text-layers'); if(!container) return; container.innerHTML = '';
+                this.texts.forEach((t) => {
+                    const isActive = t.id === this.activeTextId;
+                    const activeClass = isActive ? 'border-[#ec4899] bg-[#2a2a40]' : 'border-[#333] bg-[#1a1b26]';
+                    container.innerHTML += `<div onclick="AppCore.selectText(${t.id})" class="${activeClass} border p-2 rounded mb-2 flex flex-col gap-2 cursor-pointer transition"><div class="flex justify-between items-center"><span class="text-[10px] font-bold text-white truncate w-24">${t.text}</span><button onclick="event.stopPropagation(); AppCore.deleteText(${t.id})" class="text-red-500"><i data-lucide="trash" class="w-3 h-3"></i></button></div><div class="flex gap-2 items-center" onclick="event.stopPropagation()"><input type="color" value="${t.color}" oninput="AppCore.updateText(${t.id}, 'color', this.value)" class="w-5 h-5 bg-transparent border-0 cursor-pointer"><input type="range" min="10" max="500" value="${t.size}" oninput="AppCore.updateText(${t.id}, 'size', this.value)" class="flex-1 h-1 bg-[#333] accent-white"></div><select onchange="event.stopPropagation(); AppCore.updateText(${t.id}, 'font', this.value)" class="bg-[#0f1016] text-[9px] text-gray-400 border border-[#333] rounded px-1 w-full" onclick="event.stopPropagation()"><option value="Oswald" ${t.font=='Oswald'?'selected':''}>Oswald (Bold)</option><option value="Rajdhani" ${t.font=='Rajdhani'?'selected':''}>Rajdhani (Tech)</option><option value="Share Tech Mono" ${t.font=='Share Tech Mono'?'selected':''}>Mono (Code)</option><option value="sans-serif" ${t.font=='sans-serif'?'selected':''}>Sans Serif</option></select></div>`;
+                }); lucide.createIcons();
+            },
+
+            // --- CORE FUNCTIONS ---
+            setLoading(state) { this.isLoading = state; const el = document.getElementById('loader-overlay'); if(el) { if(state) el.classList.remove('hidden'); else setTimeout(()=>el.classList.add('hidden'),200); } },
+            loadImage(src) { return new Promise((resolve) => { const img = new Image(); img.crossOrigin = "anonymous"; img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = src; }); },
+            handleBgUpload(input) { const f=input.files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{const i=new Image(); i.onload=()=>{this.resources.bg=i; this.requestRender();}; i.src=e.target.result;}; r.readAsDataURL(f); },
+            applyTemplate(id) {
+                if(typeof id !== 'string') return; const t = this.templates.find(x => x.id === id); if(!t || this.isLoading) return;
+                this.setLoading(true); this.activeTemplate = t;
+                if(t.mode) { this.config.blendMode = t.mode; const s=document.getElementById('opt-blend'); if(s)s.value=t.mode; }
+                this.resources.base = null; this.resources.mask = null; const ts = Date.now();
+                Promise.all([ this.loadImage(`assets/${t.category}/${t.src}?v=${ts}`), this.loadImage(`assets/${t.category}/${t.src.replace('.png','_mask.png')}?v=${ts}`) ]).then(([b, m]) => { this.resources.base = b; this.resources.mask = m; this.setLoading(false); this.requestRender(); });
+            },
+            requestRender() { if(!this.renderPending){ this.renderPending=true; requestAnimationFrame(()=>{this.renderMockup(); this.renderPending=false;}); } },
+
+            // --- FIX UTAMA ADA DI SINI ---
+            _prepareDesignSprite(designImg, c) {
+                const w = designImg.naturalWidth; const h = designImg.naturalHeight;
+                const cvs = document.createElement('canvas'); cvs.width = w; cvs.height = h;
+                const ctx = cvs.getContext('2d');
+                ctx.drawImage(designImg, 0, 0, w, h);
+
+                // Mode penghapusan
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = "black"; // Solid black untuk potongan tajam
+
+                // 1. HARD DELETE (POTONG TAJAM) - SISI
+                if(c.dt>0) ctx.fillRect(0,0,w,h*c.dt);
+                if(c.db>0) ctx.fillRect(0,h-(h*c.db),w,h*c.db);
+                if(c.dl>0) ctx.fillRect(0,0,w*c.dl,h);
+                if(c.dr>0) ctx.fillRect(w-(w*c.dr),0,w*c.dr,h);
+
+                // 2. HARD DELETE (POTONG TAJAM) - POJOK (Bentuk Segitiga Solid)
+                const maxDim = Math.max(w,h);
+                const doHardCorner = (cx, cy, val, type) => {
+                    if(val<=0) return; const size = maxDim * val;
+                    ctx.beginPath(); ctx.moveTo(cx, cy);
+                    if(type=='tl') { ctx.lineTo(cx+size, cy); ctx.lineTo(cx, cy+size); }
+                    if(type=='tr') { ctx.lineTo(cx-size, cy); ctx.lineTo(cx, cy+size); }
+                    if(type=='bl') { ctx.lineTo(cx+size, cy); ctx.lineTo(cx, cy-size); }
+                    if(type=='br') { ctx.lineTo(cx-size, cy); ctx.lineTo(cx, cy-size); }
+                    ctx.closePath(); ctx.fill();
+                };
+                doHardCorner(0,0,c.dctl,'tl'); doHardCorner(w,0,c.dctr,'tr');
+                doHardCorner(0,h,c.dcbl,'bl'); doHardCorner(w,h,c.dcbr,'br');
+
+                // 3. SOFT PADDING (BLUR HALUS) - 8 ARAH (Menggunakan Gradient)
+                const maxR = Math.min(w,h)*0.5;
+                if(c.ft>0){ const g=ctx.createLinearGradient(0,0,0,h*c.ft); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(0,0,w,h*c.ft); }
+                if(c.fb>0){ const g=ctx.createLinearGradient(0,h,0,h-(h*c.fb)); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(0,h-(h*c.fb),w,h*c.fb); }
+                if(c.fl>0){ const g=ctx.createLinearGradient(0,0,w*c.fl,0); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(0,0,w*c.fl,h); }
+                if(c.fr>0){ const g=ctx.createLinearGradient(w,0,w-(w*c.fr),0); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(w-(w*c.fr),0,w*c.fr,h); }
+
+                if(c.ctl>0){ const r=maxR*(c.ctl*3); const g=ctx.createRadialGradient(0,0,0,0,0,r); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(0,0,r,r); }
+                if(c.ctr>0){ const r=maxR*(c.ctr*3); const g=ctx.createRadialGradient(w,0,0,w,0,r); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(w-r,0,r,r); }
+                if(c.cbl>0){ const r=maxR*(c.cbl*3); const g=ctx.createRadialGradient(0,h,0,0,h,r); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(0,h-r,r,r); }
+                if(c.cbr>0){ const r=maxR*(c.cbr*3); const g=ctx.createRadialGradient(w,h,0,w,h,r); g.addColorStop(0,"black"); g.addColorStop(1,"transparent"); ctx.fillStyle=g; ctx.fillRect(w-r,h-r,r,r); }
+
+                return cvs;
+            },
+
+            renderMockup() {
+                const canvas = document.getElementById('preview-canvas'); if (!canvas || !this.resources.base) return;
+                const baseImg = this.resources.base; const maskImg = this.resources.mask;
+                const w = baseImg.naturalWidth; const h = baseImg.naturalHeight;
+                if(canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+                const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,w,h);
+
+                ctx.save(); if(this.resources.bg) ctx.drawImage(this.resources.bg, 0, 0, w, h); else { ctx.fillStyle = this.config.bgColor; ctx.fillRect(0, 0, w, h); } ctx.restore();
+                ctx.drawImage(baseImg, 0, 0, w, h);
+
+                if (this.designImg) {
+                    const sprite = this._prepareDesignSprite(this.designImg, this.config);
+                    const buf = document.createElement('canvas'); buf.width = w; buf.height = h; const bCtx = buf.getContext('2d');
+                    bCtx.save(); const cx = w/2 + this.config.x; const cy = h/2 + this.config.y; bCtx.translate(cx, cy); bCtx.rotate((this.config.rotate * Math.PI)/180); bCtx.scale(this.config.scale, this.config.scale);
+                    const dW = this.designImg.naturalWidth; const dH = this.designImg.naturalHeight; const ratio = Math.min((w*0.5)/dW, (h*0.5)/dH);
+                    bCtx.drawImage(sprite, -dW*ratio/2, -dH*ratio/2, dW*ratio, dH*ratio); bCtx.restore();
+
+                    if(maskImg && !this.showMaskOnly) { bCtx.globalCompositeOperation = 'destination-in'; bCtx.drawImage(maskImg, 0, 0, w, h); }
+                    ctx.save(); ctx.globalCompositeOperation = this.config.blendMode; ctx.drawImage(buf, 0, 0); ctx.restore();
+
+                    if(maskImg && this.config.texture > 0 && !this.showMaskOnly) {
+                        const texBuf = document.createElement('canvas'); texBuf.width = w; texBuf.height = h; const tCtx = texBuf.getContext('2d');
+                        tCtx.drawImage(buf, 0, 0); tCtx.globalCompositeOperation = 'source-in';
+                        const cVal = this.config.foldContrast * 200 + 100; tCtx.filter = `contrast(${cVal}%) grayscale(100%)`;
+                        tCtx.drawImage(baseImg, 0, 0, w, h);
+                        ctx.save(); ctx.globalCompositeOperation = 'hard-light'; ctx.globalAlpha = this.config.texture; ctx.drawImage(texBuf, 0, 0); ctx.restore();
+                    }
+                }
+                if(this.showMaskOnly && maskImg) { ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,w,h); ctx.drawImage(maskImg, 0, 0, w, h); }
+
+                this.texts.forEach(t => {
+                    ctx.save(); ctx.font = `bold ${t.size}px "${t.font}", sans-serif`; ctx.fillStyle = t.color;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = "rgba(0,0,0,0.3)"; ctx.shadowBlur = 4;
+                    const tx = (w/2) + parseInt(t.x); const ty = (h/2) + parseInt(t.y); ctx.fillText(t.text, tx, ty); ctx.restore();
+                });
+            },
+
+            // --- EVENTS ---
+            updateConfig(key, val) { if(key==='blendMode')this.config.blendMode=val; else this.config[key]=parseFloat(val); this.requestRender(); },
+            handleCustomBase(input) { const f=input.files[0]; if(!f)return; this.setLoading(true); const r=new FileReader(); r.onload=(e)=>{const i=new Image(); i.onload=()=>{this.activeTemplate=null; this.resources.base=i; this.resources.mask=null; this.setLoading(false); this.requestRender();}; i.src=e.target.result;}; r.readAsDataURL(f); },
+            handleCustomMask(input) { const f=input.files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{const i=new Image(); i.onload=()=>{this.resources.mask=i; this.requestRender();}; i.src=e.target.result;}; r.readAsDataURL(f); },
+            handleDesign(input) { const f=input.files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{const i=new Image(); i.onload=()=>{this.designImg=i; this.config.scale=1;this.config.rotate=0;this.config.x=0;this.config.y=0; ['scale','rotate','x','y'].forEach(k=>document.getElementById('opt-'+k).value=(k==='scale'?1:0)); document.getElementById('design-placeholder').classList.add('hidden'); this.requestRender();}; i.src=e.target.result;}; r.readAsDataURL(f); },
+            toggleMaskView() { this.showMaskOnly=!this.showMaskOnly; this.requestRender(); },
+            setupViewportEvents() { const v=document.getElementById('viewport'); if(!v)return; v.addEventListener('wheel',(e)=>{e.preventDefault();let n=this.zoomLevel+(e.deltaY>0?-0.1:0.1);if(n<0.1)n=0.1;if(n>3)n=3;this.setZoom(n);document.getElementById('zoom-slider').value=n;},{passive:false}); v.addEventListener('mousedown',(e)=>{if(e.button===1||e.shiftKey){this.isPanning=true;v.style.cursor='move';}else{this.startDrag(e);}this.lastMouseX=e.clientX;this.lastMouseY=e.clientY;}); window.addEventListener('mousemove',(e)=>{if(this.isPanning){v.scrollLeft-=(e.clientX-this.lastMouseX);v.scrollTop-=(e.clientY-this.lastMouseY);this.lastMouseX=e.clientX;this.lastMouseY=e.clientY;}else{this.doDrag(e);}}); window.addEventListener('mouseup',()=>{this.isPanning=false;this.endDrag();v.style.cursor='grab';}); },
+            setZoom(val) { this.zoomLevel=parseFloat(val); const c=document.getElementById('preview-canvas'); if(c)c.style.transform=`scale(${this.zoomLevel})`; document.getElementById('zoom-label').innerText=Math.round(this.zoomLevel*100)+'%'; },
+            startDrag(e) { this.isDragging=true; this.lastMouseX=e.clientX; this.lastMouseY=e.clientY; if(this.activeTextId) this.dragTarget = 'text'; else if(this.designImg) this.dragTarget = 'design'; document.getElementById('preview-canvas').classList.add('cursor-grabbing'); },
+            doDrag(e) { if(!this.isDragging)return; const dx=(e.clientX-this.lastMouseX)/this.zoomLevel; const dy=(e.clientY-this.lastMouseY)/this.zoomLevel; const c = document.getElementById('preview-canvas'); const ratio = c.width / c.clientWidth; if (this.dragTarget === 'text' && this.activeTextId) { const idx = this.texts.findIndex(t => t.id == this.activeTextId); if(idx > -1) { this.texts[idx].x += dx * ratio; this.texts[idx].y += dy * ratio; } } else if (this.dragTarget === 'design') { this.config.x += dx * ratio; this.config.y += dy * ratio; document.getElementById('opt-x').value=this.config.x; document.getElementById('opt-y').value=this.config.y; } this.lastMouseX=e.clientX; this.lastMouseY=e.clientY; this.requestRender(); },
+            endDrag() { this.isDragging=false; this.dragTarget=null; document.getElementById('preview-canvas').classList.remove('cursor-grabbing'); },
+            async loadPartial(id, url) { try{const r=await fetch(url);document.getElementById('view-'+id).innerHTML=await r.text();if(id==='app')this.setupViewportEvents();}catch(e){console.error(e);} },
+            initCategories() { const c=[...new Set(this.templates.map(t=>t.category))]; const list=document.getElementById('category-list'); if(!list)return; list.innerHTML=`<button onclick="AppCore.enableCustomMode()" id="btn-cat-custom" class="cat-btn px-4 py-2 rounded text-[10px] font-bold border border-[#333] text-gray-400 hover:text-white transition whitespace-nowrap flex items-center gap-2"><i data-lucide="upload" class="w-3 h-3"></i> CUSTOM</button>`; c.forEach(x=>{ list.innerHTML+=`<button onclick="AppCore.selectCategory('${x}')" id="btn-cat-${x}" class="cat-btn px-4 py-2 rounded text-[10px] font-bold border border-[#333] text-gray-400 hover:text-white transition uppercase whitespace-nowrap">${x}</button>`; }); lucide.createIcons(); },
+            selectCategory(cat) { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); document.getElementById('btn-cat-'+cat).classList.add('active'); document.getElementById('template-grid-panel').classList.remove('hidden'); document.getElementById('custom-base-panel').classList.add('hidden'); const grid=document.getElementById('template-grid'); grid.innerHTML=''; this.templates.filter(t=>t.category===cat).forEach(t=>{ const p=`assets/${t.category}/${t.src}`; grid.innerHTML+=`<div onclick="AppCore.applyTemplate('${t.id}')" class="p-2 border border-[#333] rounded bg-[#1a1b26] hover:border-[#8b5cf6] cursor-pointer transition flex flex-col items-center gap-2"><div class="w-full aspect-square bg-black rounded flex items-center justify-center overflow-hidden relative"><img src="${p}" class="object-contain w-full h-full opacity-80"></div><span class="text-[10px] font-bold text-gray-400 text-center truncate w-full">${t.name}</span></div>`; }); },
+            enableCustomMode() { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); document.getElementById('btn-cat-custom').classList.add('active'); document.getElementById('template-grid-panel').classList.add('hidden'); document.getElementById('custom-base-panel').classList.remove('hidden'); this.activeTemplate=null; this.resources={base:null,mask:null}; this.requestRender(); },
+            download() { const c=document.getElementById('preview-canvas'); const l=document.createElement('a'); l.download=`flowork_${Date.now()}.png`; l.href=c.toDataURL('image/png',1.0); l.click(); }
+        };
+
+        window.AppCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

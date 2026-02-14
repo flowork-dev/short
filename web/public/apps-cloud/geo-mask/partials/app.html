@@ -1,0 +1,54 @@
+<div class="w-full h-full overflow-y-auto bg-[#171925] flex flex-col items-center p-6 custom-scrollbar pb-32">
+
+    <div class="w-full max-w-2xl bg-[#1a1a24]/60 border border-gray-800 p-8 rounded-2xl relative overflow-hidden shadow-2xl">
+
+        <div id="drop-zone" class="border-2 border-dashed border-gray-600 rounded-xl p-12 text-center hover:border-[#54d7f6] hover:bg-[#54d7f6]/5 transition-all relative group cursor-pointer">
+            <input type="file" id="fileInput" accept="image/jpeg, image/jpg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="AppCore.handleFile(this)">
+            <div class="pointer-events-none group-hover:scale-105 transition-transform">
+                <i data-lucide="image-plus" class="w-16 h-16 text-gray-500 mx-auto mb-4 group-hover:text-[#54d7f6]"></i>
+                <h3 class="text-white font-black text-2xl brand-font tracking-wide">UPLOAD TARGET</h3>
+                <p class="text-sm text-gray-400 mt-2 font-mono">Format: JPG/JPEG Only (Exif Standard)</p>
+            </div>
+        </div>
+
+        <div id="editor-area" class="hidden space-y-8 animate-fade-in">
+
+            <div class="flex items-center gap-6 bg-[#0b0c15] p-4 rounded-xl border border-[#3a3962]">
+                <img id="img-preview" class="w-20 h-20 object-cover rounded-lg border border-gray-600">
+                <div class="flex-1 min-w-0">
+                    <p id="file-name" class="text-base font-bold text-white truncate mb-1">image.jpg</p>
+                    <p id="current-exif" class="text-xs text-yellow-500 mono-font bg-yellow-900/20 px-2 py-1 rounded inline-block border border-yellow-500/30">Scanning Metadata...</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-xs text-[#54d7f6] font-bold tracking-widest uppercase mb-2 block mono-font">Latitude (Desimal)</label>
+                    <input type="number" id="lat-input" step="any" placeholder="-6.2088" class="w-full bg-[#0b0c15] border border-[#3a3962] text-[#54d7f6] p-4 rounded-lg focus:border-[#54d7f6] focus:ring-1 focus:ring-[#54d7f6] outline-none transition font-mono font-bold">
+                </div>
+                <div>
+                    <label class="text-xs text-[#54d7f6] font-bold tracking-widest uppercase mb-2 block mono-font">Longitude (Desimal)</label>
+                    <input type="number" id="lng-input" step="any" placeholder="106.8456" class="w-full bg-[#0b0c15] border border-[#3a3962] text-[#54d7f6] p-4 rounded-lg focus:border-[#54d7f6] focus:ring-1 focus:ring-[#54d7f6] outline-none transition font-mono font-bold">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs text-gray-500 font-bold tracking-widest uppercase mb-3 block mono-font">QUICK JUMP PRESETS</label>
+                <div class="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
+                    <button onclick="AppCore.setLoc(48.8584, 2.2945)" class="px-4 py-2 bg-[#3a3962] hover:bg-[#706bf3] text-xs font-bold rounded-lg border border-gray-600 text-white whitespace-nowrap transition shadow-lg">🇫🇷 Paris Eiffel</button>
+                    <button onclick="AppCore.setLoc(35.6586, 139.7454)" class="px-4 py-2 bg-[#3a3962] hover:bg-[#706bf3] text-xs font-bold rounded-lg border border-gray-600 text-white whitespace-nowrap transition shadow-lg">🇯🇵 Tokyo Tower</button>
+                    <button onclick="AppCore.setLoc(40.7580, -73.9855)" class="px-4 py-2 bg-[#3a3962] hover:bg-[#706bf3] text-xs font-bold rounded-lg border border-gray-600 text-white whitespace-nowrap transition shadow-lg">🇺🇸 Times Square</button>
+                    <button onclick="AppCore.setLoc(37.2431, -115.7930)" class="px-4 py-2 bg-[#3a3962] hover:bg-[#706bf3] text-xs font-bold rounded-lg border border-gray-600 text-white whitespace-nowrap transition shadow-lg">👽 Area 51</button>
+                    <button onclick="AppCore.setLoc(-8.4095, 115.1889)" class="px-4 py-2 bg-[#3a3962] hover:bg-[#706bf3] text-xs font-bold rounded-lg border border-gray-600 text-white whitespace-nowrap transition shadow-lg">🇮🇩 Bali (Canggu)</button>
+                </div>
+            </div>
+
+            <button onclick="AppCore.injectExif()" id="btn-inject" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-black font-black py-5 rounded-xl shadow-[0_0_30px_rgba(84,215,246,0.3)] transition transform hover:-translate-y-1 flex justify-center items-center gap-2 brand-font text-lg tracking-widest">
+                <i data-lucide="satellite" class="w-6 h-6"></i> INJECT FAKE LOCATION
+            </button>
+
+            <div id="status-msg" class="text-center text-xs font-mono h-6"></div>
+        </div>
+
+    </div>
+</div>

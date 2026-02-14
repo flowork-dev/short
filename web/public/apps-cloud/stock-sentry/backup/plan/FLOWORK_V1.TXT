@@ -1,0 +1,1823 @@
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\index.html JUMLAH BARIS 130 
+#######################################################################
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Sentry | Flowork</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js"
+        }
+    }
+    </script>
+
+    <script>
+        const originalError = console.error;
+        console.error = function(...args) {
+            const msg = args[0]?.toString() || "";
+            if (msg.includes("adsbygoogle") || msg.includes("TagError") || msg.includes("dtscout")) return;
+            originalError.apply(console, args);
+        };
+        window.onerror = function(msg) {
+            if (msg.toLowerCase().includes("adsbygoogle") || msg.toLowerCase().includes("tagerror")) return true;
+            return false;
+        };
+    </script>
+
+    <style>
+        :root { --bg-core: #171925; --neon-cyan: #54d7f6; --neon-purple: #706bf3; }
+        body { background-color: var(--bg-core); color: #e0f0ff; font-family: 'Rajdhani', sans-serif; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .nav-btn { opacity: 0.5; transition: 0.3s; border-bottom: 2px solid transparent; }
+        .nav-btn.active { opacity: 1; color: var(--neon-cyan); border-bottom: 2px solid var(--neon-cyan); }
+        .hidden-view { display: none !important; }
+
+        /* PERBAIKAN: Menambahkan CSS Custom Scrollbar yang sebelumnya hilang */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #171925; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3a3962; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #54d7f6; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <main class="flex-1 relative overflow-hidden">
+        <div id="global-loader" class="absolute inset-0 flex items-center justify-center bg-[#171925] z-40 hidden-view">
+            <div class="text-center">
+                <i class="mdi mdi-loading mdi-spin text-4xl text-[#54d7f6]"></i>
+                <p class="mt-2 text-xs font-mono text-[#54d7f6] animate-pulse">LOADING MODULE...</p>
+            </div>
+        </div>
+        <div id="view-lander" class="h-full w-full overflow-y-auto custom-scrollbar"></div>
+        <div id="view-app" class="h-full w-full overflow-hidden hidden-view"></div>
+    </main>
+
+    <script>
+        // FUNGSI SCRIPT RE-IGNITION (Agar Vue jalan)
+        function executeScripts(container) {
+            container.querySelectorAll("script").forEach((oldScript) => {
+                const newScript = document.createElement("script");
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+        }
+
+        // FUNGSI LOAD MODULE DARI FOLDER PARTIALS
+        async function loadModule(viewId, fileName) {
+            const container = document.getElementById(viewId);
+            // Cek Path: partials/[nama_file]
+            const filePath = `partials/${fileName}`;
+            try {
+                if (container.getAttribute('data-loaded') === 'true') return;
+                console.log(`[SYSTEM] Fetching: ${filePath}`);
+                const response = await fetch(`${filePath}?v=${Date.now()}`);
+
+                if (!response.ok) throw new Error(`Gagal memuat ${filePath} (Status: ${response.status})`);
+                const html = await response.text();
+                container.innerHTML = html;
+                executeScripts(container);
+
+                container.setAttribute('data-loaded', 'true');
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = `
+                    <div class="p-10 text-center text-red-500 font-mono border border-red-900 bg-red-900/10 m-4 rounded">
+                        <h2 class="text-xl font-bold mb-2">404 MODULE MISSING</h2>
+                        <p>Gagal mengambil file: <span class="text-white bg-red-900 px-1">${filePath}</span></p>
+                        <p class="text-xs mt-4 text-gray-400">Pastikan file <b>${fileName}</b> ada di dalam folder <b>partials/</b></p>
+                    </div>`;
+            }
+        }
+
+        window.switchTab = async function(tabName) {
+            const lander = document.getElementById('view-lander');
+            const app = document.getElementById('view-app');
+
+            if (tabName === 'lander') {
+                lander.classList.remove('hidden-view');
+                app.classList.add('hidden-view');
+                document.getElementById('btn-lander').classList.add('active');
+                document.getElementById('btn-app').classList.remove('active');
+            } else {
+                document.getElementById('global-loader').classList.remove('hidden-view');
+                // Panggil file tanpa 'partials/' karena sudah di-handle di fungsi loadModule
+                await loadModule('view-app', 'app.html');
+                setTimeout(() => {
+                    document.getElementById('global-loader').classList.add('hidden-view');
+                    app.classList.remove('hidden-view');
+                    lander.classList.add('hidden-view');
+                    document.getElementById('btn-app').classList.add('active');
+                    document.getElementById('btn-lander').classList.remove('active');
+                }, 300);
+            }
+        };
+
+        window.enterApp = () => switchTab('app');
+        // INIT: Load Lander dari partials/lander.html
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadModule('view-lander', 'lander.html');
+        });
+    </script>
+</body>
+</html>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\manifest.json JUMLAH BARIS 30 
+#######################################################################
+
+```json
+{
+    "id": "stock-sentry",
+    "name": "STOCK SENTRY: LOGISTICS OPS",
+    "version": "1.2.0",
+    "description": "Sistem audit logistik taktis. Pantau inventory, cegah kebocoran aset, dan sinkronisasi data terenkripsi via jalur pribadi (BYOS).",
+    "author": "Flowork Cyber Division",
+    "tier": "login",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "stock-sentry",
+    "capabilities": [
+        "client_side_only",
+        "local_storage",
+        "internet_access",
+        "external_api"
+    ],
+    "required_variables": [
+        {
+            "name": "STOCK_SENTRY_GOOGLE_ID",
+            "label": "Secure Cloud Client ID",
+            "type": "public",
+            "description": "Client ID untuk akses penyimpanan cloud pribadi (Google Drive).",
+            "required": true
+        }
+    ],
+    "tags": ["business", "inventory", "cloud-sync"]
+}
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\drive-adapter.js JUMLAH BARIS 54 
+#######################################################################
+
+```js
+import { ref } from 'vue';
+
+export const userContext = ref(null);
+export const isDriveConnected = ref(false); // <--- INI YANG HILANG SEBELUMNYA
+
+export async function secureFetch(url, options = {}) {
+    try {
+        const response = await fetch(url, options);
+        if (response.status === 401) window.parent.postMessage({ type: 'FLOWORK_AUTH_REQUIRED' }, '*');
+        if (response.status === 402) window.parent.postMessage({ type: 'FLOWORK_PAYMENT_REQUIRED' }, '*');
+        return response;
+    } catch (e) {
+        console.error("Network Error:", e);
+        throw e;
+    }
+}
+
+export function initFloworkBridge() {
+    window.addEventListener('message', (event) => {
+        if (event.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+            userContext.value = event.data.user;
+            console.log("[Adapter] User Synced:", event.data.user);
+        }
+    });
+    window.parent.postMessage({ type: 'FLOWORK_APP_READY' }, '*');
+}
+
+export const DriveAdapter = {
+    async init() {
+        console.log("[Drive] Initializing...");
+        setTimeout(() => {
+            console.log("[Drive] Connected!");
+            isDriveConnected.value = true; // Update state global
+            window.dispatchEvent(new CustomEvent('auth-success'));
+        }, 1000);
+    },
+
+    async saveData(data) {
+        if (!isDriveConnected.value) return;
+        console.log("[Drive] Saving data...", data);
+        setTimeout(() => {
+            console.log("[Drive] Data Saved!");
+        }, 500);
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\flowork-core.js JUMLAH BARIS 51 
+#######################################################################
+
+```js
+import { ref } from 'vue';
+
+export const userContext = ref(null);
+
+export async function secureFetch(url, options = {}) {
+    try {
+        const response = await fetch(url, options);
+
+        if (response.status === 401) {
+            window.parent.postMessage({ type: 'FLOWORK_AUTH_REQUIRED' }, '*');
+            throw new Error("AUTH_REQUIRED");
+        }
+
+        if (response.status === 402) {
+            window.parent.postMessage({ type: 'FLOWORK_PAYMENT_REQUIRED' }, '*');
+            throw new Error("PAYMENT_REQUIRED");
+        }
+
+        if (response.status === 429) {
+            window.parent.postMessage({ type: 'FLOWORK_RATE_LIMITED' }, '*');
+            throw new Error("RATE_LIMITED");
+        }
+
+        return response;
+    } catch (e) {
+        console.error("[SecureFetch] Ops Error:", e);
+        throw e;
+    }
+}
+
+export function initFloworkBridge() {
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+
+        if (data.type === 'FLOWORK_USER_SYNC') {
+            console.log("[Bridge] Identity Synced:", data.user);
+            userContext.value = data.user;
+        }
+    });
+
+    window.parent.postMessage({ type: 'FLOWORK_APP_READY' }, '*');
+}
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\store.js JUMLAH BARIS 47 
+#######################################################################
+
+```js
+import { reactive, watch } from 'vue';
+import { DriveAdapter, isDriveConnected } from './drive-adapter.js';
+
+export const store = reactive({
+    inventory: [],
+    purchaseOrders: [],
+    logs: [],
+    settings: {
+        activeLocation: 'MAIN' // Multi-gudang tetap ada untuk labeling
+    }
+});
+
+export const StorageManager = {
+    init() {
+        const saved = localStorage.getItem('ss_admin_v1');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                store.inventory = data.inv || [];
+                store.purchaseOrders = data.po || [];
+                store.logs = data.logs || [];
+            } catch (e) { console.error("Data Corrupt", e); }
+        }
+
+        watch(store, () => {
+            const payload = {
+                inv: store.inventory,
+                po: store.purchaseOrders,
+                logs: store.logs
+            };
+            localStorage.setItem('ss_admin_v1', JSON.stringify(payload));
+
+            if (isDriveConnected.value) {
+                DriveAdapter.saveData(payload);
+            }
+        }, { deep: true });
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\analytics.js JUMLAH BARIS 40 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+
+export const AnalyticsService = {
+    getFastMoving() {
+        const usageMap = {};
+        store.logs.forEach(log => {
+            if (log.type === 'OUT') {
+                if (!usageMap[log.itemName]) usageMap[log.itemName] = 0;
+                usageMap[log.itemName] += Math.abs(log.qty);
+            }
+        });
+        return Object.entries(usageMap)
+            .map(([name, qty]) => ({ name, qty }))
+            .sort((a, b) => b.qty - a.qty)
+            .slice(0, 5);
+    },
+
+    getDeadStock() {
+        const movedItems = new Set(store.logs.filter(l => l.type === 'OUT').map(l => l.itemName));
+        return store.inventory.filter(item => item.stock > 0 && !movedItems.has(item.name));
+    },
+
+    getProfitAnalysis() {
+        let revenue = 0, cost = 0;
+        store.inventory.forEach(item => {
+            revenue += (item.sellPrice * item.stock);
+            cost += (item.buyPrice * item.stock);
+        });
+        return { revenue, cost, margin: revenue - cost };
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\export.js JUMLAH BARIS 30 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+
+export const ExportService = {
+    downloadExcel() {
+        if (!window.XLSX) return alert("Excel Library belum siap!");
+        const wb = XLSX.utils.book_new();
+
+        const invData = store.inventory.map(i => ({
+            SKU: i.sku, Name: i.name, Type: i.type || 'single',
+            Stock: i.stock, Buy: i.buyPrice, Sell: i.sellPrice
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invData), "Stok");
+
+        const logData = store.logs.map(l => ({
+            Date: l.date, Type: l.type, Item: l.itemName, Qty: l.qty, Note: l.desc
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logData), "History");
+
+        XLSX.writeFile(wb, `StockSentry_Report_${Date.now()}.xlsx`);
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\inbound.js JUMLAH BARIS 39 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+import { Logger } from './logger.js';
+
+export const InboundService = {
+    createPO(supplier, items) {
+        if (items.length === 0) return false;
+
+        store.purchaseOrders.unshift({
+            id: Date.now(),
+            poNumber: `PO-${Date.now().toString().slice(-6)}`,
+            supplier: supplier,
+            date: new Date().toISOString(),
+            status: 'PENDING',
+            items: JSON.parse(JSON.stringify(items)) // Deep copy biar aman
+        });
+        return true;
+    },
+
+    receivePO(po) {
+        po.items.forEach(poItem => {
+            const invItem = store.inventory.find(i => i.id === poItem.id);
+            if (invItem) {
+                invItem.stock += parseInt(poItem.qty);
+                Logger.log('IN', invItem.name, poItem.qty, `PO Received: ${po.poNumber}`);
+            }
+        });
+        po.status = 'RECEIVED';
+        po.receivedDate = new Date().toISOString();
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\inventory.js JUMLAH BARIS 54 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+import { Logger } from './logger.js';
+
+export const InventoryService = {
+    add(itemData) {
+        if (!itemData.name) return false;
+        store.inventory.unshift({
+            id: Date.now(), type: 'single', ...itemData,
+            location: store.settings.activeLocation, lastUpdated: new Date().toISOString()
+        });
+        Logger.log('NEW', itemData.name, itemData.stock, 'Initial Entry');
+        return true;
+    },
+
+    addBatch(baseItem, variants) {
+        let count = 0;
+        variants.forEach((v, index) => {
+            if(!v.trim()) return;
+            const newItem = {
+                ...baseItem, id: Date.now() + index, type: 'single',
+                name: `${baseItem.name} - ${v.trim()}`, sku: `${baseItem.sku}-${v.trim()}`,
+                location: store.settings.activeLocation, lastUpdated: new Date().toISOString()
+            };
+            store.inventory.unshift(newItem);
+            count++;
+        });
+        Logger.log('NEW', baseItem.name, count, 'Variant Generated');
+        return count;
+    },
+
+    addBundle(bundleData, components) {
+        store.inventory.unshift({
+            id: Date.now(), type: 'bundle', ...bundleData,
+            components: JSON.parse(JSON.stringify(components)), // Simpan resep
+            location: store.settings.activeLocation, lastUpdated: new Date().toISOString()
+        });
+        Logger.log('NEW', bundleData.name, bundleData.stock, 'Bundle Created');
+        return true;
+    },
+
+    printLabel(item) {
+        const win = window.open('', '', 'width=400,height=400');
+        win.document.write(`<html><body style="text-align:center;font-family:monospace;"><h2>${item.name}</h2><div id="q"></div><p>${item.sku}</p><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script>new QRCode(document.getElementById("q"),{text:"${item.sku}",width:128,height:128});setTimeout(()=>window.print(),500);</script></body></html>`);
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\logger.js JUMLAH BARIS 26 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+
+export const Logger = {
+    log(type, itemName, qty, desc) {
+        store.logs.unshift({
+            id: Date.now(),
+            date: new Date().toISOString(),
+            type,
+            itemName,
+            qty,
+            user: 'ADMIN', // Hardcoded Admin
+            desc
+        });
+
+        if (store.logs.length > 2000) store.logs.pop();
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\outbound.js JUMLAH BARIS 63 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+import { Logger } from './logger.js';
+import { reactive } from 'vue';
+
+export const cartState = reactive({ items: [], customerName: '' });
+
+export const OutboundService = {
+    addToCart(item) {
+        const existing = cartState.items.find(c => c.id === item.id);
+        if (existing) existing.qty++;
+        else cartState.items.push({ ...item, qty: 1 });
+    },
+
+    removeItem(index) { cartState.items.splice(index, 1); },
+
+    processCheckout() {
+        if (cartState.items.length === 0 || !cartState.customerName) return false;
+
+        const sjItems = [];
+
+        cartState.items.forEach(cItem => {
+            const invItem = store.inventory.find(i => i.id === cItem.id);
+
+            if (invItem) {
+                if (invItem.type === 'bundle' && invItem.components) {
+                    invItem.components.forEach(comp => {
+                        const childItem = store.inventory.find(ci => ci.id === comp.id);
+                        if (childItem) {
+                            const qtyToDeduct = comp.qty * cItem.qty; // Resep x Jumlah Beli
+                            childItem.stock -= qtyToDeduct;
+                            Logger.log('OUT', childItem.name, -qtyToDeduct, `Bundle Sold: ${invItem.name}`);
+                        }
+                    });
+                    invItem.stock -= cItem.qty;
+                } else {
+                    invItem.stock -= cItem.qty;
+                }
+
+                Logger.log('OUT', invItem.name, -cItem.qty, `Sent to: ${cartState.customerName}`);
+                sjItems.push({ name: invItem.name, sku: invItem.sku, qty: cItem.qty });
+            }
+        });
+
+        this.printSuratJalan(sjItems, cartState.customerName);
+        cartState.items = [];
+        cartState.customerName = '';
+        return true;
+    },
+
+    printSuratJalan(items, customer) {
+        const win = window.open('', '', 'width=800,height=600');
+        win.document.write(`<html><body><h1>SURAT JALAN</h1><p>Yth: ${customer}</p><ul>${items.map(i=>`<li>${i.name} (${i.qty})</li>`).join('')}</ul><script>window.print()</script></body></html>`);
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\pos.js JUMLAH BARIS 104 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+import { Logger } from './logger.js';
+import { WhatsAppService } from './wa-bridge.js';
+import { reactive } from 'vue';
+
+export const posState = reactive({
+    cart: [],
+    customerPhone: '',
+    discount: 0,
+    cashGiven: 0
+});
+
+export const POSService = {
+    addToCart(item) {
+        const existing = posState.cart.find(c => c.id === item.id);
+        if (existing) existing.qty++;
+        else posState.cart.push({ ...item, qty: 1 });
+    },
+
+    calculateTotal() {
+        const subtotal = posState.cart.reduce((acc, item) => acc + (item.sellPrice * item.qty), 0);
+        return subtotal - posState.discount;
+    },
+
+    processPayment() {
+        const total = this.calculateTotal();
+        if (posState.cashGiven < total) {
+            alert(`Uang kurang! Kurang: ${total - posState.cashGiven}`);
+            return false;
+        }
+
+        posState.cart.forEach(cItem => {
+            const invItem = store.inventory.find(i => i.id === cItem.id);
+            if (invItem) {
+                if (invItem.type === 'bundle' && invItem.components) {
+                    invItem.components.forEach(comp => {
+                        const child = store.inventory.find(x => x.id === comp.id);
+                        if(child) child.stock -= (comp.qty * cItem.qty);
+                    });
+                }
+                invItem.stock -= cItem.qty;
+                Logger.log('POS', invItem.name, -cItem.qty, `Sold via POS`);
+            }
+        });
+
+        this.printThermalReceipt(posState.cart, total, posState.cashGiven, posState.discount);
+
+        if (posState.customerPhone) {
+            WhatsAppService.sendInvoice(posState.customerPhone, posState.cart, total, posState.cashGiven);
+        }
+
+        posState.cart = [];
+        posState.cashGiven = 0;
+        posState.discount = 0;
+        return true;
+    },
+
+    printThermalReceipt(items, total, cash, discount) {
+        const win = window.open('', '', 'width=300,height=600');
+        win.document.write(`
+            <html>
+            <head>
+                <style>
+                    body { font-family: 'Courier New', monospace; width: 58mm; font-size: 10px; margin: 0; padding: 5px; }
+                    .line { border-bottom: 1px dashed #000; margin: 5px 0; }
+                    .flex { display: flex; justify-content: space-between; }
+                    .center { text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="center">
+                    <strong>TOKO STOCK SENTRY</strong><br>
+                    Jl. Digital No. 1
+                </div>
+                <div class="line"></div>
+                ${items.map(i => `
+                    <div>${i.name}</div>
+                    <div class="flex">
+                        <span>${i.qty} x ${i.sellPrice}</span>
+                        <span>${i.qty * i.sellPrice}</span>
+                    </div>
+                `).join('')}
+                <div class="line"></div>
+                <div class="flex"><span>DISKON:</span><span>-${discount}</span></div>
+                <div class="flex" style="font-size:12px; font-weight:bold;"><span>TOTAL:</span><span>${total}</span></div>
+                <div class="flex"><span>TUNAI:</span><span>${cash}</span></div>
+                <div class="flex"><span>KEMBALI:</span><span>${cash - total}</span></div>
+                <div class="line"></div>
+                <div class="center">Terima Kasih!</div>
+                <script>window.print();</script>
+            </body>
+            </html>
+        `);
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\predictor.js JUMLAH BARIS 39 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+
+export const PredictionService = {
+    getDailyUsage(itemName) {
+        const daysToAnalyze = 30;
+        const now = new Date();
+        let totalQtyOut = 0;
+        let firstDate = now;
+
+        store.logs.forEach(log => {
+            const logDate = new Date(log.date);
+            const diffTime = Math.abs(now - logDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (log.itemName === itemName && log.type === 'OUT' && diffDays <= daysToAnalyze) {
+                totalQtyOut += Math.abs(log.qty);
+                if (logDate < firstDate) firstDate = logDate;
+            }
+        });
+
+        const dateDiff = Math.max(1, Math.ceil(Math.abs(now - firstDate) / (1000 * 60 * 60 * 24)));
+        return totalQtyOut / dateDiff; // Rata-rata per hari
+    },
+
+    predictDaysLeft(item) {
+        const dailyUsage = this.getDailyUsage(item.name);
+        if (dailyUsage === 0) return 999; // Gak pernah laku = Aman selamanya
+        return Math.floor(item.stock / dailyUsage);
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\returns.js JUMLAH BARIS 35 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+import { Logger } from './logger.js';
+
+export const ReturnService = {
+    processReturn(item, qty, type, reason) {
+        const invItem = store.inventory.find(i => i.id === item.id);
+        if (!invItem) return false;
+
+        const quantity = parseInt(qty);
+
+        if (type === 'CUSTOMER_RETURN') {
+            invItem.stock += quantity;
+            Logger.log('IN', invItem.name, quantity, `Retur Customer: ${reason}`);
+        }
+        else if (type === 'SUPPLIER_RETURN') {
+            if (invItem.stock < quantity) {
+                alert("Stok tidak cukup untuk retur ke supplier!");
+                return false;
+            }
+            invItem.stock -= quantity;
+            Logger.log('OUT', invItem.name, -quantity, `Retur Supplier: ${reason}`);
+        }
+
+        return true;
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\transfer.js JUMLAH BARIS 52 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+import { Logger } from './logger.js';
+
+export const TransferService = {
+    moveStock(sourceItem, targetLocation, qty, note) {
+        const quantity = parseInt(qty);
+
+        if (sourceItem.stock < quantity) {
+            alert(`Stok di ${sourceItem.location} tidak cukup! Sisa: ${sourceItem.stock}`);
+            return false;
+        }
+
+        if (sourceItem.location === targetLocation) {
+            alert("Lokasi asal dan tujuan tidak boleh sama!");
+            return false;
+        }
+
+        sourceItem.stock -= quantity;
+
+        let targetItem = store.inventory.find(i =>
+            i.sku === sourceItem.sku && i.location === targetLocation
+        );
+
+        if (targetItem) {
+            targetItem.stock += quantity;
+        } else {
+            store.inventory.unshift({
+                id: Date.now(), // ID baru
+                name: sourceItem.name,
+                sku: sourceItem.sku,
+                stock: quantity,
+                buyPrice: sourceItem.buyPrice,
+                sellPrice: sourceItem.sellPrice,
+                minStock: sourceItem.minStock,
+                location: targetLocation // Lokasi baru
+            });
+        }
+
+        Logger.log('MUTASI', sourceItem.name, 0, `Transfer ${quantity} Pcs: ${sourceItem.location} -> ${targetLocation} (${note})`);
+
+        return true;
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\js\services\wa-bridge.js JUMLAH BARIS 50 
+#######################################################################
+
+```js
+import { store } from '../store.js';
+
+export const WhatsAppService = {
+    sendInvoice(customerPhone, items, total, payment) {
+        if (!customerPhone) return;
+
+        let msg = `*INVOICE PEMBELIAN*\n`;
+        msg += `------------------\n`;
+        items.forEach(i => {
+            msg += `${i.name} x${i.qty} = ${i.sellPrice * i.qty}\n`;
+        });
+        msg += `------------------\n`;
+        msg += `*TOTAL: ${total}*\n`;
+        msg += `BAYAR: ${payment}\n`;
+        msg += `KEMBALI: ${payment - total}\n`;
+        msg += `\nTerima kasih sudah belanja!`;
+
+        this.openWA(customerPhone, msg);
+    },
+
+    orderSupplier(item) {
+        const phone = prompt("Masukkan Nomor WA Supplier (628xxx):");
+        if(!phone) return;
+
+        let msg = `Halo Bos, mau restock barang ini dong:\n\n`;
+        msg += `Nama: *${item.name}*\n`;
+        msg += `SKU: ${item.sku}\n`;
+        msg += `Sisa Stok: ${item.stock}\n`;
+        msg += `\nMohon infonya. Thanks!`;
+
+        this.openWA(phone, msg);
+    },
+
+    openWA(phone, text) {
+        let cleanPhone = phone.replace(/\D/g,'');
+        if(cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
+
+        const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+};
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\app.html JUMLAH BARIS 465 
+#######################################################################
+
+```html
+<div id="stock-app" style="background-color: #171925; color: white;" class="flex flex-col h-full font-['Rajdhani'] overflow-hidden">
+
+    <style>
+        .cyber-border { box-shadow: 0 0 10px rgba(0, 180, 216, 0.2); transition: all 0.3s; }
+        .cyber-border:hover { box-shadow: 0 0 20px rgba(0, 180, 216, 0.6); border-color: #00b4d8; }
+
+        /* TOAST ANIMATION (Pop Up Center) */
+        .toast-enter-active { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast-leave-active { transition: all 0.3s ease; }
+        .toast-leave-to { opacity: 0; transform: scale(0.8); }
+
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+
+    <header class="h-14 bg-[#0f111a] border-b border-[#3a3962] flex items-center justify-between px-4 z-40 shrink-0 relative shadow-md">
+        <div class="flex items-center gap-3">
+            <button @click="showSidebar = !showSidebar" class="md:hidden text-white p-1 rounded hover:bg-[#222538]">
+                <i class="mdi mdi-menu text-2xl"></i>
+            </button>
+            <div class="w-8 h-8 bg-gradient-to-br from-[#00b4d8] to-[#ef233c] rounded flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] animate-pulse">V8</div>
+            <div class="hidden md:block">
+                <h1 class="font-['Orbitron'] text-md tracking-widest text-white leading-none">STOCK SENTRY</h1>
+                <p class="text-[9px] text-gray-500 font-mono">{{ storeProfile.name || 'ULTIMATE RETAIL ENGINE' }}</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+            <button @click="openSettings" class="hidden md:flex items-center gap-2 bg-[#222538] border border-[#706bf3] text-[#706bf3] px-3 py-1 rounded text-[10px] hover:bg-[#706bf3] hover:text-white font-bold transition-all">
+                <i class="mdi mdi-cog"></i> SETUP TOKO
+            </button>
+            <div class="h-4 w-[1px] bg-gray-700 hidden md:block"></div>
+            <select v-model="store.settings.activeLocation" class="bg-[#222538] border border-[#3a3962] text-xs px-2 py-1 outline-none text-[#54d7f6] rounded max-w-[100px] md:max-w-none">
+                <option value="MAIN">MAIN</option>
+                <option value="STORE_A">CABANG A</option>
+                <option value="STORE_B">CABANG B</option>
+            </select>
+            <div class="px-2 py-1 border rounded text-[10px] font-bold flex items-center gap-1" :class="isDriveConnected ? 'border-[#54d7f6] text-[#54d7f6]' : 'border-red-500 text-red-500'">
+                <i class="mdi" :class="isDriveConnected ? 'mdi-cloud-check' : 'mdi-cloud-off-outline'"></i>
+                <span class="hidden md:inline">{{ isDriveConnected ? 'SYNCED' : 'OFFLINE' }}</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <div v-if="showSidebar" @click="showSidebar = false" class="fixed inset-0 bg-black/80 z-30 md:hidden backdrop-blur-sm"></div>
+
+        <nav :class="showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" class="absolute md:static top-0 left-0 h-full w-64 bg-[#0f111a] border-r border-[#3a3962] flex flex-col justify-between pb-4 z-40 transition-transform duration-300 shadow-2xl md:shadow-none">
+            <div class="space-y-1 p-2 overflow-y-auto custom-scrollbar flex-1">
+                <div class="md:hidden flex justify-end p-2">
+                    <button @click="showSidebar = false" class="text-gray-400 hover:text-white"><i class="mdi mdi-close text-2xl"></i></button>
+                </div>
+                <button @click="switchView('pos')" :class="currentView === 'pos' ? 'bg-[#00b4d8] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-4 mb-2 rounded-xl flex items-center gap-3 shadow-lg transition-all">
+                    <i class="mdi mdi-cash-register text-2xl"></i><span class="font-bold text-lg">MESIN KASIR</span>
+                </button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">GUDANG & ADMIN</div>
+                <button @click="switchView('inventory')" :class="currentView === 'inventory' ? 'bg-[#54d7f6] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-cube-outline text-xl"></i><span class="font-bold">INVENTORY</span></button>
+                <button @click="switchView('analytics')" :class="currentView === 'analytics' ? 'bg-[#9d4edd] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-google-analytics text-xl"></i><span class="font-bold">ANALYTICS (AI)</span></button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">LOGISTIK</div>
+                <button @click="switchView('outbound')" :class="currentView === 'outbound' ? 'bg-[#ff9f1c] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-truck-delivery text-xl"></i><span class="font-bold">SURAT JALAN</span></button>
+                <button @click="switchView('po')" :class="currentView === 'po' ? 'bg-[#706bf3] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-import text-xl"></i><span class="font-bold">INBOUND (PO)</span></button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">OPERASIONAL</div>
+                <button @click="switchView('transfer')" :class="currentView === 'transfer' ? 'bg-[#2ec4b6] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-dolly text-xl"></i><span class="font-bold">TRANSFER</span></button>
+                <button @click="switchView('returns')" :class="currentView === 'returns' ? 'bg-[#ef233c] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-keyboard-return text-xl"></i><span class="font-bold">RETURNS</span></button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">AUDIT</div>
+                <button @click="switchView('opname')" :class="currentView === 'opname' ? 'bg-[#ff006e] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-qrcode-scan text-xl"></i><span class="font-bold">STOCK OPNAME</span></button>
+                <button @click="switchView('history')" :class="currentView === 'history' ? 'bg-white text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-history text-xl"></i><span class="font-bold">LOGS</span></button>
+            </div>
+            <div class="p-2 border-t border-[#3a3962]">
+                <button @click="connectDrive" class="w-full p-3 border border-[#3a3962] text-xs text-gray-500 hover:text-white rounded text-center transition-colors">
+                <i class="mdi mdi-refresh mr-1"></i> REBOOT SYSTEM
+                </button>
+            </div>
+        </nav>
+
+        <main class="flex-1 flex flex-col h-full bg-[#171925] relative overflow-hidden">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none"></div>
+
+            <div v-if="currentView === 'pos'" class="flex-1 flex flex-col md:flex-row h-full overflow-hidden animate_animated animate_fadeIn bg-[#0f111a]">
+                <div class="flex-1 flex flex-col h-full overflow-hidden relative border-r border-[#3a3962]">
+                    <div class="bg-[#171925] border-b border-[#3a3962] p-4 z-20 shadow-md shrink-0 flex gap-3">
+                        <div class="flex-1 relative group">
+                            <i class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#00b4d8] transition-colors"></i>
+                            <input v-model="searchQuery" placeholder="Cari Item..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#00b4d8] focus:shadow-[0_0_15px_rgba(0,180,216,0.3)] transition-all">
+                        </div>
+                        <button @click="openScanner('inventory')" class="bg-[#222538] w-12 rounded-xl border border-[#3a3962] text-[#00b4d8] hover:bg-[#00b4d8] hover:text-black transition-all"><i class="mdi mdi-barcode-scan text-xl"></i></button>
+                        <button @click="openSettings" class="md:hidden bg-[#222538] w-12 rounded-xl border border-[#3a3962] text-gray-400"><i class="mdi mdi-cog text-xl"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            <div v-for="item in filteredInventory" :key="item.id" @click="POSService.addToCart(item)" class="bg-[#222538] border border-[#3a3962] rounded-2xl overflow-hidden relative cursor-pointer active:scale-95 transition-all duration-200 hover:-translate-y-1 cyber-border flex flex-col h-[180px] group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-[#00b4d8]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div class="p-4 flex-1 flex flex-col justify-between relative z-10">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div class="text-[10px] text-gray-500 font-mono">{{ item.sku }}</div>
+                                            <div v-if="item.type === 'bundle'" class="px-1.5 py-0.5 bg-[#9d4edd] text-white rounded text-[8px] font-bold shadow-[0_0_10px_#9d4edd]">PAKET</div>
+                                        </div>
+                                        <h3 class="font-bold text-gray-100 text-sm leading-tight line-clamp-2 group-hover:text-[#00b4d8] transition-colors">{{ item.name }}</h3>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="flex items-end justify-between"><span class="text-[#00b4d8] font-bold text-lg drop-shadow-[0_0_5px_rgba(0,180,216,0.5)]">{{ formatRupiah(item.sellPrice).replace(',00', '') }}</span></div>
+                                        <div class="w-full bg-gray-700 h-1 mt-2 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-[#00b4d8] to-[#706bf3]" :style="`width: ${Math.min((item.stock/50)*100, 100)}%`"></div></div>
+                                        <div class="text-[9px] text-right mt-1 text-gray-400">Stok: {{ item.stock }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:hidden absolute bottom-0 left-0 right-0 bg-[#171925]/90 backdrop-blur border-t border-[#3a3962] p-4 flex items-center gap-4 z-30">
+                        <div class="flex-1" @click="showMobileCart = true">
+                            <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1"><i class="mdi mdi-cart"></i> {{ posState.cart.reduce((a,b)=>a+b.qty,0) }} ITEM</div>
+                            <div class="text-xl font-bold text-white font-['Orbitron']">{{ formatRupiah(posTotal - posState.discount).replace(',00', '') }}</div>
+                        </div>
+                        <button @click="showMobileCart = true" class="bg-[#00b4d8] text-[#171925] font-black px-6 py-3 rounded-xl shadow-[0_0_15px_#00b4d8] active:scale-95 transition-transform flex items-center gap-2">BAYAR <i class="mdi mdi-chevron-up"></i></button>
+                    </div>
+                </div>
+                <div :class="showMobileCart ? 'translate-y-0' : 'translate-y-full md:translate-y-0'" class="fixed md:static inset-0 md:inset-auto z-50 md:z-auto w-full md:w-[420px] bg-[#171925] flex flex-col h-full transition-transform duration-300 shadow-2xl relative">
+                    <div class="hidden md:block absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#3a3962] to-transparent"></div>
+                    <div class="shrink-0 p-5 border-b border-[#3a3962] flex justify-between items-center bg-[#171925] z-20">
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2 font-['Orbitron'] text-[#00b4d8]"><i class="mdi mdi-cart-outline"></i> CURRENT BILL</h2>
+                        <div class="flex gap-2">
+                            <button @click="posState.cart = []" class="text-xs bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-white transition-colors">RESET</button>
+                            <button @click="showMobileCart = false" class="md:hidden text-gray-400"><i class="mdi mdi-chevron-down text-2xl"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3 bg-[#0f111a] relative">
+                        <div v-if="posState.cart.length === 0" class="flex flex-col items-center justify-center h-full text-gray-600 opacity-50"><div class="w-20 h-20 border-2 border-dashed border-gray-600 rounded-full flex items-center justify-center mb-4"><i class="mdi mdi-barcode-scan text-4xl"></i></div><p class="font-['Orbitron'] tracking-widest">SCAN ITEM</p></div>
+                        <div v-for="(item, idx) in posState.cart" :key="idx" class="bg-[#222538] p-3 rounded-xl border border-[#3a3962] flex justify-between items-center group hover:border-[#706bf3] transition-colors shadow-lg">
+                            <div class="flex-1 pl-1">
+                                <div class="text-white font-bold text-sm line-clamp-1 mb-1">{{ item.name }}</div>
+                                <div class="flex items-center gap-2 text-xs"><span class="text-gray-400">{{ formatRupiah(item.sellPrice).replace(',00', '') }}</span><span class="text-[#706bf3] font-bold">x {{ item.qty }}</span></div>
+                            </div>
+                            <div class="flex items-center bg-[#171925] rounded-lg border border-[#3a3962] p-1 gap-1">
+                                <button @click="item.qty > 1 ? item.qty-- : POSService.removeItem(idx)" class="w-7 h-7 rounded hover:bg-red-500 hover:text-white text-gray-400 transition-colors flex items-center justify-center"><i class="mdi" :class="item.qty > 1 ? 'mdi-minus' : 'mdi-trash-can-outline'"></i></button>
+                                <span class="w-6 text-center text-white font-bold text-sm">{{ item.qty }}</span>
+                                <button @click="item.qty++" class="w-7 h-7 rounded hover:bg-[#00b4d8] hover:text-[#171925] text-gray-400 transition-colors flex items-center justify-center"><i class="mdi mdi-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shrink-0 bg-[#1e2130] border-t border-[#3a3962] p-5 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-gray-400 text-xs"><span>Subtotal</span><span>{{ formatRupiah(posTotal) }}</span></div>
+                            <div class="flex justify-between items-center text-gray-400 text-xs"><span>Diskon</span><div class="flex items-center gap-1 border-b border-gray-600"><span class="text-gray-500">Rp</span><input v-model="posState.discount" type="number" class="w-20 bg-transparent text-right text-white outline-none focus:text-[#00b4d8]"></div></div>
+                            <div class="flex justify-between text-white text-2xl font-black font-['Orbitron'] pt-2 border-t border-gray-600"><span>TOTAL</span><span class="text-[#00b4d8] drop-shadow-[0_0_10px_rgba(0,180,216,0.4)]">{{ formatRupiah(posTotal - posState.discount).replace(',00', '') }}</span></div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden group focus-within:border-[#706bf3] transition-colors"><div class="bg-[#222538] w-10 flex items-center justify-center text-gray-400"><i class="mdi mdi-account"></i></div><input v-model="posState.customerPhone" placeholder="Nomor Pelanggan (WA)" class="flex-1 bg-transparent p-3 text-sm text-white outline-none"></div>
+                            <div class="relative group"><input v-model="posState.cashGiven" type="number" placeholder="Input Pembayaran..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded-lg p-3 pl-4 pr-12 text-white font-bold text-lg outline-none focus:border-[#00b4d8] transition-all focus:shadow-[0_0_15px_rgba(0,180,216,0.2)]"><div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">IDR</div></div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button @click="posState.cashGiven = (posTotal - posState.discount)" class="bg-[#222538] border border-[#3a3962] text-[10px] text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black hover:font-bold transition-all">UANG PAS</button>
+                                <button @click="posState.cashGiven = 50000" class="bg-[#222538] border border-[#3a3962] text-[10px] text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black hover:font-bold transition-all">50K</button>
+                                <button @click="posState.cashGiven = 100000" class="bg-[#222538] border border-[#3a3962] text-[10px] text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black hover:font-bold transition-all">100K</button>
+                                <button @click="posState.cashGiven = 0" class="bg-[#222538] border border-red-900/50 text-[10px] text-red-400 py-2 rounded hover:bg-red-500 hover:text-white transition-all">CLR</button>
+                            </div>
+                            <div v-if="posState.cashGiven > 0" class="flex justify-between items-center bg-[#0f111a] p-2 rounded border border-[#3a3962] border-dashed"><span class="text-xs text-gray-400">KEMBALI</span><span class="font-bold font-mono text-lg" :class="(posState.cashGiven - (posTotal - posState.discount)) < 0 ? 'text-red-500' : 'text-[#ff9f1c]'">{{ formatRupiah(posState.cashGiven - (posTotal - posState.discount)) }}</span></div>
+                            <button @click="processPOS" class="w-full bg-gradient-to-r from-[#00b4d8] to-[#706bf3] text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(112,107,243,0.4)] hover:shadow-[0_0_30px_rgba(112,107,243,0.6)] active:scale-[0.98] transition-all flex justify-center items-center gap-2 relative overflow-hidden group">
+                                <div class="absolute top-0 left-0 w-full h-full bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-500 skew-x-12"></div>
+                                <i class="mdi mdi-printer-check text-xl"></i> CETAK STRUK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'inventory'" class="flex-1 flex flex-col p-4 overflow-hidden animate_animated animate_fadeIn">
+                <div class="flex gap-3 overflow-x-auto pb-2 mb-2 shrink-0">
+                    <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#54d7f6] min-w-[140px] shadow"><div class="text-[10px] text-gray-400">TOTAL ASSET</div><div class="text-md font-bold font-['Orbitron']">{{ formatRupiah(financials.totalAssets) }}</div></div>
+                    <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#ff2a6d] min-w-[140px] shadow"><div class="text-[10px] text-gray-400">LOW STOCK</div><div class="text-md font-bold text-[#ff2a6d] font-['Orbitron']">{{ deadStockItems.length }} ITEMS</div></div>
+                </div>
+                <div class="flex gap-2 sticky top-0 z-10 py-2 shrink-0">
+                        <input v-model="searchQuery" placeholder="Search SKU / Name..." class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded px-3 text-sm outline-none focus:border-[#54d7f6]">
+                        <button @click="openScanner('inventory')" class="bg-[#222538] border border-[#54d7f6] text-[#54d7f6] px-3 rounded hover:bg-[#54d7f6] hover:text-[#171925]"><i class="mdi mdi-qrcode-scan"></i></button>
+                        <button @click="showAddModal = true" class="bg-[#54d7f6] text-[#171925] px-3 rounded font-bold text-sm shadow flex items-center gap-1 whitespace-nowrap"><i class="mdi mdi-plus"></i> NEW</button>
+                </div>
+                <div class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden flex flex-col">
+                    <div class="overflow-y-auto flex-1 custom-scrollbar">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-[#222538] text-xs uppercase text-gray-400 sticky top-0 z-10 shadow"><tr><th class="p-3">ITEM</th><th class="p-3 text-right">STOCK</th><th class="p-3 text-right hidden md:table-cell">AI PREDICTION</th><th class="p-3 text-center">OPT</th></tr></thead>
+                            <tbody class="divide-y divide-[#3a3962]">
+                                <tr v-for="item in filteredInventory" :key="item.id" class="hover:bg-[#1e2130]">
+                                    <td class="p-3"><div class="font-bold text-white flex flex-wrap items-center gap-2">{{ item.name }} <span v-if="item.type === 'bundle'" class="px-1 bg-[#9d4edd] text-white text-[9px] rounded font-bold">PAKET</span></div><div class="text-xs text-[#54d7f6]">{{ item.sku }}</div></td>
+                                    <td class="p-3 text-right"><div class="text-lg font-['Orbitron']" :class="item.stock <= item.minStock ? 'text-[#ff2a6d]' : 'text-white'">{{ item.stock }}</div></td>
+                                    <td class="p-3 text-right hidden md:table-cell"><span v-if="getDaysLeft(item) < 7" class="text-[#ff2a6d] font-bold text-xs">Habis {{ getDaysLeft(item) }} Hari</span><span v-else-if="getDaysLeft(item) > 100" class="text-gray-500 text-xs">Aman</span><span v-else class="text-[#ff9f1c] text-xs">{{ getDaysLeft(item) }} Hari lagi</span></td>
+                                    <td class="p-3 text-center"><button @click="InventoryService.printLabel(item)" class="text-gray-400 hover:text-[#54d7f6]"><i class="mdi mdi-printer text-lg"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'analytics'" class="flex-1 overflow-y-auto p-4 space-y-6 animate_animated animate_fadeIn custom-scrollbar">
+                <h2 class="text-xl font-['Orbitron'] text-[#9d4edd]">INTELLIGENCE</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd]"><h3 class="text-gray-400 text-xs">ESTIMASI OMSET</h3><p class="text-2xl font-bold text-white">{{ formatRupiah(profitData.revenue) }}</p></div>
+                    <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd]"><h3 class="text-gray-400 text-xs">MODAL GUDANG</h3><p class="text-2xl font-bold text-white">{{ formatRupiah(profitData.cost) }}</p></div>
+                    <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd] bg-gradient-to-r from-[#9d4edd]/20 to-transparent"><h3 class="text-[#9d4edd] text-xs font-bold">POTENSI CUAN</h3><p class="text-2xl font-bold text-[#9d4edd]">{{ formatRupiah(profitData.margin) }}</p></div>
+                </div>
+            </div>
+
+            <div v-if="['opname','outbound','po','transfer','returns','history'].includes(currentView)" class="flex-1 overflow-y-auto p-4 custom-scrollbar animate_animated animate_fadeIn">
+                <div v-if="currentView === 'opname'" class="flex-1 flex flex-col p-4">
+                    <h2 class="text-xl font-['Orbitron'] text-[#ff006e] mb-4">STOCK OPNAME</h2>
+                    <div class="flex-1 bg-[#222538] rounded-xl border border-[#ff006e]/30 flex flex-col items-center justify-center p-8 shadow-2xl relative overflow-hidden">
+                        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                        <i class="mdi mdi-barcode-scan text-7xl text-[#ff006e] mb-6 drop-shadow-[0_0_10px_#ff006e]"></i>
+                        <p class="text-gray-300 mb-8 max-w-sm text-center">Mode Audit Fisik. Scan barcode barang di gudang.</p>
+                        <button @click="openScanner('opname')" class="bg-[#ff006e] text-white px-8 py-4 rounded-xl font-bold shadow-[0_0_30px_#ff006e] hover:scale-105 transition-transform text-lg flex items-center gap-2"><i class="mdi mdi-camera"></i> MULAI SCAN</button>
+                    </div>
+                </div>
+                <div v-if="currentView === 'outbound'" class="flex flex-col md:flex-row gap-4 h-full">
+                     <div class="flex-1 overflow-hidden flex flex-col"><input v-model="searchQuery" placeholder="Cari barang..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded p-3 mb-2 text-sm shrink-0"><div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar"><div v-for="item in filteredInventory" :key="item.id" class="bg-[#222538] p-3 rounded flex justify-between cursor-pointer hover:border-[#ff9f1c] border border-transparent" @click="OutboundService.addToCart(item)"><div><div class="font-bold text-white">{{ item.name }}</div><div class="text-xs text-gray-500">Stok: {{ item.stock }}</div></div><i class="mdi mdi-plus-box text-[#ff9f1c] text-2xl"></i></div></div></div>
+                     <div class="w-full md:w-1/3 bg-[#222538] border border-[#ff9f1c] rounded-xl p-4 flex flex-col"><h2 class="text-[#ff9f1c] font-['Orbitron'] mb-4">SURAT JALAN</h2><input v-model="cartState.customerName" placeholder="Nama Penerima" class="bg-[#0f111a] border border-[#3a3962] rounded p-2 mb-4 text-white w-full"><div class="flex-1 overflow-y-auto space-y-2 mb-4 custom-scrollbar bg-[#0f111a] p-2 rounded"><div v-for="(c, idx) in cartState.items" :key="idx" class="flex justify-between items-center text-sm bg-[#222538] p-2 rounded"><span>{{ c.name }}</span><div class="flex items-center gap-1"><input v-model="c.qty" type="number" class="w-10 bg-black text-center text-white border border-[#3a3962]"><button @click="OutboundService.removeItem(idx)" class="text-red-500"><i class="mdi mdi-close"></i></button></div></div></div><button @click="handleCheckout" class="w-full py-3 bg-[#ff9f1c] text-black font-bold rounded font-['Orbitron'] hover:bg-white transition-colors">CETAK DO</button></div>
+                </div>
+                <div v-if="currentView === 'po'" class="space-y-4"><div class="flex justify-between sticky top-0 bg-[#171925] py-2 z-10"><h2 class="text-xl font-['Orbitron'] text-[#706bf3]">PO</h2><button @click="showPOModal=true" class="bg-[#706bf3] px-4 py-2 rounded text-white font-bold">BUAT PO</button></div><div class="grid gap-3"><div v-for="po in store.purchaseOrders" :key="po.id" class="bg-[#222538] p-4 rounded flex justify-between"><div><span class="text-[#706bf3] font-bold">{{ po.poNumber }}</span><div class="text-xs text-gray-400">{{ po.supplier }}</div></div><button v-if="po.status==='PENDING'" @click="InboundService.receivePO(po)" class="bg-green-600 px-3 rounded text-white text-xs font-bold">TERIMA</button></div></div></div>
+                <div v-if="currentView === 'transfer'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#2ec4b6]">TRANSFER</h2><div class="flex flex-col md:flex-row gap-6"><div class="flex-1 bg-[#222538] p-4 rounded"><input v-model="searchQuery" placeholder="Cari..." class="w-full bg-[#0f111a] p-2 rounded mb-3"><div class="h-64 overflow-y-auto space-y-2"><div v-for="item in filteredInventory" :key="item.id" @click="selectTransferItem(item)" class="p-2 border border-[#3a3962] rounded cursor-pointer" :class="transfer.selectedItem?.id===item.id?'border-[#2ec4b6]':''">{{ item.name }} ({{ item.stock }})</div></div></div><div class="w-full md:w-1/3 bg-[#0f111a] p-4 rounded border border-[#2ec4b6]"><select v-model="transfer.targetLocation" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><option value="MAIN">MAIN</option><option value="STORE_A">STORE A</option></select><input v-model="transfer.qty" type="number" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><button @click="processTransfer" class="w-full py-2 bg-[#2ec4b6] text-white font-bold rounded">KIRIM</button></div></div></div>
+                <div v-if="currentView === 'returns'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#ef233c] mb-4">RETURNS</h2><div class="grid md:grid-cols-2 gap-6"><div class="bg-[#222538] p-6 rounded border border-[#ef233c] cursor-pointer hover:bg-[#ef233c]/10" @click="openReturnModal('CUSTOMER_RETURN')"><h3 class="font-bold text-[#ef233c]">CUSTOMER RETUR (+)</h3></div><div class="bg-[#222538] p-6 rounded border border-yellow-500 cursor-pointer hover:bg-yellow-500/10" @click="openReturnModal('SUPPLIER_RETURN')"><h3 class="font-bold text-yellow-500">SUPPLIER RETUR (-)</h3></div></div></div>
+                <div v-if="currentView === 'history'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-white">LOGS</h2><div class="bg-[#0f111a] border border-[#3a3962] rounded overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-400 whitespace-nowrap"><tbody class="divide-y divide-[#3a3962]"><tr v-for="log in store.logs" :key="log.id" class="hover:bg-[#1e2130]"><td class="p-3 w-32">{{ new Date(log.date).toLocaleDateString() }}</td><td class="p-3 w-20"><span class="px-2 rounded border" :class="log.type==='IN'?'border-green-500 text-green-500':'text-[#ff9f1c] border-[#ff9f1c]'">{{ log.type }}</span></td><td class="p-3 text-white font-bold">{{ log.itemName }}</td><td class="p-3 text-right">{{ log.qty }}</td></tr></tbody></table></div></div></div>
+            </div>
+        </main>
+    </div>
+
+    <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 pointer-events-none">
+        <transition-group name="toast">
+            <div v-for="notif in notifications" :key="notif.id"
+                 class="pointer-events-auto bg-[#171925]/95 border-2 p-6 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center gap-4 backdrop-blur-xl min-w-[320px] max-w-[90%]"
+                 :class="notif.type === 'success' ? 'border-[#54d7f6]' : 'border-red-500'">
+
+                <div class="w-24 h-24 relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-full h-full">
+                        <defs>
+                            <linearGradient id="live_grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#2d2f45"><animate attributeName="stop-color" values="#2d2f45;#1a1a2e;#2d2f45" dur="8s" repeatCount="indefinite"/></stop>
+                                <stop offset="50%" stop-color="#706bf3"><animate attributeName="stop-color" values="#706bf3;#9b5de5;#706bf3" dur="8s" repeatCount="indefinite"/></stop>
+                                <stop offset="100%" stop-color="#54d7f6"><animate attributeName="stop-color" values="#54d7f6;#00f2ff;#54d7f6" dur="8s" repeatCount="indefinite"/></stop>
+                            </linearGradient>
+                            <style>
+                                .body-breathe { animation: breatheAnim 4s ease-in-out infinite; transform-origin: center; }
+                                .gold-pulse { animation: goldThroat 2s ease-in-out infinite alternate; filter: drop-shadow(0 0 5px #ffd700); }
+                                @keyframes breatheAnim { 0%, 100% { filter: drop-shadow(0 0 2px rgba(84,215,246,0.3)); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px rgba(112,107,243,0.6)); transform: scale(1.02); } }
+                                @keyframes goldThroat { from { stroke-opacity: 0.8; stroke-width: 8; filter: drop-shadow(0 0 2px #ffd700); } to { stroke-opacity: 1; stroke-width: 10; filter: drop-shadow(0 0 12px #ffd700); } }
+                            </style>
+                        </defs>
+                        <g class="body-breathe">
+                            <path d="M100 80 L 220 80 L 220 200 L 160 200 L 160 432 L 100 432 Z" fill="url(#live_grad)" stroke="#3a3962" stroke-width="4"/>
+                            <path d="M260 80 L 412 80 L 412 180 L 260 180 Z" fill="#54d7f6" opacity="0.9"><animate attributeName="opacity" values="0.9;0.7;0.9" dur="3s" repeatCount="indefinite"/></path>
+                            <path d="M260 220 L 360 220 L 360 320 L 260 320 Z" fill="#706bf3" opacity="0.9"><animate attributeName="opacity" values="0.9;0.6;0.9" dur="4s" repeatCount="indefinite"/></path>
+                        </g>
+                        <g class="gold-pulse">
+                            <path d="M220 130 L 260 130" stroke="#ffd700" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M220 270 L 260 270" stroke="#ffd700" stroke-width="8" stroke-linecap="round"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="text-center">
+                    <h4 class="font-black text-2xl mb-1 font-['Orbitron'] tracking-widest"
+                        :class="notif.type === 'success' ? 'text-[#54d7f6]' : 'text-red-500'">
+                        {{ notif.title }}
+                    </h4>
+                    <p class="text-sm text-gray-300 font-bold px-4">{{ notif.message }}</p>
+                </div>
+            </div>
+        </transition-group>
+    </div>
+
+    <div v-if="showSettingsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="bg-[#171925] border border-[#706bf3] w-full max-w-md rounded-xl p-6 relative shadow-[0_0_50px_rgba(112,107,243,0.2)]">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#706bf3] to-[#54d7f6]"></div>
+            <h3 class="font-['Orbitron'] text-2xl text-white mb-6 flex items-center gap-2">
+                <i class="mdi mdi-store-cog text-[#706bf3]"></i> PROFIL TOKO
+            </h3>
+            <div class="space-y-4">
+                <div><label class="text-xs text-gray-500 uppercase font-bold">Nama Toko (Header Struk)</label><input v-model="storeProfile.name" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#706bf3] outline-none"></div>
+                <div><label class="text-xs text-gray-500 uppercase font-bold">Alamat / Baris 2</label><input v-model="storeProfile.address" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#706bf3] outline-none"></div>
+                <div><label class="text-xs text-gray-500 uppercase font-bold">Footer Struk (Pesan)</label><input v-model="storeProfile.footer" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#706bf3] outline-none"></div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button @click="showSettingsModal=false" class="flex-1 py-3 border border-gray-600 rounded text-gray-400 hover:text-white">BATAL</button>
+                <button @click="saveStoreProfile" class="flex-1 py-3 bg-[#706bf3] text-white rounded font-bold shadow-lg hover:bg-[#5e58db]">SIMPAN</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-[#171925] border border-[#54d7f6] w-full max-w-lg rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex border-b border-[#3a3962] shrink-0">
+                <button @click="addMode='single'" class="flex-1 py-3 font-bold text-sm" :class="addMode==='single'?'bg-[#54d7f6] text-black':'text-gray-500'">SINGLE</button>
+                <button @click="addMode='variant'" class="flex-1 py-3 font-bold text-sm" :class="addMode==='variant'?'bg-[#ff9f1c] text-black':'text-gray-500'">VARIANT</button>
+                <button @click="addMode='bundle'" class="flex-1 py-3 font-bold text-sm" :class="addMode==='bundle'?'bg-[#9d4edd] text-white':'text-gray-500'">BUNDLE</button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+                <input v-model="newItem.name" placeholder="Nama Barang" class="w-full bg-[#222538] p-3 rounded text-white border border-[#3a3962]">
+                <div v-if="addMode==='bundle'" class="bg-[#9d4edd]/10 p-2 rounded"><div class="h-20 overflow-y-auto mb-2 custom-scrollbar"><div v-for="item in store.inventory" :key="item.id" class="flex justify-between p-1 hover:bg-[#222538] text-sm"><span>{{ item.name }}</span><button @click="addBundleComponent(item)" class="text-[#9d4edd] font-bold">+</button></div></div><div v-if="bundleComponents.length>0" class="text-xs"><div v-for="(c,i) in bundleComponents" :key="i">{{ c.name }} ({{ c.qty }})</div></div></div>
+                <div v-if="addMode==='variant'"><input v-model="newItem.variantString" placeholder="Varian: S, M, L (Pisahkan Koma)" class="w-full bg-[#0f111a] p-3 rounded text-white border border-[#ff9f1c]"></div>
+                <div class="grid grid-cols-2 gap-4"><input v-model="newItem.sku" placeholder="SKU" class="bg-[#222538] p-2 rounded text-white"><input v-model="newItem.stock" type="number" placeholder="Stok" class="bg-[#222538] p-2 rounded text-white"></div>
+                <div class="grid grid-cols-2 gap-4"><input v-model="newItem.buyPrice" type="number" placeholder="HPP" class="bg-[#222538] p-2 rounded text-white"><input v-model="newItem.sellPrice" type="number" placeholder="Jual" class="bg-[#222538] p-2 rounded text-white"></div>
+            </div>
+            <div class="flex gap-3 p-4 border-t border-[#3a3962] shrink-0"><button @click="showAddModal=false" class="flex-1 py-3 border border-gray-600 rounded text-gray-400">BATAL</button><button @click="saveNewItem" class="flex-1 py-3 bg-[#54d7f6] text-black rounded font-bold">SIMPAN</button></div>
+        </div>
+    </div>
+    <div v-if="showScanner" class="fixed inset-0 z-50 bg-black flex flex-col"><div class="p-4 flex justify-between items-center bg-[#0f111a] border-b border-[#3a3962]"><span class="font-['Orbitron'] text-white">SCANNER: {{ scannerMode }}</span><button @click="closeScanner" class="text-red-500 relative z-50 p-2 bg-red-900/20 rounded-full border border-red-500/50"><i class="mdi mdi-close text-2xl"></i></button></div><div class="flex-1 relative flex items-center justify-center bg-black"><div id="reader" class="w-full max-w-sm"></div></div></div>
+    <div v-if="showPOModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"><div class="bg-[#171925] border border-[#706bf3] w-full max-w-lg rounded-xl p-6 space-y-4"><h3 class="font-['Orbitron'] text-[#706bf3]">PO</h3><input v-model="newPO.supplier" placeholder="Supplier" class="w-full bg-[#222538] p-2 rounded text-white"><div class="border border-[#3a3962] rounded p-2 h-40 overflow-y-auto"><div v-for="item in store.inventory" :key="item.id" class="flex justify-between p-2 hover:bg-[#222538]"><span class="text-sm">{{ item.name }}</span><button @click="newPO.items.push({id:item.id, name:item.name, qty:10})" class="text-[#54d7f6] text-xs font-bold">+ ADD</button></div></div><div class="flex gap-2"><button @click="showPOModal=false" class="flex-1 py-2 border border-gray-600 rounded">BATAL</button><button @click="createPO" class="flex-1 py-2 bg-[#706bf3] text-white rounded font-bold">BUAT</button></div></div></div>
+    <div v-if="showReturnModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"><div class="bg-[#171925] border border-[#ef233c] w-full max-w-md rounded-xl p-6 space-y-4"><h3 class="font-['Orbitron'] text-[#ef233c]">RETUR</h3><select v-model="returnForm.selectedItemId" class="w-full bg-[#222538] p-2 rounded text-white"><option v-for="item in store.inventory" :value="item.id">{{ item.name }}</option></select><input v-model="returnForm.qty" type="number" placeholder="Jml" class="w-full bg-[#222538] p-2 rounded text-white"><input v-model="returnForm.reason" placeholder="Alasan" class="w-full bg-[#222538] p-2 rounded text-white"><button @click="executeReturn" class="w-full py-3 bg-[#ef233c] text-white font-bold rounded">PROSES</button><button @click="showReturnModal=false" class="w-full py-2 text-gray-400">BATAL</button></div></div>
+</div>
+
+<script type="module">
+    import { createApp, ref, computed, onMounted, reactive } from 'vue';
+    import { DriveAdapter, initFloworkBridge, isDriveConnected } from './js/drive-adapter.js';
+    import { store, StorageManager } from './js/store.js';
+    import { InventoryService } from './js/services/inventory.js';
+    import { OutboundService, cartState } from './js/services/outbound.js';
+    import { InboundService } from './js/services/inbound.js';
+    import { TransferService } from './js/services/transfer.js';
+    import { ReturnService } from './js/services/returns.js';
+    import { AnalyticsService } from './js/services/analytics.js';
+    import { ExportService } from './js/services/export.js';
+    import { POSService, posState } from './js/services/pos.js';
+    import { PredictionService } from './js/services/predictor.js';
+    import { WhatsAppService } from './js/services/wa-bridge.js';
+
+    createApp({
+        setup() {
+            onMounted(() => {
+                initFloworkBridge();
+                StorageManager.init();
+                DriveAdapter.init();
+                const savedProfile = localStorage.getItem('ss_profile');
+                if(savedProfile) storeProfile.value = JSON.parse(savedProfile);
+            });
+
+            // STATE
+            const currentView = ref('pos');
+            const searchQuery = ref('');
+            const showSidebar = ref(false);
+            const showMobileCart = ref(false);
+            const showAddModal = ref(false), addMode = ref('single');
+            const showPOModal = ref(false), showReturnModal = ref(false);
+            const showSettingsModal = ref(false);
+            const showScanner = ref(false), scannerMode = ref('inventory');
+            const html5QrCode = ref(null);
+            const notifications = ref([]);
+
+            // FORMS
+            const newItem = ref({ name: '', sku: '', stock: 0, buyPrice: 0, sellPrice: 0, variantString: '' });
+            const storeProfile = ref({ name: 'TOKO STOCK SENTRY', address: 'Jl. Digital No. 1', footer: 'Terima Kasih!' });
+            const bundleComponents = ref([]);
+            const newPO = ref({ supplier: '', items: [] });
+            const transfer = reactive({ selectedItem: null, targetLocation: 'STORE_A', qty: 0 });
+            const returnForm = reactive({ type: '', selectedItemId: null, qty: 0, reason: '' });
+
+            // COMPUTED
+            const filteredInventory = computed(() => {
+                if(!searchQuery.value) return store.inventory;
+                const q = searchQuery.value.toLowerCase();
+                return store.inventory.filter(i => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q));
+            });
+            const financials = computed(() => {
+                const totalAssets = store.inventory.reduce((acc, i) => acc + (i.buyPrice * i.stock), 0);
+                return { totalAssets };
+            });
+            const deadStockItems = computed(() => store.inventory.filter(i => i.stock <= 5));
+            const profitData = computed(() => AnalyticsService.getProfitAnalysis());
+            const fastMoving = computed(() => AnalyticsService.getFastMoving());
+            const deadStock = computed(() => AnalyticsService.getDeadStock());
+            const posTotal = computed(() => POSService.calculateTotal());
+
+            // ACTIONS & HELPERS
+            const notify = (title, message, type = 'success') => {
+                const id = Date.now();
+                notifications.value.push({ id, title, message, type });
+                setTimeout(() => { notifications.value = notifications.value.filter(n => n.id !== id) }, 3000);
+            };
+
+            const switchView = (view) => { currentView.value = view; showSidebar.value = false; };
+            const openSettings = () => showSettingsModal.value = true;
+            const saveStoreProfile = () => {
+                localStorage.setItem('ss_profile', JSON.stringify(storeProfile.value));
+                showSettingsModal.value = false;
+                notify('Sukses', 'Profil Toko Disimpan!');
+            };
+
+            // Definisikan addBundleComponent DULU sebelum dipakai di return atau fungsi lain
+            const addBundleComponent = (item) => {
+                const exist = bundleComponents.value.find(c=>c.id===item.id);
+                if(!exist) bundleComponents.value.push({id:item.id, name:item.name, qty:1});
+            };
+
+            const saveNewItem = () => {
+                if (addMode.value === 'single') { if(InventoryService.add(newItem.value)) { closeAddModal(); notify('Barang Baru', 'Item Single ditambahkan'); } }
+                else if (addMode.value === 'variant') { if(InventoryService.addBatch(newItem.value, newItem.value.variantString.split(','))) { closeAddModal(); notify('Barang Baru', 'Varian Item ditambahkan'); } }
+                else if (addMode.value === 'bundle') { if(InventoryService.addBundle(newItem.value, bundleComponents.value)) { closeAddModal(); notify('Barang Baru', 'Paket Bundle dibuat'); } }
+            };
+
+            const closeAddModal = () => { showAddModal.value = false; newItem.value = {name:'', sku:'', stock:0}; bundleComponents.value = []; };
+            const handleCheckout = () => { if(OutboundService.processCheckout()) notify('Logistik', 'Surat Jalan Dicetak'); };
+            const createPO = () => { if(InboundService.createPO(newPO.value.supplier, newPO.value.items)) { showPOModal.value = false; notify('Inbound', 'PO Berhasil Dibuat'); } };
+            const selectTransferItem = (item) => transfer.selectedItem = item;
+            const processTransfer = () => { if(TransferService.moveStock(transfer.selectedItem, transfer.targetLocation, transfer.qty, 'Manual')) { notify('Transfer', 'Stok berhasil dipindah'); transfer.selectedItem = null; } };
+            const openReturnModal = (type) => { returnForm.type = type; showReturnModal.value = true; };
+            const executeReturn = () => { const item = store.inventory.find(i => i.id === returnForm.selectedItemId); if(ReturnService.processReturn(item, returnForm.qty, returnForm.type, returnForm.reason)) { notify('Retur', 'Retur Berhasil Diproses'); showReturnModal.value = false; } };
+
+            // FIXED POS LOGIC: Check money here to avoid ALERT in service
+            const processPOS = () => {
+                const total = posTotal.value - posState.discount;
+                if(posState.cashGiven < total) {
+                    notify('TRANSAKSI GAGAL', `Uang Kurang ${formatRupiah(total - posState.cashGiven)}`, 'error');
+                    return; // Stop, don't trigger service
+                }
+
+                if(POSService.processPayment()) {
+                    notify('TRANSAKSI SUKSES', 'Struk sedang dicetak...');
+                }
+            };
+
+            // FIXED SCANNER LOGIC: Force close on error
+            const openScanner = (mode) => {
+                scannerMode.value = mode; showScanner.value = true;
+                setTimeout(() => {
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    html5QrCode.value = new Html5Qrcode("reader");
+                    html5QrCode.value.start({ facingMode: "environment" }, config, (decodedText) => handleScan(decodedText));
+                }, 100);
+            };
+            const handleScan = (code) => {
+                const item = store.inventory.find(i => i.sku === code);
+                if (item) {
+                    if (scannerMode.value === 'inventory') notify('SCANNER', `${item.name} | Stok: ${item.stock}`);
+                    else if (scannerMode.value === 'opname') {
+                        const realQty = prompt(`Stok Sistem: ${item.stock}\nMasukkan Stok Fisik:`);
+                        if(realQty) { item.stock = parseInt(realQty); notify('Opname', 'Stok Terupdate!'); }
+                    }
+                    closeScanner();
+                } else notify('Error', "SKU Tidak Dikenal: " + code, 'error');
+            };
+            const closeScanner = async () => {
+                try {
+                    if(html5QrCode.value) await html5QrCode.value.stop().then(() => html5QrCode.value.clear());
+                } catch(e) { console.log("Force closing scanner"); }
+                showScanner.value = false;
+            };
+
+            const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+            const getDaysLeft = (item) => PredictionService.predictDaysLeft(item);
+
+            return {
+                store, currentView, searchQuery, isDriveConnected,
+                showSidebar, showMobileCart, switchView,
+                filteredInventory, financials, deadStockItems, profitData, fastMoving, deadStock,
+                posState, posTotal, cartState,
+                showAddModal, addMode, showPOModal, showReturnModal, showScanner, scannerMode,
+                newItem, newPO, bundleComponents, transfer, returnForm,
+                showSettingsModal, storeProfile, notifications,
+                saveNewItem, addBundleComponent, handleCheckout, createPO, selectTransferItem, processTransfer, openReturnModal, executeReturn,
+                processPOS, openSettings, saveStoreProfile,
+                InventoryService, OutboundService, InboundService, POSService, WhatsAppService,
+                openScanner, closeScanner, formatRupiah, getDaysLeft, connectDrive: () => DriveAdapter.init(),
+                downloadReport: () => ExportService.downloadExcel()
+            };
+        }
+    }).mount('#stock-app');
+</script>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\lander.html JUMLAH BARIS 164 
+#######################################################################
+
+```html
+<div class="w-full max-w-5xl mx-auto px-6 py-12 pb-40 animate_animated animate_fadeIn font-sans text-gray-300">
+
+    <div class="text-center mb-16">
+        <div class="inline-flex items-center gap-2 px-5 py-2 bg-[#171925] border border-[#54d7f6]/30 rounded-full mb-6 shadow-[0_0_15px_rgba(84,215,246,0.2)]">
+            <span class="w-2 h-2 rounded-full bg-[#54d7f6] animate-pulse"></span>
+            <span class="text-[#54d7f6] text-[10px] font-bold tracking-[0.3em] font-['Orbitron']">LOGISTICS INTELLIGENCE // V1.0</span>
+        </div>
+
+        <h1 class="text-4xl md:text-6xl font-black text-white mb-6 leading-tight font-['Orbitron'] tracking-wide">
+            JANGAN BIARKAN<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#54d7f6] to-[#706bf3]">STOK GHOIB MENGGEROGOTI PROFIT</span>
+        </h1>
+
+        <p class="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-10 font-light leading-relaxed">
+            Sistem manajemen inventori taktis untuk bisnis modern.
+            <span class="text-white font-bold">Tanpa biaya server bulanan</span>,
+            <span class="text-white font-bold">100% Privasi Data (Private Vault)</span>,
+            dan akurasi tingkat tinggi untuk mencegah kebocoran aset.
+        </p>
+
+        <button onclick="enterApp()" class="px-10 py-5 bg-[#54d7f6] text-[#171925] font-black text-xl rounded-xl transition-all shadow-[0_0_30px_rgba(84,215,246,0.4)] hover:shadow-[0_0_50px_rgba(84,215,246,0.6)] hover:bg-white font-['Orbitron'] tracking-wider mb-12">
+            DEPLOY SYSTEM NOW <i class="mdi mdi-arrow-right ml-2"></i>
+        </button>
+
+        <div class="relative w-full aspect-video border-2 border-[#3a3962] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(112,107,243,0.15)] group mb-8 relative bg-[#0f111a]">
+
+            <img src="./cover.webp" alt="Stock Sentry Dashboard Preview" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500">
+
+            <div class="absolute inset-0 bg-gradient-to-t from-[#171925] via-transparent to-transparent opacity-50 pointer-events-none"></div>
+
+            <div class="absolute top-0 left-0 w-full h-1 bg-[#54d7f6]/50 shadow-[0_0_15px_#54d7f6] animate-[scan_4s_ease-in-out_infinite] pointer-events-none opacity-70"></div>
+
+            <div class="absolute bottom-6 right-6 text-right pointer-events-none z-10">
+                <div class="text-[#54d7f6] font-mono text-xs mb-1 tracking-widest">SYSTEM STATUS</div>
+                <div class="text-white font-['Orbitron'] text-2xl font-bold flex items-center justify-end gap-3">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#54d7f6] opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-[#54d7f6]"></span>
+                    </span>
+                    LIVE MONITORING
+                </div>
+            </div>
+        </div>
+
+        <button onclick="enterApp()" class="px-12 py-4 bg-transparent border border-[#706bf3] text-[#706bf3] font-bold text-lg rounded-xl hover:bg-[#706bf3] hover:text-white transition-all font-['Orbitron'] tracking-widest">
+            <i class="mdi mdi-qrcode-scan mr-2"></i> ACTIVATE SCANNER MODE
+        </button>
+    </div>
+
+    <div class="bg-[#1e2130]/50 border border-[#3a3962] rounded-3xl p-8 md:p-12 backdrop-blur-sm mt-12 relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            <i class="mdi mdi-alert-decagram text-9xl text-white"></i>
+        </div>
+
+        <h2 class="text-3xl font-bold text-white mb-6 font-['Orbitron'] border-l-4 border-[#706bf3] pl-4">
+            REALITA BISNIS: <span class="text-[#706bf3]">THE SILENT KILLER</span>
+        </h2>
+
+        <div class="space-y-6 text-lg leading-relaxed text-gray-300 text-justify font-sans">
+            <p>
+                Dalam dunia operasional bisnis, musuh terbesar bukanlah kompetitor, melainkan <strong>ketidaktertiban data internal</strong>.
+                Seringkali kita melihat bisnis dengan omset tinggi namun profit margin yang sangat tipis.
+                Setelah diaudit, penyebabnya hampir selalu sama: <strong>Inventory Leakage (Kebocoran Stok).</strong>
+            </p>
+            <p>
+                Sistem pencatatan manual atau spreadsheet yang tidak tersinkronisasi menciptakan celah fatal.
+                Barang fisik hilang, tercatat ada tapi aslinya nihil, atau aset menumpuk di gudang tanpa terdeteksi (Dead Stock).
+                Ini bukan sekadar "selisih", ini adalah uang tunai yang terbakar percuma.
+            </p>
+        </div>
+
+        <hr class="border-[#3a3962] my-10 opacity-30">
+
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                 <h3 class="text-2xl font-bold text-white mb-4 font-['Orbitron']">SOLUSI: <span class="text-[#54d7f6]">STOCK SENTRY</span></h3>
+                 <p class="text-gray-400 mb-6">
+                     Kami membangun arsitektur sistem yang menghilangkan kompleksitas software Enterprise (ERP) yang mahal,
+                     namun mempertahankan fungsi vital yang dibutuhkan untuk audit dan tracking aset.
+                 </p>
+                 <ul class="space-y-4">
+                     <li class="flex items-start gap-3">
+                         <div class="mt-1 bg-[#54d7f6]/20 p-1 rounded-full"><i class="mdi mdi-check text-[#54d7f6]"></i></div>
+                         <div>
+                             <strong class="text-white block mb-1">Audit Taktis (Mobile Ready)</strong>
+                             <span class="text-sm">Tim lapangan dapat melakukan opname menggunakan QR Scanner langsung dari smartphone. Cepat, akurat, tanpa alat khusus.</span>
+                         </div>
+                     </li>
+                     <li class="flex items-start gap-3">
+                         <div class="mt-1 bg-[#54d7f6]/20 p-1 rounded-full"><i class="mdi mdi-check text-[#54d7f6]"></i></div>
+                         <div>
+                             <strong class="text-white block mb-1">Aset Valuasi Real-time</strong>
+                             <span class="text-sm">Ketahui nilai pasti aset Anda detik ini juga. Sistem menghitung total nilai barang vs potensi profit secara otomatis.</span>
+                         </div>
+                     </li>
+                 </ul>
+            </div>
+
+            <div class="bg-[#171925] p-6 rounded-xl border border-[#3a3962]">
+                <div class="text-[#706bf3] font-mono text-xs mb-4 tracking-widest flex items-center gap-2">
+                    <i class="mdi mdi-chip"></i> TECHNICAL ADVANTAGE
+                </div>
+                <div class="space-y-4">
+                    <div class="border-b border-[#3a3962] pb-3">
+                        <div class="text-white font-bold mb-1 flex items-center gap-2"><i class="mdi mdi-database-lock text-[#54d7f6]"></i> PRIVATE VAULT ARCHITECTURE</div>
+                        <div class="text-xs text-gray-500 pl-6">Database tersimpan di penyimpanan cloud pribadi Anda. Kami tidak memiliki akses ke data sensitif bisnis Anda.</div>
+                    </div>
+                    <div class="border-b border-[#3a3962] pb-3">
+                        <div class="text-white font-bold mb-1 flex items-center gap-2"><i class="mdi mdi-lightning-bolt text-[#54d7f6]"></i> ZERO LATENCY EDGE</div>
+                        <div class="text-xs text-gray-500 pl-6">Aplikasi berjalan di jaringan Edge global. Responsif, ringan, dan tidak membebani perangkat.</div>
+                    </div>
+                    <div>
+                        <div class="text-white font-bold mb-1 flex items-center gap-2"><i class="mdi mdi-cash-remove text-[#54d7f6]"></i> COST EFFICIENCY</div>
+                        <div class="text-xs text-gray-500 pl-6">Tanpa biaya sewa server. Tanpa biaya maintenance bulanan. Murni efisiensi operasional.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-16 grid md:grid-cols-2 gap-6">
+        <div class="bg-[#171925] p-6 rounded-xl border border-[#3a3962] hover:border-[#54d7f6] transition-colors group">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="p-3 bg-[#3a3962]/50 rounded-lg text-white group-hover:bg-[#54d7f6] group-hover:text-[#171925] transition-all">
+                    <i class="mdi mdi-shield-lock-outline text-2xl"></i>
+                </div>
+                <h3 class="text-white font-bold text-lg font-['Orbitron']">KEAMANAN DATA ABSOLUT</h3>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed">
+                Data inventori adalah rahasia dapur perusahaan. Dengan konsep <i>Bring Your Own Storage</i>, privasi Anda terjamin 100% karena data tidak pernah meninggalkan kontrol Anda.
+            </p>
+        </div>
+
+        <div class="bg-[#171925] p-6 rounded-xl border border-[#3a3962] hover:border-[#706bf3] transition-colors group">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="p-3 bg-[#3a3962]/50 rounded-lg text-white group-hover:bg-[#706bf3] transition-all">
+                    <i class="mdi mdi-chart-timeline-variant text-2xl"></i>
+                </div>
+                <h3 class="text-white font-bold text-lg font-['Orbitron']">SKALABILITAS TANPA BATAS</h3>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed">
+                Mulai dari 100 item hingga 10.000 SKU, sistem tetap stabil. Tidak ada penurunan performa infrastruktur saat bisnis Anda berkembang pesat.
+            </p>
+        </div>
+    </div>
+
+    <div class="text-center mt-20 mb-10">
+        <h3 class="text-2xl font-bold text-white mb-6 font-['Orbitron']">
+            EFISIENSI ADALAH KUNCI PROFITABILITAS
+        </h3>
+        <p class="text-gray-400 mb-8 max-w-xl mx-auto">
+            Hentikan kerugian akibat manajemen manual hari ini juga.
+            Beralih ke sistem yang transparan, aman, dan efisien.
+        </p>
+
+        <button onclick="enterApp()" class="w-full md:w-auto px-16 py-6 bg-[#54d7f6] text-[#171925] font-black text-xl rounded-xl hover:bg-white transition-all shadow-[0_0_40px_rgba(84,215,246,0.3)] font-['Orbitron'] tracking-widest uppercase">
+            MULAI AUDIT SEKARANG
+        </button>
+    </div>
+
+    <div class="text-center border-t border-[#3a3962] pt-8 text-gray-600 text-xs font-mono">
+        <p>SECURE INFRASTRUCTURE • ENCRYPTED CONNECTION • 2026</p>
+    </div>
+</div>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\components\analytics.html JUMLAH BARIS 12 
+#######################################################################
+
+```html
+<div v-if="currentView === 'analytics'" class="flex-1 overflow-y-auto p-4 space-y-6 animate_animated animate_fadeIn custom-scrollbar">
+    <h2 class="text-xl font-['Orbitron'] text-[#9d4edd]">INTELLIGENCE</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd]"><h3 class="text-gray-400 text-xs">ESTIMASI OMSET</h3><p class="text-2xl font-bold text-white">{{ formatRupiah(profitData.revenue) }}</p></div>
+        <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd]"><h3 class="text-gray-400 text-xs">MODAL GUDANG</h3><p class="text-2xl font-bold text-white">{{ formatRupiah(profitData.cost) }}</p></div>
+        <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd] bg-gradient-to-r from-[#9d4edd]/20 to-transparent"><h3 class="text-[#9d4edd] text-xs font-bold">POTENSI CUAN</h3><p class="text-2xl font-bold text-[#9d4edd]">{{ formatRupiah(profitData.margin) }}</p></div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-[#0f111a] border border-green-500/30 rounded-xl p-4"><h3 class="text-green-500 font-bold mb-4 flex items-center gap-2"><i class="mdi mdi-fire"></i> TERLARIS (TOP 5)</h3><div class="space-y-3"><div v-for="(item, i) in fastMoving" :key="i" class="flex justify-between border-b border-[#3a3962] pb-2 text-sm"><span>{{ i+1 }}. {{ item.name }}</span><span class="font-mono text-green-400 font-bold">{{ item.qty }} Terjual</span></div></div></div>
+        <div class="bg-[#0f111a] border border-red-500/30 rounded-xl p-4"><h3 class="text-red-500 font-bold mb-4 flex items-center gap-2"><i class="mdi mdi-spider-web"></i> STOCK MATI (DEAD)</h3><div class="space-y-3 max-h-60 overflow-y-auto custom-scrollbar"><div v-for="(item, i) in deadStock" :key="i" class="flex justify-between border-b border-[#3a3962] pb-2 text-sm"><span>{{ item.name }}</span><span class="font-mono text-red-400">{{ item.stock }} Pcs</span></div></div></div>
+    </div>
+</div>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\components\inventory.html JUMLAH BARIS 46 
+#######################################################################
+
+```html
+<div v-if="currentView === 'inventory'" class="flex-1 flex flex-col p-4 overflow-hidden animate_animated animate_fadeIn">
+    <div class="flex gap-3 overflow-x-auto pb-2 mb-2 shrink-0">
+        <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#54d7f6] min-w-[140px] shadow">
+            <div class="text-[10px] text-gray-400">TOTAL ASSET</div>
+            <div class="text-md font-bold font-['Orbitron']">{{ formatRupiah(financials.totalAssets) }}</div>
+        </div>
+        <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#ff2a6d] min-w-[140px] shadow">
+            <div class="text-[10px] text-gray-400">LOW STOCK</div>
+            <div class="text-md font-bold text-[#ff2a6d] font-['Orbitron']">{{ deadStockItems.length }} ITEMS</div>
+        </div>
+    </div>
+
+    <div class="flex gap-2 sticky top-0 z-10 py-2 shrink-0">
+            <input v-model="searchQuery" placeholder="Search SKU / Name..." class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded px-3 text-sm outline-none focus:border-[#54d7f6]">
+            <button @click="openScanner('inventory')" class="bg-[#222538] border border-[#54d7f6] text-[#54d7f6] px-3 rounded hover:bg-[#54d7f6] hover:text-[#171925]"><i class="mdi mdi-qrcode-scan"></i></button>
+            <button @click="showAddModal = true" class="bg-[#54d7f6] text-[#171925] px-3 rounded font-bold text-sm shadow flex items-center gap-1 whitespace-nowrap"><i class="mdi mdi-plus"></i> NEW</button>
+    </div>
+
+    <div class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden flex flex-col">
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-[#222538] text-xs uppercase text-gray-400 sticky top-0 z-10 shadow">
+                    <tr><th class="p-3">ITEM</th><th class="p-3 text-right">STOCK</th><th class="p-3 text-right hidden md:table-cell">AI PREDICTION</th><th class="p-3 text-center">OPT</th></tr>
+                </thead>
+                <tbody class="divide-y divide-[#3a3962]">
+                    <tr v-for="item in filteredInventory" :key="item.id" class="hover:bg-[#1e2130]">
+                        <td class="p-3">
+                            <div class="font-bold text-white flex flex-wrap items-center gap-2">{{ item.name }} <span v-if="item.type === 'bundle'" class="px-1 bg-[#9d4edd] text-white text-[9px] rounded font-bold">PAKET</span></div>
+                            <div class="text-xs text-[#54d7f6]">{{ item.sku }}</div>
+                        </td>
+                        <td class="p-3 text-right">
+                            <div class="text-lg font-['Orbitron']" :class="item.stock <= item.minStock ? 'text-[#ff2a6d]' : 'text-white'">{{ item.stock }}</div>
+                            <div v-if="item.stock <= item.minStock" class="text-[9px] text-[#ff2a6d] cursor-pointer hover:underline bg-[#ff2a6d]/10 px-1 rounded inline-block mt-1" @click="WhatsAppService.orderSupplier(item)"><i class="mdi mdi-whatsapp"></i> ORDER</div>
+                        </td>
+                        <td class="p-3 text-right hidden md:table-cell">
+                            <span v-if="getDaysLeft(item) < 7" class="text-[#ff2a6d] font-bold text-xs">Habis {{ getDaysLeft(item) }} Hari</span>
+                            <span v-else-if="getDaysLeft(item) > 100" class="text-gray-500 text-xs">Aman</span>
+                            <span v-else class="text-[#ff9f1c] text-xs">{{ getDaysLeft(item) }} Hari lagi</span>
+                        </td>
+                        <td class="p-3 text-center"><button @click="InventoryService.printLabel(item)" class="text-gray-400 hover:text-[#54d7f6]"><i class="mdi mdi-printer text-lg"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\components\ops.html JUMLAH BARIS 35 
+#######################################################################
+
+```html
+<div v-if="currentView === 'opname'" class="flex-1 flex flex-col p-4 animate_animated animate_fadeIn">
+    <h2 class="text-xl font-['Orbitron'] text-[#ff006e] mb-4">STOCK OPNAME</h2>
+    <div class="flex-1 bg-[#222538] rounded-xl border border-[#ff006e]/30 flex flex-col items-center justify-center p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+        <i class="mdi mdi-barcode-scan text-7xl text-[#ff006e] mb-6 drop-shadow-[0_0_10px_#ff006e]"></i>
+        <p class="text-gray-300 mb-8 max-w-sm text-center">Mode Audit Fisik. Scan barcode barang di gudang, sistem akan mencocokkan data.</p>
+        <button @click="openScanner('opname')" class="bg-[#ff006e] text-white px-8 py-4 rounded-xl font-bold shadow-[0_0_30px_#ff006e] hover:scale-105 transition-transform text-lg flex items-center gap-2">
+            <i class="mdi mdi-camera"></i> MULAI SCAN
+        </button>
+    </div>
+</div>
+
+<div v-if="currentView === 'outbound'" class="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden animate_animated animate_fadeIn">
+    <div class="flex-1 flex flex-col gap-4 overflow-hidden">
+            <input v-model="searchQuery" placeholder="Cari barang..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded p-3 text-sm shrink-0">
+            <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+                <div v-for="item in filteredInventory" :key="item.id" class="bg-[#222538] p-3 rounded flex justify-between cursor-pointer hover:border-[#ff9f1c] border border-transparent" @click="OutboundService.addToCart(item)"><div><div class="font-bold text-white">{{ item.name }}</div><div class="text-xs text-gray-500">Stok: {{ item.stock }}</div></div><i class="mdi mdi-plus-box text-[#ff9f1c] text-2xl"></i></div>
+            </div>
+    </div>
+    <div class="w-full md:w-1/3 bg-[#222538] border border-[#ff9f1c] rounded-xl p-4 flex flex-col shrink-0 md:h-full">
+        <h2 class="text-[#ff9f1c] font-['Orbitron'] mb-4">SURAT JALAN</h2>
+        <input v-model="cartState.customerName" placeholder="Nama Penerima" class="bg-[#0f111a] border border-[#3a3962] rounded p-2 mb-4 text-white w-full">
+        <div class="flex-1 overflow-y-auto space-y-2 mb-4 custom-scrollbar bg-[#0f111a] p-2 rounded">
+            <div v-for="(c, idx) in cartState.items" :key="idx" class="flex justify-between items-center text-sm bg-[#222538] p-2 rounded"><span>{{ c.name }}</span><div class="flex items-center gap-1"><input v-model="c.qty" type="number" class="w-10 bg-black text-center text-white border border-[#3a3962]"><button @click="OutboundService.removeItem(idx)" class="text-red-500"><i class="mdi mdi-close"></i></button></div></div>
+        </div>
+        <button @click="handleCheckout" class="w-full py-3 bg-[#ff9f1c] text-black font-bold rounded font-['Orbitron'] hover:bg-white transition-colors">CETAK DO</button>
+    </div>
+</div>
+
+<div v-if="['po','transfer','returns','history'].includes(currentView)" class="flex-1 overflow-y-auto p-4 custom-scrollbar animate_animated animate_fadeIn">
+    <div v-if="currentView === 'po'" class="space-y-4"><div class="flex justify-between sticky top-0 bg-[#171925] py-2 z-10"><h2 class="text-xl font-['Orbitron'] text-[#706bf3]">PO</h2><button @click="showPOModal=true" class="bg-[#706bf3] px-4 py-2 rounded text-white font-bold">BUAT PO</button></div><div class="grid gap-3"><div v-for="po in store.purchaseOrders" :key="po.id" class="bg-[#222538] p-4 rounded flex justify-between"><div><span class="text-[#706bf3] font-bold">{{ po.poNumber }}</span><div class="text-xs text-gray-400">{{ po.supplier }}</div></div><button v-if="po.status==='PENDING'" @click="InboundService.receivePO(po)" class="bg-green-600 px-3 rounded text-white text-xs font-bold">TERIMA</button></div></div></div>
+    <div v-if="currentView === 'transfer'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#2ec4b6]">TRANSFER</h2><div class="flex flex-col md:flex-row gap-6"><div class="flex-1 bg-[#222538] p-4 rounded"><input v-model="searchQuery" placeholder="Cari..." class="w-full bg-[#0f111a] p-2 rounded mb-3"><div class="h-64 overflow-y-auto space-y-2"><div v-for="item in filteredInventory" :key="item.id" @click="selectTransferItem(item)" class="p-2 border border-[#3a3962] rounded cursor-pointer" :class="transfer.selectedItem?.id===item.id?'border-[#2ec4b6]':''">{{ item.name }} ({{ item.stock }})</div></div></div><div class="w-full md:w-1/3 bg-[#0f111a] p-4 rounded border border-[#2ec4b6]"><select v-model="transfer.targetLocation" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><option value="MAIN">MAIN</option><option value="STORE_A">STORE A</option></select><input v-model="transfer.qty" type="number" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><button @click="processTransfer" class="w-full py-2 bg-[#2ec4b6] text-white font-bold rounded">KIRIM</button></div></div></div>
+    <div v-if="currentView === 'returns'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#ef233c] mb-4">RETURNS</h2><div class="grid md:grid-cols-2 gap-6"><div class="bg-[#222538] p-6 rounded border border-[#ef233c] cursor-pointer hover:bg-[#ef233c]/10" @click="openReturnModal('CUSTOMER_RETURN')"><h3 class="font-bold text-[#ef233c]">CUSTOMER RETUR (+)</h3></div><div class="bg-[#222538] p-6 rounded border border-yellow-500 cursor-pointer hover:bg-yellow-500/10" @click="openReturnModal('SUPPLIER_RETURN')"><h3 class="font-bold text-yellow-500">SUPPLIER RETUR (-)</h3></div></div></div>
+    <div v-if="currentView === 'history'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-white">LOGS</h2><div class="bg-[#0f111a] border border-[#3a3962] rounded overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-400 whitespace-nowrap"><tbody class="divide-y divide-[#3a3962]"><tr v-for="log in store.logs" :key="log.id" class="hover:bg-[#1e2130]"><td class="p-3 w-32">{{ new Date(log.date).toLocaleDateString() }}</td><td class="p-3 w-20"><span class="px-2 rounded border" :class="log.type==='IN'?'border-green-500 text-green-500':'text-[#ff9f1c] border-[#ff9f1c]'">{{ log.type }}</span></td><td class="p-3 text-white font-bold">{{ log.itemName }}</td><td class="p-3 text-right">{{ log.qty }}</td></tr></tbody></table></div></div></div>
+</div>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\components\pos.html JUMLAH BARIS 167 
+#######################################################################
+
+```html
+<div v-if="currentView === 'pos'" class="flex-1 flex flex-col md:flex-row h-full overflow-hidden animate_animated animate_fadeIn bg-[#0f111a]">
+
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+
+        <div class="bg-[#171925] border-b border-[#3a3962] p-3 z-20 shadow-md shrink-0">
+            <div class="flex gap-2 mb-3">
+                <div class="flex-1 relative">
+                    <i class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input v-model="searchQuery" placeholder="Cari Item / Scan SKU..."
+                        class="w-full bg-[#0f111a] border border-[#3a3962] rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#00b4d8] focus:ring-1 focus:ring-[#00b4d8] transition-all">
+                </div>
+                <button @click="openScanner('inventory')" class="bg-[#222538] w-12 rounded-xl border border-[#3a3962] text-[#00b4d8] active:scale-90 transition-transform">
+                    <i class="mdi mdi-barcode-scan text-xl"></i>
+                </button>
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+                <button @click="searchQuery = ''" class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors" :class="searchQuery === '' ? 'bg-[#00b4d8] text-white' : 'bg-[#222538] text-gray-400 border border-[#3a3962]'">
+                    SEMUA
+                </button>
+                <button @click="searchQuery = 'paket'" class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors" :class="searchQuery.toLowerCase().includes('paket') ? 'bg-[#9d4edd] text-white' : 'bg-[#222538] text-gray-400 border border-[#3a3962]'">
+                    📦 PAKET BUNDLE
+                </button>
+                <button @click="searchQuery = 'promo'" class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors" :class="searchQuery === 'promo' ? 'bg-[#ff9f1c] text-black' : 'bg-[#222538] text-gray-400 border border-[#3a3962]'">
+                    🔥 PROMO
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-3 custom-scrollbar pb-24 md:pb-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div v-for="item in filteredInventory" :key="item.id" @click="POSService.addToCart(item)"
+                    class="bg-[#222538] border border-[#3a3962] rounded-2xl overflow-hidden relative cursor-pointer active:scale-95 transition-all duration-100 hover:border-[#00b4d8] group shadow-lg flex flex-col h-[160px]">
+
+                    <div class="h-1 w-full bg-gradient-to-r from-[#00b4d8] to-[#706bf3]"></div>
+
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div v-if="item.type === 'bundle'" class="inline-block px-1.5 py-0.5 bg-[#9d4edd]/20 text-[#9d4edd] border border-[#9d4edd]/50 rounded text-[9px] font-bold mb-1">
+                                PAKET
+                            </div>
+                            <h3 class="font-bold text-gray-100 text-sm leading-tight line-clamp-2 group-hover:text-[#00b4d8] transition-colors">
+                                {{ item.name }}
+                            </h3>
+                            <p class="text-[10px] text-gray-500 mt-1 font-mono tracking-wide">{{ item.sku }}</p>
+                        </div>
+
+                        <div class="flex items-end justify-between mt-2">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-400">Harga</span>
+                                <span class="text-[#00b4d8] font-bold text-md">{{ formatRupiah(item.sellPrice).replace(',00', '') }}</span>
+                            </div>
+                            <div class="text-[10px] px-2 py-1 rounded bg-[#171925] border border-[#3a3962]" :class="item.stock <= 5 ? 'text-red-500 border-red-900' : 'text-gray-400'">
+                                Stock: {{ item.stock }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="absolute inset-0 bg-white opacity-0 active:opacity-10 transition-opacity pointer-events-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:hidden absolute bottom-0 left-0 right-0 bg-[#171925] border-t border-[#3a3962] p-4 flex items-center gap-4 z-30 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+            <div class="flex-1" @click="showMobileCart = true">
+                <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    <i class="mdi mdi-cart"></i> {{ posState.cart.reduce((a,b)=>a+b.qty,0) }} ITEM
+                </div>
+                <div class="text-xl font-bold text-white font-['Orbitron']">{{ formatRupiah(posTotal - posState.discount).replace(',00', '') }}</div>
+            </div>
+            <button @click="showMobileCart = true" class="bg-[#00b4d8] text-[#171925] font-black px-6 py-3 rounded-xl shadow-[0_0_15px_#00b4d8] active:scale-95 transition-transform flex items-center gap-2">
+                BAYAR <i class="mdi mdi-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <div :class="showMobileCart ? 'translate-y-0' : 'translate-y-full md:translate-y-0'"
+         class="fixed md:static inset-0 md:inset-auto z-50 md:z-auto w-full md:w-[400px] bg-[#171925] border-l border-[#3a3962] flex flex-col h-full transition-transform duration-300 shadow-2xl">
+
+        <div class="md:hidden p-4 border-b border-[#3a3962] flex justify-between items-center bg-[#171925]">
+            <h2 class="text-lg font-bold text-white font-['Orbitron']">ORDER DETAILS</h2>
+            <button @click="showMobileCart = false" class="w-8 h-8 rounded-full bg-[#222538] flex items-center justify-center text-white"><i class="mdi mdi-chevron-down"></i></button>
+        </div>
+
+        <div class="hidden md:flex p-4 border-b border-[#3a3962] justify-between items-center bg-[#171925]">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2 font-['Orbitron']"><i class="mdi mdi-receipt"></i> CURRENT BILL</h2>
+            <button @click="posState.cart = []" class="text-[10px] bg-red-900/20 border border-red-900 text-red-500 px-3 py-1 rounded hover:bg-red-900/50 transition-colors">CLEAR</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-[#0f111a]">
+            <div v-if="posState.cart.length === 0" class="flex flex-col items-center justify-center h-64 text-gray-600 opacity-50">
+                <i class="mdi mdi-cash-register text-6xl mb-4"></i>
+                <p class="font-['Orbitron']">READY TO SERVE</p>
+            </div>
+
+            <div v-for="(item, idx) in posState.cart" :key="idx" class="bg-[#222538] p-3 rounded-xl border border-[#3a3962] flex justify-between items-center group relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#706bf3]"></div>
+                <div class="flex-1 pl-2">
+                    <div class="text-white font-bold text-sm line-clamp-1">{{ item.name }}</div>
+                    <div class="text-xs text-[#706bf3] font-mono mt-1">{{ formatRupiah(item.sellPrice * item.qty).replace(',00', '') }}</div>
+                </div>
+
+                <div class="flex items-center bg-[#171925] rounded-lg border border-[#3a3962] p-1">
+                    <button @click="item.qty > 1 ? item.qty-- : POSService.removeItem(idx)" class="w-8 h-8 rounded hover:bg-red-500 hover:text-white text-gray-400 transition-colors flex items-center justify-center">
+                        <i class="mdi" :class="item.qty > 1 ? 'mdi-minus' : 'mdi-trash-can-outline'"></i>
+                    </button>
+                    <input type="number" v-model="item.qty" class="w-10 bg-transparent text-center text-white font-bold text-sm outline-none appearance-none">
+                    <button @click="item.qty++" class="w-8 h-8 rounded hover:bg-[#00b4d8] hover:text-[#171925] text-gray-400 transition-colors flex items-center justify-center">
+                        <i class="mdi mdi-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[#1e2130] border-t border-[#3a3962] p-5 shrink-0 shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
+
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-gray-400 text-xs">
+                    <span>Subtotal</span>
+                    <span>{{ formatRupiah(posTotal) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-gray-400 text-xs">
+                    <span>Diskon</span>
+                    <div class="flex items-center gap-1 border-b border-gray-600">
+                        <span class="text-gray-500">Rp</span>
+                        <input v-model="posState.discount" type="number" class="w-16 bg-transparent text-right text-white outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-between text-white text-xl font-bold font-['Orbitron'] pt-2 border-t border-gray-600">
+                    <span>TOTAL</span>
+                    <span class="text-[#00b4d8]">{{ formatRupiah(posTotal - posState.discount).replace(',00', '') }}</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden">
+                    <div class="bg-[#222538] w-10 flex items-center justify-center text-gray-400"><i class="mdi mdi-whatsapp"></i></div>
+                    <input v-model="posState.customerPhone" placeholder="No. WA (628...)" class="flex-1 bg-transparent p-3 text-sm text-white outline-none">
+                </div>
+
+                <div class="relative">
+                    <input v-model="posState.cashGiven" type="number" placeholder="Uang Diterima..."
+                        class="w-full bg-[#0f111a] border border-[#3a3962] rounded-lg p-3 pl-4 pr-12 text-white font-bold text-lg outline-none focus:border-[#00b4d8] transition-colors">
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">IDR</div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-2">
+                    <button @click="posState.cashGiven = (posTotal - posState.discount)" class="bg-[#222538] border border-[#3a3962] text-xs text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black transition-colors">PAS</button>
+                    <button @click="posState.cashGiven = 20000" class="bg-[#222538] border border-[#3a3962] text-xs text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black transition-colors">20k</button>
+                    <button @click="posState.cashGiven = 50000" class="bg-[#222538] border border-[#3a3962] text-xs text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black transition-colors">50k</button>
+                    <button @click="posState.cashGiven = 100000" class="bg-[#222538] border border-[#3a3962] text-xs text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black transition-colors">100k</button>
+                </div>
+
+                <div v-if="posState.cashGiven > 0" class="flex justify-between items-center bg-[#0f111a] p-2 rounded border border-[#3a3962] border-dashed">
+                    <span class="text-xs text-gray-400">KEMBALI</span>
+                    <span class="font-bold text-[#ff9f1c]" :class="(posState.cashGiven - (posTotal - posState.discount)) < 0 ? 'text-red-500' : 'text-[#ff9f1c]'">
+                        {{ formatRupiah(posState.cashGiven - (posTotal - posState.discount)) }}
+                    </span>
+                </div>
+
+                <button @click="processPOS" class="w-full bg-gradient-to-r from-[#00b4d8] to-[#706bf3] text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(112,107,243,0.4)] hover:shadow-[0_0_30px_rgba(112,107,243,0.6)] active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+                    <i class="mdi mdi-printer"></i> PROSES TRANSAKSI
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+#######################################################################
+# WEBSITE https://flowork.cloud
+# File NAME : C:\FLOWORK\flowork-gui\template\web\public\apps-cloud\stock-sentry\partials\components\sidebar.html JUMLAH BARIS 33 
+#######################################################################
+
+```html
+<nav :class="showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" class="absolute md:static top-0 left-0 h-full w-64 bg-[#0f111a] border-r border-[#3a3962] flex flex-col justify-between pb-4 z-40 transition-transform duration-300 shadow-2xl md:shadow-none">
+    <div class="space-y-1 p-2 overflow-y-auto custom-scrollbar flex-1">
+        <div class="md:hidden flex justify-end p-2">
+            <button @click="showSidebar = false" class="text-gray-400 hover:text-white"><i class="mdi mdi-close text-2xl"></i></button>
+        </div>
+
+        <button @click="switchView('pos')" :class="currentView === 'pos' ? 'bg-[#00b4d8] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-4 mb-2 rounded-xl flex items-center gap-3 shadow-lg transition-all">
+            <i class="mdi mdi-cash-register text-2xl"></i><span class="font-bold text-lg">MESIN KASIR</span>
+        </button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">GUDANG & ADMIN</div>
+        <button @click="switchView('inventory')" :class="currentView === 'inventory' ? 'bg-[#54d7f6] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-cube-outline text-xl"></i><span class="font-bold">INVENTORY</span></button>
+        <button @click="switchView('analytics')" :class="currentView === 'analytics' ? 'bg-[#9d4edd] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-google-analytics text-xl"></i><span class="font-bold">ANALYTICS (AI)</span></button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">LOGISTIK</div>
+        <button @click="switchView('outbound')" :class="currentView === 'outbound' ? 'bg-[#ff9f1c] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-truck-delivery text-xl"></i><span class="font-bold">SURAT JALAN</span></button>
+        <button @click="switchView('po')" :class="currentView === 'po' ? 'bg-[#706bf3] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-import text-xl"></i><span class="font-bold">INBOUND (PO)</span></button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">OPERASIONAL</div>
+        <button @click="switchView('transfer')" :class="currentView === 'transfer' ? 'bg-[#2ec4b6] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-dolly text-xl"></i><span class="font-bold">TRANSFER</span></button>
+        <button @click="switchView('returns')" :class="currentView === 'returns' ? 'bg-[#ef233c] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-keyboard-return text-xl"></i><span class="font-bold">RETURNS</span></button>
+
+        <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">AUDIT</div>
+        <button @click="switchView('opname')" :class="currentView === 'opname' ? 'bg-[#ff006e] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-qrcode-scan text-xl"></i><span class="font-bold">STOCK OPNAME</span></button>
+        <button @click="switchView('history')" :class="currentView === 'history' ? 'bg-white text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-history text-xl"></i><span class="font-bold">LOGS</span></button>
+    </div>
+
+    <div class="p-2 border-t border-[#3a3962]">
+            <button @click="connectDrive" class="w-full p-3 border border-[#3a3962] text-xs text-gray-500 hover:text-white rounded text-center transition-colors">
+            <i class="mdi mdi-refresh mr-1"></i> REBOOT SYSTEM
+        </button>
+    </div>
+</nav>
+```

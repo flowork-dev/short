@@ -1,0 +1,24 @@
+{
+    "id": "grid-tactics",
+    "name": "Grid Tactics - Feed Ops",
+    "version": "1.0.0",
+    "description": "Potong gambar panorama jadi Carousel seamless atau Grid 3x3 estetik. Presisi pixel tinggi tanpa celah.",
+    "author": "Flowork Creative Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "slug": "grid-tactics",
+    "capabilities": [
+        "local_processing",
+        "image_slicing",
+        "file_io"
+    ],
+    "tags": [
+        "instagram",
+        "carousel",
+        "grid",
+        "slicer",
+        "social-media"
+    ]
+}

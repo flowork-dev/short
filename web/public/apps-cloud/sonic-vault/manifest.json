@@ -1,0 +1,26 @@
+{
+    "id": "sonic-vault",
+    "name": "KIRIM PESAN RAHASIA MELALUI FILE MP3",
+    "version": "1.0.0",
+    "description": "Tools ala Mr. Robot! Sisipkan pesan teks rahasia ke dalam file suara atau lagu tanpa merusak kualitas audionya. Orang lain cuma dengar musik.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 9,
+    "slug": "sonic-vault",
+    "capabilities": [
+        "client_side_only",
+        "file_io",
+        "audio_processing"
+    ],
+    "tags": [
+        "audio",
+        "steganography",
+        "spy-tools",
+        "privacy",
+        "mr-robot"
+    ]
+}

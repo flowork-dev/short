@@ -1,0 +1,27 @@
+{
+    "id": "tele-ops",
+    "name": "BACA NASKAH TANPA KELIHATAN BACA (TELEPROMPTER)",
+    "version": "1.0.0",
+    "description": "Mata lo masih lirik kertas pas bikin konten? Keliatan amatir bro. Ubah HP/Laptop jadi Teleprompter Profesional. Baca naskah sambil natap lensa, audiens gak bakal sadar.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "tele-ops",
+    "capabilities": [
+        "client_side_processing",
+        "dom_manipulation",
+        "offline_capable"
+    ],
+    "tags": [
+        "teleprompter",
+        "content-creator",
+        "video-tools",
+        "tiktok",
+        "productivity"
+    ],
+    "required_variables": []
+}

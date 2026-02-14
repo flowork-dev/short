@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Ops | Neural Image Compression</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        :root {
+            /* FLOWORK PALETTE */
+            --bg-core: #171925;
+            --neon-cyan: #54d7f6;
+            --neon-purple: #706bf3;
+            --input-bg: #3a3962;
+            --op-green: #0aff60;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: #e0f0ff;
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 0;
+            /* [RULE 1] Mengubah overflow:hidden menjadi auto agar bisa scroll di HP */
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Lock scroll hanya di desktop agar dashboard tetap terasa solid */
+        @media (min-width: 1024px) {
+            body { overflow: hidden; }
+        }
+
+        /* GRID BACKGROUND */
+        .cyber-grid {
+            position: fixed; inset: 0; z-index: -1;
+            background-image:
+                linear-gradient(rgba(23, 25, 37, 0.95), rgba(23, 25, 37, 0.95)),
+                linear-gradient(0deg, transparent 24%, rgba(84, 215, 246, 0.03) 25%, rgba(84, 215, 246, 0.03) 26%, transparent 27%, transparent 74%, rgba(84, 215, 246, 0.03) 75%, rgba(84, 215, 246, 0.03) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(84, 215, 246, 0.03) 25%, rgba(84, 215, 246, 0.03) 26%, transparent 27%, transparent 74%, rgba(84, 215, 246, 0.03) 75%, rgba(84, 215, 246, 0.03) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+        }
+
+        /* UTILS */
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .hidden-view { display: none !important; }
+
+        /* SCROLLBAR */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <div class="cyber-grid"></div>
+
+    <main class="w-full min-h-screen lg:h-screen relative">
+        <div id="view-app" class="w-full h-full"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            userIdentity: null,
+            vueInstance: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                this.initVue();
+
+                window.addEventListener('message', (e) => {
+                    if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                        this.setIdentity(e.data.userAddress);
+                    }
+                });
+
+                console.log("SYSTEM: PIXEL OPS READY");
+            },
+
+            async loadPartial(id, url) {
+                const res = await fetch(url);
+                document.getElementById(id).innerHTML = await res.text();
+            },
+
+            // switchTab function removed
+
+            setIdentity(address) {
+                this.userIdentity = address;
+                const tutorial = document.getElementById('api-tutorial');
+                if(tutorial) address ? tutorial.style.display = 'block' : tutorial.style.display = 'none';
+                if(this.vueInstance) this.vueInstance.userIdentity.address = address;
+            },
+
+            openSettings() {
+                window.parent.postMessage({ type: 'OPEN_SETTINGS', tab: 'variables' }, '*');
+            },
+
+            initVue() {
+                const { createApp, ref, computed, reactive } = Vue;
+                const { createVuetify } = Vuetify;
+                const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+                const app = createApp({
+                    setup() {
+                        const isDragging = ref(false);
+                        const isProcessing = ref(false);
+                        const fileInput = ref(null);
+                        const userIdentity = reactive({ address: null });
+
+                        const files = ref([]);
+                        const options = reactive({
+                            maxSizeMB: 1,
+                            maxWidthOrHeight: 1920,
+                            useWebWorker: true,
+                            initialQuality: 0.8
+                        });
+
+                        userIdentity.address = AppCore.userIdentity;
+
+                        const processedFiles = computed(() => files.value.filter(f => f.compressed));
+
+                        const totalSaved = computed(() => {
+                            let orig = 0;
+                            let comp = 0;
+                            files.value.forEach(f => {
+                                if(f.compressed) {
+                                    orig += f.original.size;
+                                    comp += f.compressed.size;
+                                }
+                            });
+                            if(orig === 0) return '0 MB';
+                            const savedBytes = orig - comp;
+                            return formatSize(savedBytes);
+                        });
+
+                        const triggerUpload = () => fileInput.value.click();
+
+                        const handleDrop = (e) => {
+                            isDragging.value = false;
+                            processFiles(e.dataTransfer.files);
+                        };
+
+                        const handleFileSelect = (e) => {
+                            processFiles(e.target.files);
+                        };
+
+                        const processFiles = async (fileList) => {
+                            isProcessing.value = true;
+                            const newFiles = Array.from(fileList).map(f => ({
+                                original: f,
+                                compressed: null,
+                                status: 'pending'
+                            }));
+                            files.value.push(...newFiles);
+
+                            for (let item of newFiles) {
+                                try {
+                                    const opts = { ...options };
+                                    if(item.original.size / 1024 / 1024 < opts.maxSizeMB) {
+                                        opts.maxSizeMB = item.original.size / 1024 / 1024 * 0.9;
+                                    }
+                                    item.compressed = await imageCompression(item.original, opts);
+                                    item.status = 'done';
+                                } catch (error) {
+                                    console.error("Compression failed:", error);
+                                    item.status = 'error';
+                                }
+                            }
+                            isProcessing.value = false;
+                        };
+
+                        const getSavings = (file) => {
+                            const diff = file.original.size - file.compressed.size;
+                            return ((diff / file.original.size) * 100).toFixed(0);
+                        };
+
+                        const formatSize = (bytes) => {
+                            if (bytes === 0) return '0 B';
+                            const k = 1024;
+                            const sizes = ['B', 'KB', 'MB', 'GB'];
+                            const i = Math.floor(Math.log(bytes) / Math.log(k));
+                            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                        };
+
+                        const downloadSingle = (file) => {
+                            window.saveAs(file.compressed, `opt_${file.original.name}`);
+                        };
+
+                        const downloadAll = async () => {
+                            const zip = new JSZip();
+                            files.value.forEach(f => {
+                                if(f.compressed) {
+                                    zip.file(`opt_${f.original.name}`, f.compressed);
+                                }
+                            });
+                            const content = await zip.generateAsync({type:"blob"});
+                            window.saveAs(content, "flowork_pixel_ops.zip");
+                        };
+
+                        AppCore.vueInstance = { userIdentity };
+
+                        return {
+                            isDragging, isProcessing, fileInput, files, options, processedFiles, totalSaved, userIdentity,
+                            triggerUpload, handleDrop, handleFileSelect, formatSize, getSavings, downloadSingle, downloadAll
+                        };
+                    }
+                });
+
+                app.use(vuetify).mount('#vue-root');
+            }
+        };
+
+        window.appCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

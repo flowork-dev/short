@@ -1,0 +1,35 @@
+<div v-if="currentView === 'opname'" class="flex-1 flex flex-col p-4 animate_animated animate_fadeIn">
+    <h2 class="text-xl font-['Orbitron'] text-[#ff006e] mb-4">STOCK OPNAME</h2>
+    <div class="flex-1 bg-[#222538] rounded-xl border border-[#ff006e]/30 flex flex-col items-center justify-center p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+        <i class="mdi mdi-barcode-scan text-7xl text-[#ff006e] mb-6 drop-shadow-[0_0_10px_#ff006e]"></i>
+        <p class="text-gray-300 mb-8 max-w-sm text-center">Mode Audit Fisik. Scan barcode barang di gudang, sistem akan mencocokkan data.</p>
+        <button @click="openScanner('opname')" class="bg-[#ff006e] text-white px-8 py-4 rounded-xl font-bold shadow-[0_0_30px_#ff006e] hover:scale-105 transition-transform text-lg flex items-center gap-2">
+            <i class="mdi mdi-camera"></i> MULAI SCAN
+        </button>
+    </div>
+</div>
+
+<div v-if="currentView === 'outbound'" class="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden animate_animated animate_fadeIn">
+    <div class="flex-1 flex flex-col gap-4 overflow-hidden">
+            <input v-model="searchQuery" placeholder="Cari barang..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded p-3 text-sm shrink-0">
+            <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+                <div v-for="item in filteredInventory" :key="item.id" class="bg-[#222538] p-3 rounded flex justify-between cursor-pointer hover:border-[#ff9f1c] border border-transparent" @click="OutboundService.addToCart(item)"><div><div class="font-bold text-white">{{ item.name }}</div><div class="text-xs text-gray-500">Stok: {{ item.stock }}</div></div><i class="mdi mdi-plus-box text-[#ff9f1c] text-2xl"></i></div>
+            </div>
+    </div>
+    <div class="w-full md:w-1/3 bg-[#222538] border border-[#ff9f1c] rounded-xl p-4 flex flex-col shrink-0 md:h-full">
+        <h2 class="text-[#ff9f1c] font-['Orbitron'] mb-4">SURAT JALAN</h2>
+        <input v-model="cartState.customerName" placeholder="Nama Penerima" class="bg-[#0f111a] border border-[#3a3962] rounded p-2 mb-4 text-white w-full">
+        <div class="flex-1 overflow-y-auto space-y-2 mb-4 custom-scrollbar bg-[#0f111a] p-2 rounded">
+            <div v-for="(c, idx) in cartState.items" :key="idx" class="flex justify-between items-center text-sm bg-[#222538] p-2 rounded"><span>{{ c.name }}</span><div class="flex items-center gap-1"><input v-model="c.qty" type="number" class="w-10 bg-black text-center text-white border border-[#3a3962]"><button @click="OutboundService.removeItem(idx)" class="text-red-500"><i class="mdi mdi-close"></i></button></div></div>
+        </div>
+        <button @click="handleCheckout" class="w-full py-3 bg-[#ff9f1c] text-black font-bold rounded font-['Orbitron'] hover:bg-white transition-colors">CETAK DO</button>
+    </div>
+</div>
+
+<div v-if="['po','transfer','returns','history'].includes(currentView)" class="flex-1 overflow-y-auto p-4 custom-scrollbar animate_animated animate_fadeIn">
+    <div v-if="currentView === 'po'" class="space-y-4"><div class="flex justify-between sticky top-0 bg-[#171925] py-2 z-10"><h2 class="text-xl font-['Orbitron'] text-[#706bf3]">PO</h2><button @click="showPOModal=true" class="bg-[#706bf3] px-4 py-2 rounded text-white font-bold">BUAT PO</button></div><div class="grid gap-3"><div v-for="po in store.purchaseOrders" :key="po.id" class="bg-[#222538] p-4 rounded flex justify-between"><div><span class="text-[#706bf3] font-bold">{{ po.poNumber }}</span><div class="text-xs text-gray-400">{{ po.supplier }}</div></div><button v-if="po.status==='PENDING'" @click="InboundService.receivePO(po)" class="bg-green-600 px-3 rounded text-white text-xs font-bold">TERIMA</button></div></div></div>
+    <div v-if="currentView === 'transfer'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#2ec4b6]">TRANSFER</h2><div class="flex flex-col md:flex-row gap-6"><div class="flex-1 bg-[#222538] p-4 rounded"><input v-model="searchQuery" placeholder="Cari..." class="w-full bg-[#0f111a] p-2 rounded mb-3"><div class="h-64 overflow-y-auto space-y-2"><div v-for="item in filteredInventory" :key="item.id" @click="selectTransferItem(item)" class="p-2 border border-[#3a3962] rounded cursor-pointer" :class="transfer.selectedItem?.id===item.id?'border-[#2ec4b6]':''">{{ item.name }} ({{ item.stock }})</div></div></div><div class="w-full md:w-1/3 bg-[#0f111a] p-4 rounded border border-[#2ec4b6]"><select v-model="transfer.targetLocation" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><option value="MAIN">MAIN</option><option value="STORE_A">STORE A</option></select><input v-model="transfer.qty" type="number" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><button @click="processTransfer" class="w-full py-2 bg-[#2ec4b6] text-white font-bold rounded">KIRIM</button></div></div></div>
+    <div v-if="currentView === 'returns'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#ef233c] mb-4">RETURNS</h2><div class="grid md:grid-cols-2 gap-6"><div class="bg-[#222538] p-6 rounded border border-[#ef233c] cursor-pointer hover:bg-[#ef233c]/10" @click="openReturnModal('CUSTOMER_RETURN')"><h3 class="font-bold text-[#ef233c]">CUSTOMER RETUR (+)</h3></div><div class="bg-[#222538] p-6 rounded border border-yellow-500 cursor-pointer hover:bg-yellow-500/10" @click="openReturnModal('SUPPLIER_RETURN')"><h3 class="font-bold text-yellow-500">SUPPLIER RETUR (-)</h3></div></div></div>
+    <div v-if="currentView === 'history'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-white">LOGS</h2><div class="bg-[#0f111a] border border-[#3a3962] rounded overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-400 whitespace-nowrap"><tbody class="divide-y divide-[#3a3962]"><tr v-for="log in store.logs" :key="log.id" class="hover:bg-[#1e2130]"><td class="p-3 w-32">{{ new Date(log.date).toLocaleDateString() }}</td><td class="p-3 w-20"><span class="px-2 rounded border" :class="log.type==='IN'?'border-green-500 text-green-500':'text-[#ff9f1c] border-[#ff9f1c]'">{{ log.type }}</span></td><td class="p-3 text-white font-bold">{{ log.itemName }}</td><td class="p-3 text-right">{{ log.qty }}</td></tr></tbody></table></div></div></div>
+</div>

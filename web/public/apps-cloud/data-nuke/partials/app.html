@@ -1,0 +1,75 @@
+<div class="h-full flex flex-col px-4 pt-6 max-w-lg mx-auto">
+
+    <div class="flex items-center justify-between mb-6">
+        <div class="bg-black/40 border border-cyan-500/30 rounded-full px-4 py-1 flex items-center gap-2 backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span class="text-[10px] font-bold text-cyan-400 tracking-widest">ONLINE</span>
+        </div>
+        <div class="text-[10px] font-mono text-gray-500">v.3.0.1</div>
+    </div>
+
+    <div class="flex-grow relative bg-[#121214] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+
+        <div id="ui-idle" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+            <div class="relative w-32 h-32 mb-6 group cursor-pointer">
+                <div class="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl group-hover:bg-cyan-500/40 transition"></div>
+                <div class="relative w-full h-full border-2 border-dashed border-cyan-500/50 rounded-full flex items-center justify-center hover:border-cyan-400 hover:scale-105 transition bg-black/40 backdrop-blur-sm">
+                    <i data-lucide="upload" class="w-10 h-10 text-cyan-400"></i>
+                </div>
+                <input type="file" id="file-input" class="absolute inset-0 opacity-0 cursor-pointer" onchange="window.appCore.processFile(this.files[0])">
+            </div>
+            <h2 class="text-xl font-bold text-white font-cyber tracking-wide mb-2">TAP TO UPLOAD</h2>
+            <p class="text-gray-500 text-xs max-w-[200px]">Pilih file korban. Proses ini tidak bisa dibatalkan.</p>
+        </div>
+
+        <div id="ui-processing" class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-black/90 z-20 hidden">
+            <div class="w-full mb-2 flex justify-between text-xs font-bold font-mono">
+                <span class="text-pink-500 animate-pulse">OVERWRITING...</span>
+                <span id="prog-text" class="text-white">0%</span>
+            </div>
+            <div class="w-full h-4 bg-gray-900 rounded-full overflow-hidden border border-gray-700">
+                <div id="prog-bar" class="h-full bg-gradient-to-r from-pink-600 to-purple-600 w-0 transition-all duration-75 ease-out shadow-[0_0_10px_#db2777]"></div>
+            </div>
+            <div class="mt-8 font-mono text-[10px] text-gray-500 text-left w-full h-32 overflow-hidden relative">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
+                <div class="opacity-50 space-y-1">
+                    <div>> Allocating memory blocks...</div>
+                    <div>> Generating noise pattern...</div>
+                    <div>> Injecting null bytes...</div>
+                    <div>> Scrambling headers...</div>
+                    <div>> Bypassing OS locks...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ui-result" class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/95 z-30 hidden">
+            <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/50 mb-4 animate-bounce">
+                <i data-lucide="trash-2" class="w-8 h-8 text-red-500"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white font-cyber text-red-500 tracking-widest mb-1">DESTROYED</h2>
+            <p class="text-gray-400 text-xs mb-8">File structure obliterated.</p>
+
+            <div class="w-full space-y-3">
+                <button onclick="window.appCore.download()" class="w-full py-4 bg-white text-black font-bold font-cyber rounded-lg hover:bg-gray-200 transition flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> DOWNLOAD ASHES
+                </button>
+                <button onclick="window.resetApp()" class="w-full py-4 border border-white/20 text-gray-400 font-bold font-mono rounded-lg hover:bg-white/5 transition text-xs">
+                    NUKE ANOTHER FILE
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mt-4 h-24 bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-[10px] overflow-y-auto text-left shadow-inner custom-scroll" id="terminal">
+        <div class="text-gray-500 italic">System Idle... Waiting for target.</div>
+    </div>
+
+</div>
+
+<style>
+    .custom-scroll::-webkit-scrollbar { width: 3px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #333; }
+</style>

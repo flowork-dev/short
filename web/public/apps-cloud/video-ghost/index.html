@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Video Ghost | Steganography Tool</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- THEME CONFIG --- */
+        :root {
+            --bg-core: #0d1117;
+            --bg-surface: #161b22;
+            --bg-input: #1a1a24;
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #00ff00;
+            --text-main: #ffffff;
+            --text-muted: #8b949e;
+        }
+
+        /* --- APK BASE STYLES --- */
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden; /* Lock body scroll */
+            overscroll-behavior: none; /* Anti-bounce effect */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+        /* Utility */
+        .glass-panel {
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex flex-col h-screen w-full">
+
+    <nav class="h-16 shrink-0 z-50 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0d1117]/95 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="w-2.5 h-2.5 bg-purple-500 rounded-sm animate-pulse shadow-[0_0_10px_#a855f7]"></div>
+            <h1 class="text-xl font-bold tracking-[0.2em] text-white">VIDEO<span class="text-purple-500">GHOST</span></h1>
+        </div>
+        <div class="px-2 py-1 rounded border border-gray-800 bg-gray-900 text-[10px] text-gray-500 font-bold">
+            V.2.0 MOBILE
+        </div>
+    </nav>
+
+    <main class="flex-1 w-full relative overflow-hidden">
+
+        <div class="w-full h-full overflow-y-auto custom-scroll pb-32 px-4 pt-4">
+            <div class="max-w-xl mx-auto space-y-6">
+
+                <div class="sticky top-0 z-40 bg-[#0d1117]/90 backdrop-blur pb-2 pt-1">
+                    <div class="flex p-1 rounded-xl bg-[#1a1a24] border border-gray-800 shadow-lg">
+                        <button onclick="AppCore.setMode('inject')" id="tab-mode-inject"
+                            class="flex-1 py-3 rounded-lg font-bold text-xs tracking-widest transition-all shadow-lg bg-purple-600 text-white">
+                            INJECTOR
+                        </button>
+                        <button onclick="AppCore.setMode('extract')" id="tab-mode-extract"
+                            class="flex-1 py-3 rounded-lg font-bold text-xs tracking-widest transition-all text-gray-500 hover:text-white">
+                            RECOVERY
+                        </button>
+                    </div>
+                </div>
+
+                <div id="panel-inject" class="space-y-6 animate-fade-in">
+
+                    <div class="glass-panel p-5 rounded-2xl relative group border-t-2 border-cyan-500/50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-cyan-400 font-bold text-sm tracking-widest flex items-center gap-2">
+                                <i data-lucide="video" class="w-4 h-4"></i> COVER VESSEL
+                            </h3>
+                            <span class="text-[9px] font-black uppercase bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20">MP4</span>
+                        </div>
+                        <label class="block w-full cursor-pointer group-hover:scale-[1.01] transition-transform">
+                            <div class="flex items-center gap-4 p-4 border border-dashed border-gray-700 rounded-xl bg-black/20 hover:border-cyan-500/50 transition">
+                                <input type="file" id="input-video" accept="video/mp4" class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-cyan-500/10 file:text-cyan-400 file:uppercase"/>
+                            </div>
+                        </label>
+                        <p class="text-[10px] text-gray-600 mt-2 pl-1">Video MP4 biasa sebagai "kulit" luarnya.</p>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl relative group border-t-2 border-purple-500/50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-purple-400 font-bold text-sm tracking-widest flex items-center gap-2">
+                                <i data-lucide="file-lock" class="w-4 h-4"></i> HIDDEN PAYLOAD
+                            </h3>
+                            <span class="text-[9px] font-black uppercase bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">ANY</span>
+                        </div>
+                        <label class="block w-full cursor-pointer group-hover:scale-[1.01] transition-transform">
+                            <div class="flex items-center gap-4 p-4 border border-dashed border-gray-700 rounded-xl bg-black/20 hover:border-purple-500/50 transition">
+                                <input type="file" id="input-secret" class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-purple-500/10 file:text-purple-400 file:uppercase"/>
+                            </div>
+                        </label>
+                        <p class="text-[10px] text-gray-600 mt-2 pl-1">File rahasia yang akan disembunyikan.</p>
+                    </div>
+
+                    <button onclick="AppCore.executeInjection()" id="btn-inject"
+                        class="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:brightness-110 text-white py-5 rounded-xl font-black text-sm tracking-[0.2em] shadow-[0_4px_20px_rgba(168,85,247,0.4)] active:scale-95 transition-all flex justify-center items-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4"></i> INITIATE FUSION
+                    </button>
+                </div>
+
+                <div id="panel-extract" class="space-y-6 hidden animate-fade-in">
+
+                    <div class="glass-panel p-5 rounded-2xl relative group border-t-2 border-green-500/50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-green-400 font-bold text-sm tracking-widest flex items-center gap-2">
+                                <i data-lucide="ghost" class="w-4 h-4"></i> GHOST VESSEL
+                            </h3>
+                            <span class="text-[9px] font-black uppercase bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20">TARGET</span>
+                        </div>
+                        <label class="block w-full cursor-pointer group-hover:scale-[1.01] transition-transform">
+                            <div class="flex items-center gap-4 p-4 border border-dashed border-gray-700 rounded-xl bg-black/20 hover:border-green-500/50 transition">
+                                <input type="file" id="input-ghost" class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-green-500/10 file:text-green-400 file:uppercase"/>
+                            </div>
+                        </label>
+                        <p class="text-[10px] text-gray-600 mt-2 pl-1">Upload video yang dicurigai berisi data.</p>
+                    </div>
+
+                    <div id="extract-results" class="space-y-2 empty:hidden"></div>
+
+                    <button onclick="AppCore.executeExtraction()" id="btn-extract"
+                        class="w-full bg-gradient-to-r from-green-600 to-emerald-500 hover:brightness-110 text-white py-5 rounded-xl font-black text-sm tracking-[0.2em] shadow-[0_4px_20px_rgba(34,197,94,0.4)] active:scale-95 transition-all flex justify-center items-center gap-2">
+                        <i data-lucide="search" class="w-4 h-4"></i> START DEEP SCAN
+                    </button>
+                </div>
+
+                <div id="status-log" class="mt-8 font-mono text-[10px] space-y-1.5 p-4 rounded-xl border border-gray-800 bg-black/60 shadow-inner min-h-[80px]">
+                    <div class="text-gray-600 italic">System Ready. Waiting for input...</div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- APP LOGIC ENGINE ---
+        const AppCore = {
+            init() {
+                lucide.createIcons();
+                this.logStatus('System initialized. Mode: Injector active.');
+
+                // Identity Listener (Opsional jika butuh sync user address)
+                window.addEventListener('message', (e) => {
+                    if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                        console.log("User synced:", e.data.userAddress);
+                    }
+                });
+            },
+
+            logStatus(msg, type = 'neutral') {
+                const log = document.getElementById('status-log');
+                if (!log) return;
+
+                let colorClass = 'text-cyan-400';
+                if(type === 'error') colorClass = 'text-red-400';
+                if(type === 'success') colorClass = 'text-green-400';
+                if(type === 'neutral') colorClass = 'text-gray-400';
+
+                const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'});
+
+                // Keep only last 5 logs to save memory on mobile
+                if(log.childElementCount > 5) log.lastElementChild.remove();
+
+                log.insertAdjacentHTML('afterbegin',
+                    `<div class="flex gap-2 animate-fade-in">
+                        <span class="text-gray-600">[${time}]</span>
+                        <span class="${colorClass}">${msg}</span>
+                    </div>`
+                );
+            },
+
+            setMode(mode) {
+                const injectPanel = document.getElementById('panel-inject');
+                const extractPanel = document.getElementById('panel-extract');
+                const btnInject = document.getElementById('tab-mode-inject');
+                const btnExtract = document.getElementById('tab-mode-extract');
+
+                if (mode === 'inject') {
+                    injectPanel.classList.remove('hidden');
+                    extractPanel.classList.add('hidden');
+
+                    btnInject.className = "flex-1 py-3 rounded-lg font-bold text-xs tracking-widest transition-all shadow-lg bg-purple-600 text-white";
+                    btnExtract.className = "flex-1 py-3 rounded-lg font-bold text-xs tracking-widest transition-all text-gray-500 hover:text-white bg-transparent";
+                    this.logStatus('Switched to Injector Mode.');
+                } else {
+                    injectPanel.classList.add('hidden');
+                    extractPanel.classList.remove('hidden');
+
+                    btnExtract.className = "flex-1 py-3 rounded-lg font-bold text-xs tracking-widest transition-all shadow-lg bg-green-600 text-white";
+                    btnInject.className = "flex-1 py-3 rounded-lg font-bold text-xs tracking-widest transition-all text-gray-500 hover:text-white bg-transparent";
+                    this.logStatus('Switched to Recovery Mode.');
+                }
+            },
+
+            // --- INJECTOR LOGIC ---
+            async executeInjection() {
+                const videoInput = document.getElementById('input-video').files[0];
+                const secretInput = document.getElementById('input-secret').files[0];
+                const btn = document.getElementById('btn-inject');
+
+                if (!videoInput) return this.logStatus('ERROR: Video Cover missing.', 'error');
+                if (videoInput.type !== 'video/mp4') return this.logStatus('ERROR: Format must be MP4.', 'error');
+                if (!secretInput) return this.logStatus('ERROR: Secret File missing.', 'error');
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="animate-pulse">PROCESSING BINARY...</span>';
+
+                try {
+                    const videoBuffer = await videoInput.arrayBuffer();
+                    const zip = new JSZip();
+                    zip.file(secretInput.name, secretInput);
+
+                    this.logStatus('Compressing payload...', 'neutral');
+                    const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+                    const zipBuffer = await zipBlob.arrayBuffer();
+
+                    // FUSION: Video + ZIP
+                    const combinedBuffer = new Uint8Array(videoBuffer.byteLength + zipBuffer.byteLength);
+                    combinedBuffer.set(new Uint8Array(videoBuffer), 0);
+                    combinedBuffer.set(new Uint8Array(zipBuffer), videoBuffer.byteLength);
+
+                    const finalBlob = new Blob([combinedBuffer], { type: "video/mp4" });
+                    const url = URL.createObjectURL(finalBlob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "ghost_" + videoInput.name;
+                    a.click();
+
+                    this.logStatus('INJECTION SUCCESS. Downloading...', 'success');
+                    btn.innerHTML = 'DOWNLOAD STARTED';
+                } catch (e) {
+                    this.logStatus(`FAILURE: ${e.message}`, 'error');
+                    btn.innerHTML = 'FAILED';
+                } finally {
+                    setTimeout(() => { btn.disabled = false; btn.innerHTML = originalText; }, 3000);
+                }
+            },
+
+            // --- EXTRACTOR LOGIC ---
+            async executeExtraction() {
+                const ghostInput = document.getElementById('input-ghost').files[0];
+                const btn = document.getElementById('btn-extract');
+                const resultArea = document.getElementById('extract-results');
+
+                if (!ghostInput) return this.logStatus('ERROR: No file selected.', 'error');
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="animate-pulse">SCANNING SECTORS...</span>';
+                resultArea.innerHTML = '';
+
+                try {
+                    const zip = new JSZip();
+                    // JSZip magic: it finds the zip signature even if appended to MP4
+                    const contents = await zip.loadAsync(ghostInput);
+                    let foundFiles = 0;
+
+                    this.logStatus('Signature detected. Extracting...', 'success');
+                    resultArea.innerHTML = `<div class="text-[10px] text-green-400 font-bold mb-2 tracking-widest uppercase">Payload Contents:</div>`;
+
+                    contents.forEach((relativePath, zipEntry) => {
+                        foundFiles++;
+                        zipEntry.async("blob").then(function(content) {
+                            const url = URL.createObjectURL(content);
+                            const item = document.createElement('div');
+                            item.className = "flex justify-between items-center bg-gray-800/50 p-3 rounded-lg border border-green-500/30 mb-2";
+                            item.innerHTML = `
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <i data-lucide="file" class="w-3 h-3 text-green-500"></i>
+                                    <span class="text-xs text-gray-200 truncate font-mono">${zipEntry.name}</span>
+                                </div>
+                                <a href="${url}" download="${zipEntry.name}" class="shrink-0 text-[10px] font-bold bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-500 transition">SAVE</a>
+                            `;
+                            resultArea.appendChild(item);
+                            lucide.createIcons();
+                        });
+                    });
+
+                    if (foundFiles === 0) throw new Error("No hidden payload found.");
+
+                    btn.innerHTML = 'SCAN COMPLETE';
+                } catch (e) {
+                    this.logStatus(`SCAN RESULT: File is clean or corrupted.`, 'error');
+                    btn.innerHTML = 'NO DATA FOUND';
+                } finally {
+                    setTimeout(() => { btn.disabled = false; btn.innerHTML = originalText; }, 3000);
+                }
+            }
+        };
+
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

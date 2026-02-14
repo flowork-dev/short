@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Trend Signal | Viral Velocity Radar</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@3.0.0/dist/vuetify.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-core: #0f1016;
+            --surface-1: #151720;
+            --neon-cyan: #00f3ff;
+            --neon-purple: #9d00ff;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: #e0f0ff;
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden; /* Lock Body */
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* CUSTOM SCROLLBAR */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+
+        /* ANIMATIONS */
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+
+        .glass-panel {
+            background: rgba(21, 23, 32, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .card-bg {
+            background: #151720;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <div id="vue-root" class="h-full flex flex-col">
+        <v-app theme="dark" style="background: transparent;">
+
+            <div class="glass-panel h-16 shrink-0 flex items-center justify-between px-4 z-50">
+                <div class="flex items-center gap-3">
+                    <div class="bg-cyan-900/20 p-1.5 rounded border border-cyan-500/30">
+                        <v-icon icon="mdi-radar" color="cyan-accent-3" size="24" class="animate-spin-slow"></v-icon>
+                    </div>
+                    <div>
+                        <h1 class="font-orbitron text-lg font-bold leading-none tracking-widest text-white">
+                            TREND <span class="text-cyan-400">SIGNAL</span>
+                        </h1>
+                        <div class="text-[9px] font-bold text-gray-500 tracking-[0.3em] mt-0.5">VELOCITY RADAR</div>
+                    </div>
+                </div>
+                <div class="px-2 py-1 rounded bg-black/40 border border-gray-800 flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-[9px] font-mono text-gray-400">ONLINE</span>
+                </div>
+            </div>
+
+            <div class="shrink-0 bg-[#0f1016] border-b border-gray-800 p-4 z-40 shadow-xl">
+                <div class="max-w-5xl mx-auto flex flex-col gap-2">
+                    <div class="text-[10px] text-gray-500 font-bold tracking-widest uppercase flex items-center gap-2">
+                        <v-icon icon="mdi-target" size="x-small" color="cyan"></v-icon> TARGET NICHE
+                    </div>
+                    <div class="flex gap-2">
+                        <v-text-field
+                            v-model="keyword"
+                            label="ENTER KEYWORD"
+                            variant="outlined" density="compact"
+                            class="font-mono text-sm" hide-details
+                            bg-color="#0a0a12" color="cyan" base-color="gray"
+                            placeholder="e.g. Crypto AI"
+                            @keyup.enter="analyzeTrend"
+                        ></v-text-field>
+                        <button @click="analyzeTrend" :disabled="loading"
+                            class="px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black font-orbitron text-xs rounded transition flex justify-center items-center gap-2 shadow-lg shadow-cyan-900/20 active:scale-95 disabled:opacity-50 disabled:scale-100">
+                            <span v-if="loading"><v-progress-circular indeterminate size="16" width="2" color="white"></v-progress-circular></span>
+                            <v-icon v-else icon="mdi-magnify" size="small"></v-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <v-main class="flex-1 overflow-y-auto custom-scroll relative bg-[#0f1016] pb-32">
+
+                <div class="max-w-5xl mx-auto p-4 flex flex-col gap-6">
+
+                    <div v-if="summary" class="grid grid-cols-2 gap-3 animate-fade-in">
+                        <div class="card-bg p-3 rounded-lg text-center">
+                            <div class="text-[9px] text-gray-500 uppercase tracking-wider mb-1">Market Signal</div>
+                            <div :class="['font-bold text-sm tracking-wide uppercase', getSignalClass(summary.signal_color)]">
+                                {{ summary.market_signal }}
+                            </div>
+                        </div>
+                        <button @click="generateBlueprint" :disabled="!results.length || generating"
+                            class="bg-purple-900/10 border border-purple-500/30 text-purple-400 hover:bg-purple-900/30 transition rounded-lg flex flex-col items-center justify-center p-2 group active:scale-95">
+                            <v-icon v-if="!generating" icon="mdi-brain" size="small" class="mb-1 group-hover:scale-110 transition"></v-icon>
+                            <v-progress-circular v-else indeterminate color="purple" size="16" width="2" class="mb-1"></v-progress-circular>
+                            <span class="text-[9px] font-bold tracking-widest">{{ generating ? 'PROCESSING...' : 'GENERATE STRATEGY' }}</span>
+                        </button>
+                    </div>
+
+                    <div v-if="blueprint" class="card-bg rounded-xl border-purple-500/30 overflow-hidden">
+                        <div class="p-3 border-b border-purple-900/50 bg-purple-900/10 flex justify-between items-center">
+                            <div class="text-[10px] font-bold text-purple-400 uppercase flex items-center gap-2">
+                                <v-icon size="small">mdi-chess-knight</v-icon> TACTICAL BLUEPRINT
+                            </div>
+                            <button @click="copyStrategy" class="text-[9px] text-purple-300 hover:text-white bg-purple-900/30 px-2 py-1 rounded border border-purple-500/30 transition active:scale-95">
+                                COPY
+                            </button>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <div class="text-[9px] text-gray-500 font-bold uppercase mb-2">Killer Hooks</div>
+                                <div class="space-y-2">
+                                    <div v-for="(hook, i) in blueprint.killer_hooks" :key="i" class="text-xs text-gray-300 bg-black/30 p-2 rounded border-l-2 border-purple-500 pl-3">
+                                        "{{ hook }}"
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-[9px] text-gray-500 font-bold uppercase mb-2">Thumbnail Concept</div>
+                                <div class="text-xs text-gray-400 bg-black/30 p-3 rounded border border-gray-800 italic">
+                                    {{ blueprint.thumbnail_concept }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-bg rounded-xl overflow-hidden flex flex-col min-h-[300px]">
+                        <div class="p-3 border-b border-gray-800 flex justify-between items-center bg-black/20">
+                            <div class="text-[10px] font-bold text-cyan-400 uppercase flex items-center gap-2">
+                                <v-icon icon="mdi-access-point-network" size="small"></v-icon> LIVE FEED
+                            </div>
+                            <div class="text-[9px] font-mono text-gray-500 bg-black/50 px-2 py-1 rounded">{{ results.length }} ASSETS</div>
+                        </div>
+
+                        <div class="flex-1 p-0">
+                            <div v-if="!results.length && !loading" class="h-40 flex flex-col items-center justify-center opacity-30 gap-2">
+                                <v-icon size="48" icon="mdi-radar" class="text-gray-600"></v-icon>
+                                <span class="text-[10px] font-mono tracking-widest text-gray-500">NO SIGNAL</span>
+                            </div>
+
+                            <div v-else class="divide-y divide-gray-800">
+                                <div v-for="item in results" :key="item.id" class="p-3 hover:bg-white/5 transition flex gap-3 items-start group">
+                                    <div class="w-24 h-14 bg-gray-800 rounded overflow-hidden shrink-0 border border-gray-700 relative">
+                                        <img :src="item.thumb" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                                        <div class="absolute bottom-0 right-0 bg-black/80 px-1 text-[8px] text-white font-mono">{{ item.duration }}</div>
+                                    </div>
+                                    <div class="flex-1 min-w-0 flex flex-col gap-1">
+                                        <div class="text-xs font-bold text-gray-200 line-clamp-2 leading-tight group-hover:text-cyan-400 transition">{{ item.title }}</div>
+                                        <div class="flex items-center gap-3 text-[9px] text-gray-500 font-mono">
+                                            <span class="text-green-400 flex items-center gap-1 font-bold"><v-icon size="x-small" icon="mdi-speedometer"></v-icon> {{ item.velocity }} VPH</span>
+                                            <span>{{ formatNumber(item.views) }} Views</span>
+                                        </div>
+                                    </div>
+                                    <a :href="'https://www.youtube.com/watch?v='+item.id" target="_blank" class="p-2 text-gray-600 hover:text-white transition">
+                                        <v-icon size="small">mdi-open-in-new</v-icon>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="global-footer" class="mt-4 opacity-80"></div>
+
+                </div>
+
+                <v-snackbar v-model="snackbar.show" :timeout="2500" :color="snackbar.color" location="bottom center" class="mb-12">
+                    <div class="flex items-center gap-3 justify-center w-full">
+                        <v-icon :icon="snackbar.icon" size="small"></v-icon>
+                        <span class="text-white font-bold text-[10px] tracking-widest font-orbitron">{{ snackbar.text }}</span>
+                    </div>
+                </v-snackbar>
+
+            </v-main>
+        </v-app>
+    </div>
+
+    <script>
+        // 1. FOOTER INJECTOR
+        async function loadFooter() {
+            try {
+                const response = await fetch('/assets/lander/footer.html');
+                if (!response.ok) throw new Error('Footer not found');
+                let html = await response.text();
+                const realYear = new Date().getFullYear();
+                html = html.replace('{YEAR}', realYear);
+                document.getElementById('global-footer').innerHTML = html;
+                if(window.lucide) window.lucide.createIcons();
+            } catch (e) {
+                console.warn("Footer fallback");
+                document.getElementById('global-footer').innerHTML =
+                    `<div class="p-8 text-center text-gray-600 font-mono text-xs">© ${new Date().getFullYear()} FLOWORK</div>`;
+            }
+        }
+        loadFooter();
+
+        // 2. SECURITY INTERCEPTOR (ORIGINAL LOGIC PRESERVED)
+        async function secureFetch(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+
+                // Handle Critical Errors (Auth/Quota)
+                if (response.status === 401 || response.status === 402 || response.status === 429) {
+                    window.parent.postMessage({ type: 'FLOWORK_API_ERROR', status: response.status }, '*');
+                    return null;
+                }
+                return response;
+            } catch (e) {
+                console.error("Network Error:", e);
+                return null;
+            }
+        }
+
+        // 3. VUE LOGIC
+        const { createApp, ref, reactive } = Vue;
+        const { createVuetify } = Vuetify;
+        const vuetify = createVuetify({ theme: { defaultTheme: 'dark' } });
+
+        const AppCore = {
+            userIdentity: null,
+            vueInstance: null,
+            init() {
+                window.addEventListener('message', (e) => {
+                    if (e.data?.type === 'FLOWORK_IDENTITY_SYNC') {
+                        this.userIdentity = e.data.userAddress;
+                        if(this.vueInstance) this.vueInstance.userIdentity.address = e.data.userAddress;
+                    }
+                });
+            }
+        };
+        AppCore.init();
+
+        createApp({
+            setup() {
+                const keyword = ref('');
+                const loading = ref(false);
+                const generating = ref(false);
+                const results = ref([]);
+                const summary = ref(null);
+                const blueprint = ref(null);
+                const userIdentity = reactive({ address: AppCore.userIdentity });
+
+                // Custom Snackbar State
+                const snackbar = reactive({
+                    show: false,
+                    text: '',
+                    color: '#1f2233',
+                    icon: 'mdi-information'
+                });
+
+                const showNotify = (msg, type = 'info') => {
+                    snackbar.text = msg;
+                    snackbar.color = type === 'error' ? '#331f1f' : '#1f2233';
+                    snackbar.icon = type === 'error' ? 'mdi-alert-circle' : 'mdi-check-circle';
+                    snackbar.show = true;
+                };
+
+                const formatNumber = (num) => num ? new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(num) : '0';
+
+                const getSignalClass = (c) => {
+                    if(c === 'green') return 'text-green-400';
+                    if(c === 'red') return 'text-red-400';
+                    return 'text-cyan-400';
+                };
+
+                const copyText = (txt) => {
+                    navigator.clipboard.writeText(txt).then(() => {
+                        showNotify('COPIED TO CLIPBOARD');
+                    });
+                };
+
+                const copyStrategy = () => {
+                    if(!blueprint.value) return;
+                    const text = `STRATEGY: ${keyword.value.toUpperCase()}\n\nHOOKS:\n${blueprint.value.killer_hooks.join('\n')}\n\nTHUMBNAIL: ${blueprint.value.thumbnail_concept}`;
+                    copyText(text);
+                };
+
+                const analyzeTrend = async () => {
+                    if (!keyword.value) return;
+                    loading.value = true;
+                    results.value = [];
+                    summary.value = null;
+                    blueprint.value = null;
+                    try {
+                        const headers = { 'Content-Type': 'application/json' };
+                        if(userIdentity.address) headers['X-User-Address'] = userIdentity.address;
+
+                        const res = await secureFetch(`/api/v1/trend/analyze?q=${encodeURIComponent(keyword.value)}`, { method: 'GET', headers });
+                        if (!res) return; // Intercepted by secureFetch
+
+                        const data = await res.json();
+                        if(data.error) {
+                            showNotify(data.message || data.error, 'error');
+                        } else {
+                            results.value = data.data || [];
+                            summary.value = data.summary;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        showNotify('Connection Error', 'error');
+                    }
+                    finally { loading.value = false; }
+                };
+
+                const generateBlueprint = async () => {
+                    if (!results.value.length) return;
+                    if (!userIdentity.address) {
+                        // Trigger Auth Popup via Parent
+                        window.parent.postMessage({ type: 'FLOWORK_API_ERROR', status: 401 }, '*');
+                        return;
+                    }
+                    generating.value = true;
+                    try {
+                        const topTitles = results.value.slice(0, 5).map(v => v.title);
+                        const res = await secureFetch('/api/v1/trend/strategy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-User-Address': userIdentity.address },
+                            body: JSON.stringify({ keyword: keyword.value, top_titles: topTitles })
+                        });
+
+                        if (!res) return;
+
+                        const data = await res.json();
+                        if (data.error) {
+                            showNotify(data.message || data.error, 'error');
+                        } else {
+                            blueprint.value = data;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        showNotify('AI Generation Failed', 'error');
+                    }
+                    finally { generating.value = false; }
+                };
+
+                AppCore.vueInstance = { userIdentity };
+
+                return {
+                    keyword, loading, generating, results, summary, blueprint, snackbar,
+                    analyzeTrend, generateBlueprint, formatNumber, getSignalClass, copyStrategy
+                };
+            }
+        }).use(vuetify).mount('#vue-root');
+    </script>
+</body>
+</html>

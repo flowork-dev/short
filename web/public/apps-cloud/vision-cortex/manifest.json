@@ -1,0 +1,35 @@
+{
+    "id": "vision-cortex",
+    "name": "BACA TEKS & DETEKSI OBJEK DARI GAMBAR PAKE OTAK ROBOT (OCR)",
+    "version": "1.0.0",
+    "description": "Ekstrak tulisan dari foto buram, deteksi label barang, dan analisa visual canggih menggunakan Google Cloud Vision API. Akurasi tinggi.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 8,
+    "default_height": 7,
+    "slug": "vision-cortex",
+    "capabilities": [
+        "internet_access",
+        "storage",
+        "d1_database_access"
+    ],
+    "tags": [
+        "ocr",
+        "vision",
+        "ai",
+        "image-analysis",
+        "google-cloud"
+    ],
+    "required_variables": [
+        {
+            "name": "GOOGLE_VISION_KEY",
+            "label": "Google Cloud Vision API Key",
+            "description": "Required to access Google Cloud Vision API for image processing.",
+            "type": "secret",
+            "required": true
+        }
+    ]
+}

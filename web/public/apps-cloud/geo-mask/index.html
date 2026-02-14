@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Mask - Location Spoofer</title>
+    <script src="../../assets/js/auto-tracker.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.6/piexif.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* FLOWORK PALETTE */
+            --bg-core: #171925;
+            --neon-cyan: #54d7f6;
+            --neon-purple: #706bf3;
+            --input-bg: #3a3962;
+            --text-main: #e0f0ff;
+        }
+
+        body {
+            background-color: var(--bg-core);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden; /* App mode */
+            font-size: 16px;
+        }
+
+        /* UTILS */
+        .brand-font { font-family: 'Orbitron', sans-serif; }
+        .mono-font { font-family: 'JetBrains Mono', monospace; }
+        .hidden-view { display: none !important; }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-core); }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <nav class="w-full h-16 fixed top-0 z-50 flex items-center justify-between px-6 bg-[#171925]/90 backdrop-blur border-b border-cyan-900/50">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-cyan-900/20 rounded border border-cyan-500/30 flex items-center justify-center animate-pulse">
+                <i data-lucide="map-pin" class="w-5 h-5 text-[#54d7f6]"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-widest text-white leading-none brand-font">GEO_<span class="text-[#54d7f6]">MASK</span></h1>
+            </div>
+        </div>
+        <div class="flex h-full font-bold text-sm tracking-widest mono-font">
+            <button id="tab-app" class="px-6 border-b-2 border-cyan-500 text-cyan-400 transition-all cursor-default">ENGINE</button>
+        </div>
+    </nav>
+
+    <main class="w-full h-screen pt-16 relative">
+        <div id="view-app" class="w-full h-full overflow-hidden"></div>
+    </main>
+
+    <script>
+        const AppCore = {
+            currentFile: null,
+            originalExifObj: null,
+            fileDataURL: null,
+
+            async init() {
+                // Lander loadPartial removed
+                await this.loadPartial('view-app', 'partials/app.html');
+
+                lucide.createIcons();
+                console.log("SYSTEM: GEO MASK READY");
+            },
+
+            async loadPartial(id, url) {
+                const res = await fetch(url);
+                document.getElementById(id).innerHTML = await res.text();
+            },
+
+            // switchTab function removed
+
+            // --- LOGIC ---
+            handleFile(input) {
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    if (file.type !== "image/jpeg" && file.type !== "image/jpg") {
+                        alert("System Error: Only JPG/JPEG files support Exif manipulation.");
+                        return;
+                    }
+
+                    this.currentFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.fileDataURL = e.target.result;
+
+                        // UI Update
+                        document.getElementById('drop-zone').classList.add('hidden');
+                        document.getElementById('editor-area').classList.remove('hidden');
+                        document.getElementById('img-preview').src = this.fileDataURL;
+                        document.getElementById('file-name').innerText = file.name;
+
+                        // Read Exif
+                        try {
+                            const exifObj = piexif.load(this.fileDataURL);
+                            this.originalExifObj = exifObj;
+                            if (exifObj['GPS'] && Object.keys(exifObj['GPS']).length > 0) {
+                                document.getElementById('current-exif').innerHTML = "<span class='text-red-400 font-bold'>WARNING: REAL GPS DATA FOUND!</span>";
+                            } else {
+                                document.getElementById('current-exif').innerHTML = "<span class='text-green-400 font-bold'>CLEAN: NO GPS DATA YET.</span>";
+                            }
+                        } catch (err) {
+                            this.originalExifObj = { "0th":{}, "Exif":{}, "GPS":{}, "1st":{}, "thumbnail":null };
+                            document.getElementById('current-exif').innerText = "No Exif found. Creating new.";
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            },
+
+            setLoc(lat, lng) {
+                document.getElementById('lat-input').value = lat;
+                document.getElementById('lng-input').value = lng;
+            },
+
+            decimalToDMS(decimal) {
+                const absDecimal = Math.abs(decimal);
+                const degrees = Math.floor(absDecimal);
+                const minutesFloat = (absDecimal - degrees) * 60;
+                const minutes = Math.floor(minutesFloat);
+                const seconds = Math.round((minutesFloat - minutes) * 60 * 100);
+                return [[degrees, 1], [minutes, 1], [seconds, 100]];
+            },
+
+            injectExif() {
+                const lat = parseFloat(document.getElementById('lat-input').value);
+                const lng = parseFloat(document.getElementById('lng-input').value);
+                const btn = document.getElementById('btn-inject');
+                const msg = document.getElementById('status-msg');
+
+                if (isNaN(lat) || isNaN(lng)) { alert("Please enter valid coords."); return; }
+
+                btn.disabled = true;
+                btn.innerHTML = "SPOOFING...";
+
+                setTimeout(() => {
+                    try {
+                        const gps = {};
+                        gps[piexif.GPSIFD.GPSLatitudeRef] = lat < 0 ? 'S' : 'N';
+                        gps[piexif.GPSIFD.GPSLatitude] = this.decimalToDMS(lat);
+                        gps[piexif.GPSIFD.GPSLongitudeRef] = lng < 0 ? 'W' : 'E';
+                        gps[piexif.GPSIFD.GPSLongitude] = this.decimalToDMS(lng);
+
+                        const newExifObj = this.originalExifObj;
+                        newExifObj['GPS'] = gps;
+                        const exifBytes = piexif.dump(newExifObj);
+                        const newImageData = piexif.insert(exifBytes, this.fileDataURL);
+
+                        const a = document.createElement("a");
+                        a.href = newImageData;
+                        a.download = "SPOOFED_" + this.currentFile.name;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        msg.innerHTML = "<span class='text-green-400 font-bold'>SUCCESS! LOCATION INJECTED.</span>";
+                        btn.innerHTML = "INJECT AGAIN";
+                        btn.disabled = false;
+                    } catch (e) {
+                        console.error(e);
+                        msg.innerText = "Error injecting Exif.";
+                        btn.disabled = false;
+                    }
+                }, 500);
+            }
+        };
+
+        window.AppCore = AppCore;
+        window.onload = () => AppCore.init();
+    </script>
+</body>
+</html>

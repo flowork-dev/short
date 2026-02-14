@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VOICE JAMMER | ANTI-CLONING</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="/assets/lander/main.js"></script>
+    <link rel="stylesheet" href="/assets/lander/style.css">
+
+    <style>
+        .hidden-view { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="hide-scrollbar">
+    <div class="w-full min-h-screen relative max-w-7xl mx-auto px-4 lg:px-8">
+
+        <div id="view-lander" class="desktop-grid fade-in">
+
+            <div class="relative z-10 animate-fade-in">
+                <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full inline-flex items-center w-fit mb-4">
+                    <span class="text-[10px] text-cyan-500 font-bold tracking-widest flex items-center gap-1 uppercase">
+                        <i data-lucide="shield-alert" class="w-3 h-3"></i> PRIVACY V1.0
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-4 font-display">
+                    VOICE JAMMER <br> <span class="gradient-text">BIKIN AI BUDEG.</span>
+                </h1>
+
+                <p class="text-sm lg:text-lg font-normal leading-relaxed max-w-md" style="color: var(--text-muted);">
+                    Lindungi suara lo dari jarahan AI Cloning. Sekali proses, audio lo bakal jadi "racun" buat algoritma deepfake, tapi tetap enak didengar manusia.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4 pb-32 mobile-spacer justify-center">
+
+                <div class="glass-panel p-5 rounded-2xl">
+                    <div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-2">
+                        <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold">Cara Mengamankan Suara</h3>
+                    </div>
+
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">1</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Siapkan Audio</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Upload rekaman/konten yang mau diamankan.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">2</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Inject Racun</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">Klik tombol di bawah untuk suntik ultrasonic noise.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">3</span>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold mb-0.5">Download Aman</span>
+                                <span class="text-[10px] opacity-70" style="color: var(--text-muted);">File siap upload. AI bakal gagal total clone suara ini.</span>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <button onclick="window.switchTab('app')"
+                        class="mt-6 w-full py-3 rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all"
+                        style="background: var(--primary); color: var(--bg-core);">
+                        <i data-lucide="zap" class="w-4 h-4"></i> PROTECT MY VOICE
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="fingerprint" class="w-5 h-5 mb-2 text-cyan-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Kenapa Pake Ini?</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Era "Trust Issue". Modal 3 detik suara lo di Story IG, AI bisa bikin lo "ngomong" apa aja buat nipu orang. Lawan balik sekarang.
+                        </p>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <i data-lucide="mic-2" class="w-5 h-5 mb-2 text-purple-500"></i>
+                        <h4 class="text-xs font-bold mb-1">Cocok Buat Siapa?</h4>
+                        <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);">
+                            Content Creator, Podcaster, Vlogger, dan siapa aja yang gak mau identitas suaranya dicuri.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border-l-4" style="border-left-color: var(--primary);">
+                    <h3 class="text-xs font-bold mb-1">Client-Side Ultrasonic Shield</h3>
+                    <p class="text-[10px]" style="color: var(--text-muted);">
+                        Menggunakan algoritma audio processing lokal (di browser lo). Suara lo gak pernah dikirim ke server (100% Private).
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="view-app" class="fade-in hidden-view py-8">
+            <button onclick="window.switchTab('lander')" class="mb-6 flex items-center gap-2 text-xs font-bold opacity-60 hover:opacity-100 transition">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> KEMBALI KE MENU
+            </button>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="glass-panel p-8 rounded-3xl text-center border border-dashed border-white/10">
+
+                    <div class="w-16 h-16 mx-auto bg-cyan-500/10 rounded-full flex items-center justify-center mb-4 text-cyan-500 animate-pulse">
+                        <i data-lucide="waves" class="w-8 h-8"></i>
+                    </div>
+
+                    <h2 class="text-2xl font-black mb-2 font-display">VOICE JAMMER CONSOLE</h2>
+                    <p class="text-sm opacity-60 mb-8" style="color: var(--text-muted);">Upload file audio/video lo di sini untuk diproses.</p>
+
+                    <div class="border-2 border-dashed border-white/20 rounded-xl p-10 hover:border-cyan-500/50 transition cursor-pointer bg-black/20">
+                        <i data-lucide="upload-cloud" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>
+                        <span class="text-xs font-bold tracking-widest uppercase">Drop File Disini</span>
+                    </div>
+
+                    <div class="mt-8 p-4 rounded-xl bg-black/40 text-left font-mono text-[10px] space-y-1 border border-white/5">
+                        <div class="text-green-500">root@flowork:~$ initializing audio_shield...</div>
+                        <div class="opacity-50">waiting for input...</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Fungsi Switch Tab Sederhana
+        window.switchTab = function(tabName) {
+            const lander = document.getElementById('view-lander');
+            const app = document.getElementById('view-app');
+
+            if (tabName === 'app') {
+                lander.classList.add('hidden-view');
+                app.classList.remove('hidden-view');
+            } else {
+                app.classList.add('hidden-view');
+                lander.classList.remove('hidden-view');
+            }
+            // Re-init icon setiap ganti view jaga-jaga
+            if(window.lucide) lucide.createIcons();
+        };
+
+        // Init Lucide Icons pas load
+        window.onload = function() {
+            if(window.lucide) lucide.createIcons();
+        };
+    </script>
+</body>
+</html>

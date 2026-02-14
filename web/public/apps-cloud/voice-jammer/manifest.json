@@ -1,0 +1,28 @@
+{
+    "id": "voice-jammer",
+    "name": "ANTI VOICE CLONING",
+    "version": "1.0.0",
+    "description": "Senjata pertahanan bio-metric suara. Suntikkan noise ultrasonic (tak terdengar) ke dalam Voice Note atau Podcast lo. Jika AI coba cloning suara lo, hasilnya bakal rusak/glitch parah. Anti penipuan Deepfake.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 10,
+    "default_height": 8,
+    "slug": "voice-jammer",
+    "capabilities": [
+        "audio_processing",
+        "file_io",
+        "client_side_computation"
+    ],
+    "tags": [
+        "security",
+        "audio",
+        "ai-defense",
+        "privacy",
+        "anti-deepfake",
+        "voice-protection"
+    ],
+    "required_variables": []
+}

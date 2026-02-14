@@ -1,0 +1,740 @@
+<div id="stock-app" style="background-color: #171925; color: white;" class="flex flex-col h-full font-['Rajdhani'] overflow-hidden">
+
+    <style>
+        .cyber-border { box-shadow: 0 0 10px rgba(0, 180, 216, 0.2); transition: all 0.3s; }
+        .cyber-border:hover { box-shadow: 0 0 20px rgba(0, 180, 216, 0.6); border-color: #00b4d8; }
+
+        /* TOAST ANIMATION */
+        .toast-enter-active { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast-leave-active { transition: all 0.3s ease; }
+        .toast-leave-to { opacity: 0; transform: scale(0.8); }
+
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+
+    <header class="h-14 bg-[#0f111a] border-b border-[#3a3962] flex items-center justify-between px-4 z-40 shrink-0 relative shadow-md">
+        <div class="flex items-center gap-3">
+            <button @click="showSidebar = !showSidebar" class="md:hidden text-white p-1 rounded hover:bg-[#222538]">
+                <i class="mdi mdi-menu text-2xl"></i>
+            </button>
+            <div class="w-8 h-8 bg-gradient-to-br from-[#00b4d8] to-[#ef233c] rounded flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(255,255,255,0.3)] animate-pulse">V8</div>
+            <div class="hidden md:block">
+                <h1 class="font-['Orbitron'] text-md tracking-widest text-white leading-none">STOCK SENTRY</h1>
+                <p class="text-[9px] text-gray-500 font-mono">{{ storeProfile.name || 'ULTIMATE RETAIL ENGINE' }}</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+            <button @click="openSettings" class="hidden md:flex items-center gap-2 bg-[#222538] border border-[#706bf3] text-[#706bf3] px-3 py-1 rounded text-[10px] hover:bg-[#706bf3] hover:text-white font-bold transition-all">
+                <i class="mdi mdi-cog"></i> SETUP
+            </button>
+            <div class="h-4 w-[1px] bg-gray-700 hidden md:block"></div>
+            <select v-model="store.settings.activeLocation" class="bg-[#222538] border border-[#3a3962] text-xs px-2 py-1 outline-none text-[#54d7f6] rounded max-w-[100px] md:max-w-none">
+                <option value="MAIN">MAIN</option>
+                <option value="STORE_A">CABANG A</option>
+                <option value="STORE_B">CABANG B</option>
+            </select>
+            <div class="px-2 py-1 border rounded text-[10px] font-bold flex items-center gap-1" :class="isDriveConnected ? 'border-[#54d7f6] text-[#54d7f6]' : 'border-red-500 text-red-500'">
+                <i class="mdi" :class="isDriveConnected ? 'mdi-cloud-check' : 'mdi-cloud-off-outline'"></i>
+                <span class="hidden md:inline">{{ isDriveConnected ? 'SYNCED' : 'OFFLINE' }}</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <div v-if="showSidebar" @click="showSidebar = false" class="fixed inset-0 bg-black/80 z-30 md:hidden backdrop-blur-sm"></div>
+        <nav :class="showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'" class="absolute md:static top-0 left-0 h-full w-64 bg-[#0f111a] border-r border-[#3a3962] flex flex-col justify-between pb-4 z-40 transition-transform duration-300 shadow-2xl md:shadow-none">
+            <div class="space-y-1 p-2 overflow-y-auto custom-scrollbar flex-1">
+                <div class="md:hidden flex justify-end p-2">
+                    <button @click="showSidebar = false" class="text-gray-400 hover:text-white"><i class="mdi mdi-close text-2xl"></i></button>
+                </div>
+                <button @click="switchView('pos')" :class="currentView === 'pos' ? 'bg-[#00b4d8] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-4 mb-2 rounded-xl flex items-center gap-3 shadow-lg transition-all">
+                    <i class="mdi mdi-cash-register text-2xl"></i><span class="font-bold text-lg">MESIN KASIR</span>
+                </button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">GUDANG & ADMIN</div>
+                <button @click="switchView('inventory')" :class="currentView === 'inventory' ? 'bg-[#54d7f6] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-cube-outline text-xl"></i><span class="font-bold">INVENTORY</span></button>
+                <button @click="switchView('analytics')" :class="currentView === 'analytics' ? 'bg-[#9d4edd] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-google-analytics text-xl"></i><span class="font-bold">ANALYTICS (AI)</span></button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">LOGISTIK</div>
+                <button @click="switchView('outbound')" :class="currentView === 'outbound' ? 'bg-[#ff9f1c] text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-truck-delivery text-xl"></i><span class="font-bold">SURAT JALAN</span></button>
+                <button @click="switchView('po')" :class="currentView === 'po' ? 'bg-[#706bf3] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-import text-xl"></i><span class="font-bold">INBOUND (PO)</span></button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">OPERASIONAL</div>
+                <button @click="switchView('transfer')" :class="currentView === 'transfer' ? 'bg-[#2ec4b6] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-dolly text-xl"></i><span class="font-bold">TRANSFER</span></button>
+                <button @click="switchView('returns')" :class="currentView === 'returns' ? 'bg-[#ef233c] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-keyboard-return text-xl"></i><span class="font-bold">RETURNS</span></button>
+                <div class="text-[10px] text-gray-500 font-bold px-3 py-2 mt-2 tracking-widest">AUDIT</div>
+                <button @click="switchView('opname')" :class="currentView === 'opname' ? 'bg-[#ff006e] text-white' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-qrcode-scan text-xl"></i><span class="font-bold">STOCK OPNAME</span></button>
+                <button @click="switchView('history')" :class="currentView === 'history' ? 'bg-white text-[#171925]' : 'text-gray-400 hover:bg-[#222538]'" class="w-full text-left p-3 rounded flex items-center gap-3"><i class="mdi mdi-history text-xl"></i><span class="font-bold">LOGS</span></button>
+            </div>
+            <div class="p-2 border-t border-[#3a3962]">
+                <button @click="connectDrive" class="w-full p-3 border border-[#3a3962] text-xs text-gray-500 hover:text-white rounded text-center transition-colors">
+                <i class="mdi mdi-refresh mr-1"></i> REBOOT SYSTEM
+                </button>
+            </div>
+        </nav>
+
+        <main class="flex-1 flex flex-col h-full bg-[#171925] relative overflow-hidden">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 pointer-events-none"></div>
+
+            <div v-if="currentView === 'pos'" class="flex-1 flex flex-col md:flex-row h-full overflow-hidden animate_animated animate_fadeIn bg-[#0f111a]">
+                <div class="flex-1 flex flex-col h-full overflow-hidden relative border-r border-[#3a3962]">
+                    <div class="bg-[#171925] border-b border-[#3a3962] p-4 z-20 shadow-md shrink-0 flex gap-3">
+                        <div class="flex-1 relative group">
+                            <i class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#00b4d8] transition-colors"></i>
+                            <input v-model="searchQuery" placeholder="Cari Item..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-[#00b4d8] focus:shadow-[0_0_15px_rgba(0,180,216,0.3)] transition-all">
+                        </div>
+                        <button @click="openScanner('inventory')" class="bg-[#222538] w-12 rounded-xl border border-[#3a3962] text-[#00b4d8] hover:bg-[#00b4d8] hover:text-black transition-all"><i class="mdi mdi-barcode-scan text-xl"></i></button>
+                        <button @click="openSettings" class="md:hidden bg-[#222538] w-12 rounded-xl border border-[#3a3962] text-gray-400"><i class="mdi mdi-cog text-xl"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar pb-24 md:pb-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            <div v-for="item in filteredInventory" :key="item.id" @click="handleAddToCart(item)" class="bg-[#222538] border border-[#3a3962] rounded-2xl overflow-hidden relative cursor-pointer active:scale-95 transition-all duration-200 hover:-translate-y-1 cyber-border flex flex-col h-[180px] group">
+                                <div class="absolute inset-0 bg-gradient-to-br from-[#00b4d8]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div class="p-4 flex-1 flex flex-col justify-between relative z-10">
+                                    <div>
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div class="text-[10px] text-gray-500 font-mono">{{ item.sku }}</div>
+                                            <div v-if="item.type === 'bundle'" class="px-1.5 py-0.5 bg-[#9d4edd] text-white rounded text-[8px] font-bold shadow-[0_0_10px_#9d4edd]">PAKET</div>
+                                        </div>
+                                        <h3 class="font-bold text-gray-100 text-sm leading-tight line-clamp-2 group-hover:text-[#00b4d8] transition-colors">{{ item.name }}</h3>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="flex items-end justify-between"><span class="text-[#00b4d8] font-bold text-lg drop-shadow-[0_0_5px_rgba(0,180,216,0.5)]">{{ formatRupiah(item.sellPrice).replace(',00', '') }}</span></div>
+                                        <div class="w-full bg-gray-700 h-1 mt-2 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-[#00b4d8] to-[#706bf3]" :style="`width: ${Math.min((item.stock/50)*100, 100)}%`"></div></div>
+                                        <div class="text-[9px] text-right mt-1 text-gray-400">Stok: {{ item.stock }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:hidden absolute bottom-0 left-0 right-0 bg-[#171925]/90 backdrop-blur border-t border-[#3a3962] p-4 flex items-center gap-4 z-30">
+                        <div class="flex-1" @click="showMobileCart = true">
+                            <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1"><i class="mdi mdi-cart"></i> {{ posState.cart.reduce((a,b)=>a+b.qty,0) }} ITEM</div>
+                            <div class="text-xl font-bold text-white font-['Orbitron']">{{ formatRupiah(posTotal - posState.discount).replace(',00', '') }}</div>
+                        </div>
+                        <button @click="showMobileCart = true" class="bg-[#00b4d8] text-[#171925] font-black px-6 py-3 rounded-xl shadow-[0_0_15px_#00b4d8] active:scale-95 transition-transform flex items-center gap-2">BAYAR <i class="mdi mdi-chevron-up"></i></button>
+                    </div>
+                </div>
+                <div :class="showMobileCart ? 'translate-y-0' : 'translate-y-full md:translate-y-0'" class="fixed md:static inset-0 md:inset-auto z-50 md:z-auto w-full md:w-[420px] bg-[#171925] flex flex-col h-full transition-transform duration-300 shadow-2xl relative">
+                    <div class="hidden md:block absolute left-0 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-[#3a3962] to-transparent"></div>
+                    <div class="shrink-0 p-5 border-b border-[#3a3962] flex justify-between items-center bg-[#171925] z-20">
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2 font-['Orbitron'] text-[#00b4d8]"><i class="mdi mdi-cart-outline"></i> CURRENT BILL</h2>
+                        <div class="flex gap-2">
+                            <button @click="posState.cart = []" class="text-xs bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-white transition-colors">RESET</button>
+                            <button @click="showMobileCart = false" class="md:hidden text-gray-400"><i class="mdi mdi-chevron-down text-2xl"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3 bg-[#0f111a] relative">
+                        <div v-if="posState.cart.length === 0" class="flex flex-col items-center justify-center h-full text-gray-600 opacity-50"><div class="w-20 h-20 border-2 border-dashed border-gray-600 rounded-full flex items-center justify-center mb-4"><i class="mdi mdi-barcode-scan text-4xl"></i></div><p class="font-['Orbitron'] tracking-widest">SCAN ITEM</p></div>
+                        <div v-for="(item, idx) in posState.cart" :key="idx" class="bg-[#222538] p-3 rounded-xl border border-[#3a3962] flex justify-between items-center group hover:border-[#706bf3] transition-colors shadow-lg">
+                            <div class="flex-1 pl-1">
+                                <div class="text-white font-bold text-sm line-clamp-1 mb-1">{{ item.name }}</div>
+                                <div class="flex items-center gap-2 text-xs"><span class="text-gray-400">{{ formatRupiah(item.sellPrice).replace(',00', '') }}</span><span class="text-[#706bf3] font-bold">x {{ item.qty }}</span></div>
+                            </div>
+                            <div class="flex items-center bg-[#171925] rounded-lg border border-[#3a3962] p-1 gap-1">
+                                <button @click="item.qty > 1 ? item.qty-- : POSService.removeItem(idx)" class="w-7 h-7 rounded hover:bg-red-500 hover:text-white text-gray-400 transition-colors flex items-center justify-center"><i class="mdi" :class="item.qty > 1 ? 'mdi-minus' : 'mdi-trash-can-outline'"></i></button>
+                                <span class="w-6 text-center text-white font-bold text-sm">{{ item.qty }}</span>
+                                <button @click="item.qty++" class="w-7 h-7 rounded hover:bg-[#00b4d8] hover:text-[#171925] text-gray-400 transition-colors flex items-center justify-center"><i class="mdi mdi-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shrink-0 bg-[#1e2130] border-t border-[#3a3962] p-5 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-gray-400 text-xs"><span>Subtotal</span><span>{{ formatRupiah(posTotal) }}</span></div>
+                            <div class="flex justify-between items-center text-gray-400 text-xs"><span>Diskon</span><div class="flex items-center gap-1 border-b border-gray-600"><span class="text-gray-500">Rp</span><input v-model="posState.discount" type="number" class="w-20 bg-transparent text-right text-white outline-none focus:text-[#00b4d8]"></div></div>
+                            <div class="flex justify-between text-white text-2xl font-black font-['Orbitron'] pt-2 border-t border-gray-600"><span>TOTAL</span><span class="text-[#00b4d8] drop-shadow-[0_0_10px_rgba(0,180,216,0.4)]">{{ formatRupiah(posTotal - posState.discount).replace(',00', '') }}</span></div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden group focus-within:border-[#706bf3] transition-colors"><div class="bg-[#222538] w-10 flex items-center justify-center text-gray-400"><i class="mdi mdi-account"></i></div><input v-model="posState.customerPhone" placeholder="Nomor Pelanggan (WA)" class="flex-1 bg-transparent p-3 text-sm text-white outline-none"></div>
+                            <div class="relative group"><input v-model="posState.cashGiven" type="number" placeholder="Input Pembayaran..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded-lg p-3 pl-4 pr-12 text-white font-bold text-lg outline-none focus:border-[#00b4d8] transition-all focus:shadow-[0_0_15px_rgba(0,180,216,0.2)]"><div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">IDR</div></div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button @click="posState.cashGiven = (posTotal - posState.discount)" class="bg-[#222538] border border-[#3a3962] text-[10px] text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black hover:font-bold transition-all">UANG PAS</button>
+                                <button @click="posState.cashGiven = 50000" class="bg-[#222538] border border-[#3a3962] text-[10px] text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black hover:font-bold transition-all">50K</button>
+                                <button @click="posState.cashGiven = 100000" class="bg-[#222538] border border-[#3a3962] text-[10px] text-gray-300 py-2 rounded hover:bg-[#00b4d8] hover:text-black hover:font-bold transition-all">100K</button>
+                                <button @click="posState.cashGiven = 0" class="bg-[#222538] border border-red-900/50 text-[10px] text-red-400 py-2 rounded hover:bg-red-500 hover:text-white transition-all">CLR</button>
+                            </div>
+                            <div v-if="posState.cashGiven > 0" class="flex justify-between items-center bg-[#0f111a] p-2 rounded border border-[#3a3962] border-dashed"><span class="text-xs text-gray-400">KEMBALI</span><span class="font-bold font-mono text-lg" :class="(posState.cashGiven - (posTotal - posState.discount)) < 0 ? 'text-red-500' : 'text-[#ff9f1c]'">{{ formatRupiah(posState.cashGiven - (posTotal - posState.discount)) }}</span></div>
+                            <button @click="processPOS" class="w-full bg-gradient-to-r from-[#00b4d8] to-[#706bf3] text-white font-black py-4 rounded-xl shadow-[0_0_20px_rgba(112,107,243,0.4)] hover:shadow-[0_0_30px_rgba(112,107,243,0.6)] active:scale-[0.98] transition-all flex justify-center items-center gap-2 relative overflow-hidden group">
+                                <div class="absolute top-0 left-0 w-full h-full bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-500 skew-x-12"></div>
+                                <i class="mdi mdi-printer-check text-xl"></i> CETAK STRUK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'inventory'" class="flex-1 flex flex-col p-4 overflow-hidden animate_animated animate_fadeIn">
+                <div class="flex gap-3 overflow-x-auto pb-2 mb-2 shrink-0">
+                    <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#54d7f6] min-w-[140px] shadow">
+                        <div class="text-[10px] text-gray-400">TOTAL ASSET</div>
+                        <div class="text-md font-bold font-['Orbitron']">{{ formatRupiah(financials.totalAssets) }}</div>
+                    </div>
+                    <div class="bg-[#222538] p-3 rounded-lg border-l-4 border-[#ff2a6d] min-w-[140px] shadow">
+                        <div class="text-[10px] text-gray-400">LOW STOCK</div>
+                        <div class="text-md font-bold text-[#ff2a6d] font-['Orbitron']">{{ deadStockItems.length }} ITEMS</div>
+                    </div>
+                </div>
+                <div class="flex gap-2 sticky top-0 z-10 py-2 shrink-0">
+                        <input v-model="searchQuery" placeholder="Search SKU / Name..." class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded px-3 text-sm outline-none focus:border-[#54d7f6]">
+
+                        <button @click="showArchived = !showArchived"
+                                class="px-3 rounded border transition-colors flex items-center gap-2"
+                                :class="showArchived ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-[#222538] border-[#3a3962] text-gray-400 hover:text-white'">
+                            <i class="mdi" :class="showArchived ? 'mdi-eye-off' : 'mdi-eye'"></i>
+                            <span class="text-[10px] font-bold hidden md:inline">{{ showArchived ? 'HIDE ARCHIVED' : 'SHOW ARCHIVED' }}</span>
+                        </button>
+
+                        <button @click="openScanner('inventory')" class="bg-[#222538] border border-[#54d7f6] text-[#54d7f6] px-3 rounded hover:bg-[#54d7f6] hover:text-[#171925]"><i class="mdi mdi-qrcode-scan"></i></button>
+                        <button @click="showAddModal = true" class="bg-[#54d7f6] text-[#171925] px-3 rounded font-bold text-sm shadow flex items-center gap-1 whitespace-nowrap"><i class="mdi mdi-plus"></i> NEW</button>
+                </div>
+                <div class="flex-1 bg-[#0f111a] border border-[#3a3962] rounded-lg overflow-hidden flex flex-col">
+                    <div class="overflow-y-auto flex-1 custom-scrollbar">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-[#222538] text-xs uppercase text-gray-400 sticky top-0 z-10 shadow">
+                                <tr>
+                                    <th class="p-3">ITEM</th>
+                                    <th class="p-3 text-right">STOCK</th>
+                                    <th class="p-3 text-right hidden md:table-cell">AI PREDICTION</th>
+                                    <th class="p-3 text-center">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#3a3962]">
+                                <tr v-for="item in filteredInventory" :key="item.id" class="hover:bg-[#1e2130]">
+                                    <td class="p-3">
+                                        <div class="font-bold text-white flex flex-wrap items-center gap-2">{{ item.name }} <span v-if="item.type === 'bundle'" class="px-1 bg-[#9d4edd] text-white text-[9px] rounded font-bold">PAKET</span></div>
+                                        <div class="text-xs text-[#54d7f6]">{{ item.sku }}</div>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        <div class="text-lg font-['Orbitron']" :class="item.stock <= item.minStock ? 'text-[#ff2a6d]' : 'text-white'">{{ item.stock }}</div>
+                                        <div v-if="item.stock <= item.minStock" class="text-[9px] text-[#ff2a6d] cursor-pointer hover:underline bg-[#ff2a6d]/10 px-1 rounded inline-block mt-1" @click="WhatsAppService.orderSupplier(item)"><i class="mdi mdi-whatsapp"></i> ORDER</div>
+                                    </td>
+                                    <td class="p-3 text-right hidden md:table-cell">
+                                        <span v-if="getDaysLeft(item) < 7" class="text-[#ff2a6d] font-bold text-xs">Habis {{ getDaysLeft(item) }} Hari</span>
+                                        <span v-else-if="getDaysLeft(item) > 100" class="text-gray-500 text-xs">Aman</span>
+                                        <span v-else class="text-[#ff9f1c] text-xs">{{ getDaysLeft(item) }} Hari lagi</span>
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <div class="flex items-center justify-center gap-3">
+                                            <button @click="openAdjustModal(item)" title="Atur Stok" class="text-gray-400 hover:text-[#ff9f1c]"><i class="mdi mdi-clipboard-edit-outline text-xl"></i></button>
+                                            <button @click="openArchiveModal(item)" title="Arsipkan" class="text-gray-400 hover:text-red-500"><i class="mdi mdi-archive-arrow-down-outline text-xl"></i></button>
+                                            <button @click="InventoryService.printLabel(item)" title="Print" class="text-gray-400 hover:text-[#54d7f6]"><i class="mdi mdi-printer text-xl"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'analytics'" class="flex-1 overflow-y-auto p-4 space-y-6 animate_animated animate_fadeIn custom-scrollbar">
+                <h2 class="text-xl font-['Orbitron'] text-[#9d4edd]">INTELLIGENCE</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd]"><h3 class="text-gray-400 text-xs">ESTIMASI OMSET</h3><p class="text-2xl font-bold text-white">{{ formatRupiah(profitData.revenue) }}</p></div>
+                    <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd]"><h3 class="text-gray-400 text-xs">MODAL GUDANG</h3><p class="text-2xl font-bold text-white">{{ formatRupiah(profitData.cost) }}</p></div>
+                    <div class="bg-[#222538] p-4 rounded-xl border border-[#9d4edd] bg-gradient-to-r from-[#9d4edd]/20 to-transparent"><h3 class="text-[#9d4edd] text-xs font-bold">POTENSI CUAN</h3><p class="text-2xl font-bold text-[#9d4edd]">{{ formatRupiah(profitData.margin) }}</p></div>
+                </div>
+            </div>
+
+            <div v-if="['opname','outbound','po','transfer','returns','history'].includes(currentView)" class="flex-1 overflow-y-auto p-4 custom-scrollbar animate_animated animate_fadeIn">
+                <div v-if="currentView === 'opname'" class="flex-1 flex flex-col p-4">
+                    <h2 class="text-xl font-['Orbitron'] text-[#ff006e] mb-4">STOCK OPNAME</h2>
+                    <div class="flex-1 bg-[#222538] rounded-xl border border-[#ff006e]/30 flex flex-col items-center justify-center p-8 shadow-2xl relative overflow-hidden">
+                        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                        <i class="mdi mdi-barcode-scan text-7xl text-[#ff006e] mb-6 drop-shadow-[0_0_10px_#ff006e]"></i>
+                        <p class="text-gray-300 mb-8 max-w-sm text-center">Mode Audit Fisik. Scan barcode barang di gudang.</p>
+                        <button @click="openScanner('opname')" class="bg-[#ff006e] text-white px-8 py-4 rounded-xl font-bold shadow-[0_0_30px_#ff006e] hover:scale-105 transition-transform text-lg flex items-center gap-2"><i class="mdi mdi-camera"></i> MULAI SCAN</button>
+                    </div>
+                </div>
+                <div v-if="currentView === 'outbound'" class="flex flex-col md:flex-row gap-4 h-full">
+                     <div class="flex-1 overflow-hidden flex flex-col"><input v-model="searchQuery" placeholder="Cari barang..." class="w-full bg-[#0f111a] border border-[#3a3962] rounded p-3 mb-2 text-sm shrink-0"><div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar"><div v-for="item in filteredInventory" :key="item.id" class="bg-[#222538] p-3 rounded flex justify-between cursor-pointer hover:border-[#ff9f1c] border border-transparent" @click="OutboundService.addToCart(item)"><div><div class="font-bold text-white">{{ item.name }}</div><div class="text-xs text-gray-500">Stok: {{ item.stock }}</div></div><i class="mdi mdi-plus-box text-[#ff9f1c] text-2xl"></i></div></div></div>
+                     <div class="w-full md:w-1/3 bg-[#222538] border border-[#ff9f1c] rounded-xl p-4 flex flex-col"><h2 class="text-[#ff9f1c] font-['Orbitron'] mb-4">SURAT JALAN</h2><input v-model="cartState.customerName" placeholder="Nama Penerima" class="bg-[#0f111a] border border-[#3a3962] rounded p-2 mb-4 text-white w-full"><div class="flex-1 overflow-y-auto space-y-2 mb-4 custom-scrollbar bg-[#0f111a] p-2 rounded"><div v-for="(c, idx) in cartState.items" :key="idx" class="flex justify-between items-center text-sm bg-[#222538] p-2 rounded"><span>{{ c.name }}</span><div class="flex items-center gap-1"><input v-model="c.qty" type="number" class="w-10 bg-black text-center text-white border border-[#3a3962]"><button @click="OutboundService.removeItem(idx)" class="text-red-500"><i class="mdi mdi-close"></i></button></div></div></div><button @click="handleCheckout" class="w-full py-3 bg-[#ff9f1c] text-black font-bold rounded font-['Orbitron'] hover:bg-white transition-colors">CETAK DO</button></div>
+                </div>
+                <div v-if="currentView === 'po'" class="space-y-4"><div class="flex justify-between sticky top-0 bg-[#171925] py-2 z-10"><h2 class="text-xl font-['Orbitron'] text-[#706bf3]">PO</h2><button @click="showPOModal=true" class="bg-[#706bf3] px-4 py-2 rounded text-white font-bold">BUAT PO</button></div><div class="grid gap-3"><div v-for="po in store.purchaseOrders" :key="po.id" class="bg-[#222538] p-4 rounded flex justify-between"><div><span class="text-[#706bf3] font-bold">{{ po.poNumber }}</span><div class="text-xs text-gray-400">{{ po.supplier }}</div></div><button v-if="po.status==='PENDING'" @click="InboundService.receivePO(po)" class="bg-green-600 px-3 rounded text-white text-xs font-bold">TERIMA</button></div></div></div>
+                <div v-if="currentView === 'transfer'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#2ec4b6]">TRANSFER</h2><div class="flex flex-col md:flex-row gap-6"><div class="flex-1 bg-[#222538] p-4 rounded"><input v-model="searchQuery" placeholder="Cari..." class="w-full bg-[#0f111a] p-2 rounded mb-3"><div class="h-64 overflow-y-auto space-y-2"><div v-for="item in filteredInventory" :key="item.id" @click="selectTransferItem(item)" class="p-2 border border-[#3a3962] rounded cursor-pointer" :class="transfer.selectedItem?.id===item.id?'border-[#2ec4b6]':''">{{ item.name }} ({{ item.stock }})</div></div></div><div class="w-full md:w-1/3 bg-[#0f111a] p-4 rounded border border-[#2ec4b6]"><select v-model="transfer.targetLocation" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><option value="MAIN">MAIN</option><option value="STORE_A">STORE A</option></select><input v-model="transfer.qty" type="number" class="bg-[#222538] w-full p-2 rounded mb-2 text-white"><button @click="processTransfer" class="w-full py-2 bg-[#2ec4b6] text-white font-bold rounded">KIRIM</button></div></div></div>
+                <div v-if="currentView === 'returns'" class="space-y-4"><h2 class="text-xl font-['Orbitron'] text-[#ef233c] mb-4">RETURNS</h2><div class="grid md:grid-cols-2 gap-6"><div class="bg-[#222538] p-6 rounded border border-[#ef233c] cursor-pointer hover:bg-[#ef233c]/10" @click="openReturnModal('CUSTOMER_RETURN')"><h3 class="font-bold text-[#ef233c]">CUSTOMER RETUR (+)</h3></div><div class="bg-[#222538] p-6 rounded border border-yellow-500 cursor-pointer hover:bg-yellow-500/10" @click="openReturnModal('SUPPLIER_RETURN')"><h3 class="font-bold text-yellow-500">SUPPLIER RETUR (-)</h3></div></div></div>
+
+                <div v-if="currentView === 'history'" class="space-y-4 animate_animated animate_fadeIn p-4">
+                    <h2 class="text-xl font-['Orbitron'] text-white">ACTIVITY LOGS</h2>
+                    <div class="bg-[#0f111a] border border-[#3a3962] rounded overflow-hidden">
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-sm text-left text-gray-400 whitespace-nowrap">
+                                <thead class="bg-[#222538] text-xs uppercase text-white font-bold sticky top-0">
+                                    <tr>
+                                        <th class="p-3 w-32">TANGGAL</th>
+                                        <th class="p-3 w-20">TYPE</th>
+                                        <th class="p-3">ITEM</th>
+                                        <th class="p-3 text-right">QTY</th>
+                                        <th class="p-3 text-left w-1/3">KETERANGAN</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#3a3962]">
+                                    <tr v-for="log in store.logs" :key="log.id" class="hover:bg-[#1e2130] transition-colors">
+                                        <td class="p-3 text-xs font-mono">{{ new Date(log.date).toLocaleString() }}</td>
+                                        <td class="p-3">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border"
+                                                  :class="{
+                                                      'border-green-500 text-green-500 bg-green-500/10': log.type === 'IN' || log.type === 'ADJUST_IN',
+                                                      'border-red-500 text-red-500 bg-red-500/10': log.type === 'OUT' || log.type === 'ADJUST_OUT',
+                                                      'border-[#ff9f1c] text-[#ff9f1c] bg-[#ff9f1c]/10': log.type === 'SYSTEM'
+                                                  }">
+                                                {{ log.type }}
+                                            </span>
+                                        </td>
+                                        <td class="p-3 text-white font-bold">{{ log.itemName }}</td>
+                                        <td class="p-3 text-right font-mono" :class="log.qty > 0 ? 'text-green-400' : 'text-red-400'">
+                                            {{ log.qty > 0 ? '+' : '' }}{{ log.qty }}
+                                        </td>
+                                        <td class="p-3 text-gray-300 italic text-xs">
+                                            {{ log.description || '-' }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 pointer-events-none">
+        <transition-group name="toast">
+            <div v-for="notif in notifications" :key="notif.id"
+                 class="pointer-events-auto bg-[#171925]/95 border-2 p-6 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center gap-4 backdrop-blur-xl min-w-[320px] max-w-[90%]"
+                 :class="notif.type === 'success' ? 'border-[#54d7f6]' : 'border-red-500'">
+
+                <div class="w-24 h-24 relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-full h-full">
+                        <defs>
+                            <linearGradient id="live_grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#2d2f45"><animate attributeName="stop-color" values="#2d2f45;#1a1a2e;#2d2f45" dur="8s" repeatCount="indefinite"/></stop>
+                                <stop offset="50%" stop-color="#706bf3"><animate attributeName="stop-color" values="#706bf3;#9b5de5;#706bf3" dur="8s" repeatCount="indefinite"/></stop>
+                                <stop offset="100%" stop-color="#54d7f6"><animate attributeName="stop-color" values="#54d7f6;#00f2ff;#54d7f6" dur="8s" repeatCount="indefinite"/></stop>
+                            </linearGradient>
+                            <style>
+                                .body-breathe { animation: breatheAnim 4s ease-in-out infinite; transform-origin: center; }
+                                .gold-pulse { animation: goldThroat 2s ease-in-out infinite alternate; filter: drop-shadow(0 0 5px #ffd700); }
+                                @keyframes breatheAnim { 0%, 100% { filter: drop-shadow(0 0 2px rgba(84,215,246,0.3)); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px rgba(112,107,243,0.6)); transform: scale(1.02); } }
+                                @keyframes goldThroat { from { stroke-opacity: 0.8; stroke-width: 8; filter: drop-shadow(0 0 2px #ffd700); } to { stroke-opacity: 1; stroke-width: 10; filter: drop-shadow(0 0 12px #ffd700); } }
+                            </style>
+                        </defs>
+                        <g class="body-breathe">
+                            <path d="M100 80 L 220 80 L 220 200 L 160 200 L 160 432 L 100 432 Z" fill="url(#live_grad)" stroke="#3a3962" stroke-width="4"/>
+                            <path d="M260 80 L 412 80 L 412 180 L 260 180 Z" fill="#54d7f6" opacity="0.9"><animate attributeName="opacity" values="0.9;0.7;0.9" dur="3s" repeatCount="indefinite"/></path>
+                            <path d="M260 220 L 360 220 L 360 320 L 260 320 Z" fill="#706bf3" opacity="0.9"><animate attributeName="opacity" values="0.9;0.6;0.9" dur="4s" repeatCount="indefinite"/></path>
+                        </g>
+                        <g class="gold-pulse">
+                            <path d="M220 130 L 260 130" stroke="#ffd700" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M220 270 L 260 270" stroke="#ffd700" stroke-width="8" stroke-linecap="round"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="text-center">
+                    <h4 class="font-black text-2xl mb-1 font-['Orbitron'] tracking-widest"
+                        :class="notif.type === 'success' ? 'text-[#54d7f6]' : 'text-red-500'">
+                        {{ notif.title }}
+                    </h4>
+                    <p class="text-sm text-gray-300 font-bold px-4">{{ notif.message }}</p>
+                </div>
+            </div>
+        </transition-group>
+    </div>
+
+    <div v-if="showSettingsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="bg-[#171925] border border-[#706bf3] w-full max-w-md rounded-xl p-6 relative shadow-[0_0_50px_rgba(112,107,243,0.2)] max-h-[90vh] overflow-y-auto">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#706bf3] to-[#54d7f6]"></div>
+            <h3 class="font-['Orbitron'] text-2xl text-white mb-6 flex items-center gap-2">
+                <i class="mdi mdi-store-cog text-[#706bf3]"></i> SYSTEM SETUP
+            </h3>
+            <div class="space-y-4 mb-6">
+                <div><label class="text-xs text-gray-500 uppercase font-bold">Nama Toko (Header Struk)</label><input v-model="storeProfile.name" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#706bf3] outline-none"></div>
+                <div><label class="text-xs text-gray-500 uppercase font-bold">Alamat / Baris 2</label><input v-model="storeProfile.address" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#706bf3] outline-none"></div>
+                <div><label class="text-xs text-gray-500 uppercase font-bold">Footer Struk (Pesan)</label><input v-model="storeProfile.footer" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#706bf3] outline-none"></div>
+            </div>
+
+            <div class="border-t border-[#3a3962] pt-4">
+                <h4 class="text-[#54d7f6] font-bold text-sm mb-2">DATABASE MANAGEMENT</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <button @click="downloadBackup" class="p-3 bg-[#0f111a] border border-[#54d7f6] text-[#54d7f6] rounded text-xs font-bold hover:bg-[#54d7f6] hover:text-black transition-colors flex flex-col items-center gap-1">
+                        <i class="mdi mdi-download text-xl"></i> BACKUP DATA
+                    </button>
+                    <label class="p-3 bg-[#0f111a] border border-[#ff9f1c] text-[#ff9f1c] rounded text-xs font-bold hover:bg-[#ff9f1c] hover:text-black transition-colors flex flex-col items-center gap-1 cursor-pointer">
+                        <i class="mdi mdi-upload text-xl"></i> RESTORE DATA
+                        <input type="file" @change="restoreBackup" class="hidden" accept=".json">
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button @click="showSettingsModal=false" class="flex-1 py-3 border border-gray-600 rounded text-gray-400 hover:text-white">BATAL</button>
+                <button @click="saveStoreProfile" class="flex-1 py-3 bg-[#706bf3] text-white rounded font-bold shadow-lg hover:bg-[#5e58db]">SIMPAN</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-[#171925] border border-[#54d7f6] w-full max-w-lg rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex border-b border-[#3a3962] shrink-0">
+                <button @click="addMode='single'" class="flex-1 py-3 font-bold text-sm" :class="addMode==='single'?'bg-[#54d7f6] text-black':'text-gray-500'">SINGLE</button>
+                <button @click="addMode='variant'" class="flex-1 py-3 font-bold text-sm" :class="addMode==='variant'?'bg-[#ff9f1c] text-black':'text-gray-500'">VARIANT</button>
+                <button @click="addMode='bundle'" class="flex-1 py-3 font-bold text-sm" :class="addMode==='bundle'?'bg-[#9d4edd] text-white':'text-gray-500'">BUNDLE</button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+                <input v-model="newItem.name" placeholder="Nama Barang" class="w-full bg-[#222538] p-3 rounded text-white border border-[#3a3962]">
+                <div v-if="addMode==='bundle'" class="bg-[#9d4edd]/10 p-2 rounded"><div class="h-20 overflow-y-auto mb-2 custom-scrollbar"><div v-for="item in store.inventory" :key="item.id" class="flex justify-between p-1 hover:bg-[#222538] text-sm"><span>{{ item.name }}</span><button @click="addBundleComponent(item)" class="text-[#9d4edd] font-bold">+</button></div></div><div v-if="bundleComponents.length>0" class="text-xs"><div v-for="(c,i) in bundleComponents" :key="i">{{ c.name }} ({{ c.qty }})</div></div></div>
+                <div v-if="addMode==='variant'"><input v-model="newItem.variantString" placeholder="Varian: S, M, L (Pisahkan Koma)" class="w-full bg-[#0f111a] p-3 rounded text-white border border-[#ff9f1c]"></div>
+                <div class="grid grid-cols-2 gap-4"><input v-model="newItem.sku" placeholder="SKU" class="bg-[#222538] p-2 rounded text-white"><input v-model="newItem.stock" type="number" placeholder="Stok" class="bg-[#222538] p-2 rounded text-white"></div>
+                <div class="grid grid-cols-2 gap-4"><input v-model="newItem.buyPrice" type="number" placeholder="HPP" class="bg-[#222538] p-2 rounded text-white"><input v-model="newItem.sellPrice" type="number" placeholder="Jual" class="bg-[#222538] p-2 rounded text-white"></div>
+            </div>
+            <div class="flex gap-3 p-4 border-t border-[#3a3962] shrink-0"><button @click="showAddModal=false" class="flex-1 py-3 border border-gray-600 rounded text-gray-400">BATAL</button><button @click="saveNewItem" class="flex-1 py-3 bg-[#54d7f6] text-black rounded font-bold">SIMPAN</button></div>
+        </div>
+    </div>
+    <div v-if="showScanner" class="fixed inset-0 z-50 bg-black flex flex-col"><div class="p-4 flex justify-between items-center bg-[#0f111a] border-b border-[#3a3962]"><span class="font-['Orbitron'] text-white">SCANNER: {{ scannerMode }}</span><button @click="closeScanner" class="text-red-500 relative z-50 p-2 bg-red-900/20 rounded-full border border-red-500/50"><i class="mdi mdi-close text-2xl"></i></button></div><div class="flex-1 relative flex items-center justify-center bg-black"><div id="reader" class="w-full max-w-sm"></div></div></div>
+    <div v-if="showPOModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"><div class="bg-[#171925] border border-[#706bf3] w-full max-w-lg rounded-xl p-6 space-y-4"><h3 class="font-['Orbitron'] text-[#706bf3]">PO</h3><input v-model="newPO.supplier" placeholder="Supplier" class="w-full bg-[#222538] p-2 rounded text-white"><div class="border border-[#3a3962] rounded p-2 h-40 overflow-y-auto"><div v-for="item in store.inventory" :key="item.id" class="flex justify-between p-2 hover:bg-[#222538]"><span class="text-sm">{{ item.name }}</span><button @click="newPO.items.push({id:item.id, name:item.name, qty:10})" class="text-[#54d7f6] text-xs font-bold">+ ADD</button></div></div><div class="flex gap-2"><button @click="showPOModal=false" class="flex-1 py-2 border border-gray-600 rounded">BATAL</button><button @click="createPO" class="flex-1 py-2 bg-[#706bf3] text-white rounded font-bold">BUAT</button></div></div></div>
+    <div v-if="showReturnModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"><div class="bg-[#171925] border border-[#ef233c] w-full max-w-md rounded-xl p-6 space-y-4"><h3 class="font-['Orbitron'] text-[#ef233c]">RETUR</h3><select v-model="returnForm.selectedItemId" class="w-full bg-[#222538] p-2 rounded text-white"><option v-for="item in store.inventory" :value="item.id">{{ item.name }}</option></select><input v-model="returnForm.qty" type="number" placeholder="Jml" class="w-full bg-[#222538] p-2 rounded text-white"><input v-model="returnForm.reason" placeholder="Alasan" class="w-full bg-[#222538] p-2 rounded text-white"><button @click="executeReturn" class="w-full py-3 bg-[#ef233c] text-white font-bold rounded">PROSES</button><button @click="showReturnModal=false" class="w-full py-2 text-gray-400">BATAL</button></div></div>
+
+    <div v-if="showAdjustModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-[#171925] border border-[#ff9f1c] w-full max-w-sm rounded-xl p-6 shadow-[0_0_30px_rgba(255,159,28,0.3)]">
+            <h3 class="font-['Orbitron'] text-[#ff9f1c] text-xl mb-1">MANUAL ADJUSTMENT</h3>
+            <p class="text-xs text-gray-500 mb-4">{{ adjustForm.itemName }}</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold">Stok Saat Ini</label>
+                    <div class="text-white font-mono text-lg">{{ adjustForm.oldStock }}</div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold">Stok Sebenarnya (Fisik)</label>
+                    <input v-model="adjustForm.newStock" type="number" min="0" class="w-full bg-[#0f111a] border border-[#3a3962] p-3 rounded text-white focus:border-[#ff9f1c] outline-none font-bold text-lg">
+                    <p class="text-[10px] mt-1" :class="adjustForm.newStock > adjustForm.oldStock ? 'text-green-500' : 'text-red-500'">
+                        Selisih: {{ adjustForm.newStock - adjustForm.oldStock > 0 ? '+' : ''}}{{ adjustForm.newStock - adjustForm.oldStock }}
+                    </p>
+                </div>
+
+                <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold">Alasan Perubahan</label>
+                    <select v-model="adjustForm.reason" class="w-full bg-[#222538] border border-[#3a3962] p-2 rounded text-white text-sm">
+                        <option value="Rusak / Expired">Rusak / Expired (Kurang)</option>
+                        <option value="Hilang / Selisih">Hilang (Kurang)</option>
+                        <option value="Bonus Supplier">Bonus Supplier (Tambah)</option>
+                        <option value="Salah Input Awal">Salah Input Awal (Koreksi)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button @click="showAdjustModal=false" class="flex-1 py-3 border border-gray-600 rounded text-gray-400 hover:text-white">BATAL</button>
+                <button @click="saveAdjustment" class="flex-1 py-3 bg-[#ff9f1c] text-[#171925] rounded font-bold hover:bg-white transition-colors">UPDATE</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showArchiveModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-[#171925] border border-red-500 w-full max-w-sm rounded-xl p-6 shadow-[0_0_30px_rgba(239,35,60,0.3)]">
+            <h3 class="font-['Orbitron'] text-red-500 text-xl mb-1">
+                {{ archiveForm.isActive ? 'ARSIPKAN BARANG?' : 'RESTORE BARANG?' }}
+            </h3>
+            <p class="text-xs text-gray-500 mb-4">{{ archiveForm.itemName }}</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold">Alasan</label>
+                    <select v-model="archiveForm.reason" class="w-full bg-[#222538] border border-[#3a3962] p-2 rounded text-white text-sm">
+                        <option value="Discontinue / Tidak Dijual Lagi">Discontinue / Tidak Dijual Lagi</option>
+                        <option value="Produk Cacat / Rusak Total">Produk Cacat / Rusak Total</option>
+                        <option value="Salah Input Data">Salah Input Data</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div v-if="archiveForm.reason === 'Lainnya'">
+                    <input v-model="archiveForm.customReason" placeholder="Tulis alasan..." class="w-full bg-[#0f111a] border border-[#3a3962] p-2 rounded text-white text-sm outline-none focus:border-red-500">
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button @click="showArchiveModal=false" class="flex-1 py-3 border border-gray-600 rounded text-gray-400 hover:text-white">BATAL</button>
+                <button @click="confirmArchive" class="flex-1 py-3 bg-red-500 text-white rounded font-bold hover:bg-white hover:text-red-500 transition-colors">
+                    {{ archiveForm.isActive ? 'ARSIPKAN' : 'RESTORE' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { createApp, ref, computed, onMounted, reactive } from 'vue';
+    import { DriveAdapter, initFloworkBridge, isDriveConnected } from './js/drive-adapter.js';
+    import { store, StorageManager } from './js/store.js';
+    import { InventoryService } from './js/services/inventory.js';
+    import { OutboundService, cartState } from './js/services/outbound.js';
+    import { InboundService } from './js/services/inbound.js';
+    import { TransferService } from './js/services/transfer.js';
+    import { ReturnService } from './js/services/returns.js';
+    import { AnalyticsService } from './js/services/analytics.js';
+    import { ExportService } from './js/services/export.js';
+    import { POSService, posState } from './js/services/pos.js';
+    import { PredictionService } from './js/services/predictor.js';
+    import { WhatsAppService } from './js/services/wa-bridge.js';
+
+    createApp({
+        setup() {
+            onMounted(() => {
+                initFloworkBridge();
+                StorageManager.init();
+                DriveAdapter.init();
+                const savedProfile = localStorage.getItem('ss_profile');
+                if(savedProfile) storeProfile.value = JSON.parse(savedProfile);
+            });
+
+            // STATE
+            const currentView = ref('pos');
+            const searchQuery = ref('');
+            const showSidebar = ref(false);
+            const showMobileCart = ref(false);
+            const showAddModal = ref(false), addMode = ref('single');
+            const showPOModal = ref(false), showReturnModal = ref(false);
+            const showSettingsModal = ref(false);
+            const showScanner = ref(false), scannerMode = ref('inventory');
+            const html5QrCode = ref(null);
+            const notifications = ref([]);
+
+            // --- STATE BARU: ADJUSTMENT & ARCHIVE MODAL ---
+            const showAdjustModal = ref(false);
+            const adjustForm = reactive({ id: null, itemName: '', oldStock: 0, newStock: 0, reason: 'Salah Input Awal' });
+
+            const showArchiveModal = ref(false);
+            const archiveForm = reactive({ id: null, itemName: '', isActive: true, reason: 'Discontinue / Tidak Dijual Lagi', customReason: '' });
+
+            const showArchived = ref(false); // Toggle Filter Arsip
+            // ----------------------------------------------
+
+            // FORMS
+            const newItem = ref({ name: '', sku: '', stock: 0, buyPrice: 0, sellPrice: 0, variantString: '' });
+            const storeProfile = ref({ name: 'TOKO STOCK SENTRY', address: 'Jl. Digital No. 1', footer: 'Terima Kasih!' });
+            const bundleComponents = ref([]);
+            const newPO = ref({ supplier: '', items: [] });
+            const transfer = reactive({ selectedItem: null, targetLocation: 'STORE_A', qty: 0 });
+            const returnForm = reactive({ type: '', selectedItemId: null, qty: 0, reason: '' });
+
+            // COMPUTED
+            const filteredInventory = computed(() => {
+                let data = store.inventory;
+
+                // --- FILTER LOGIC (ARCHIVE TOGGLE) ---
+                if (showArchived.value) {
+                    // Jika toggle ON: Tampilkan HANYA yang diarsip
+                    data = data.filter(i => i.isActive === false);
+                } else {
+                    // Jika toggle OFF (Default): Tampilkan yang AKTIF saja
+                    data = data.filter(i => i.isActive !== false);
+                }
+                // -------------------------------------
+
+                if(searchQuery.value) {
+                    const q = searchQuery.value.toLowerCase();
+                    data = data.filter(i => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q));
+                }
+                return data;
+            });
+
+            const financials = computed(() => {
+                // UPDATE: HANYA HITUNG ASSET DARI BARANG AKTIF
+                const activeItems = store.inventory.filter(i => i.isActive !== false);
+                const totalAssets = activeItems.reduce((acc, i) => acc + (i.buyPrice * i.stock), 0);
+                return { totalAssets };
+            });
+
+            // UPDATE: DEAD STOCK JUGA HANYA YG AKTIF
+            const deadStockItems = computed(() => store.inventory.filter(i => i.stock <= 5 && i.isActive !== false));
+
+            const profitData = computed(() => AnalyticsService.getProfitAnalysis());
+            const fastMoving = computed(() => AnalyticsService.getFastMoving());
+            const deadStock = computed(() => AnalyticsService.getDeadStock());
+            const posTotal = computed(() => POSService.calculateTotal());
+
+            // ACTIONS & HELPERS
+            const notify = (title, message, type = 'success') => {
+                const id = Date.now();
+                notifications.value.push({ id, title, message, type });
+                setTimeout(() => { notifications.value = notifications.value.filter(n => n.id !== id) }, 3000);
+            };
+
+            const switchView = (view) => { currentView.value = view; showSidebar.value = false; };
+            const openSettings = () => showSettingsModal.value = true;
+            const saveStoreProfile = () => {
+                localStorage.setItem('ss_profile', JSON.stringify(storeProfile.value));
+                showSettingsModal.value = false;
+                notify('Sukses', 'Profil Toko Disimpan!');
+            };
+
+            const addBundleComponent = (item) => {
+                const exist = bundleComponents.value.find(c=>c.id===item.id);
+                if(!exist) bundleComponents.value.push({id:item.id, name:item.name, qty:1});
+            };
+
+            const saveNewItem = () => {
+                if (addMode.value === 'single') { if(InventoryService.add(newItem.value)) { closeAddModal(); notify('Barang Baru', 'Item Single ditambahkan'); } }
+                else if (addMode.value === 'variant') { if(InventoryService.addBatch(newItem.value, newItem.value.variantString.split(','))) { closeAddModal(); notify('Barang Baru', 'Varian Item ditambahkan'); } }
+                else if (addMode.value === 'bundle') { if(InventoryService.addBundle(newItem.value, bundleComponents.value)) { closeAddModal(); notify('Barang Baru', 'Paket Bundle dibuat'); } }
+            };
+
+            const closeAddModal = () => { showAddModal.value = false; newItem.value = {name:'', sku:'', stock:0}; bundleComponents.value = []; };
+            const handleCheckout = () => { if(OutboundService.processCheckout()) notify('Logistik', 'Surat Jalan Dicetak'); };
+            const createPO = () => { if(InboundService.createPO(newPO.value.supplier, newPO.value.items)) { showPOModal.value = false; notify('Inbound', 'PO Berhasil Dibuat'); } };
+            const selectTransferItem = (item) => transfer.selectedItem = item;
+            const processTransfer = () => { if(TransferService.moveStock(transfer.selectedItem, transfer.targetLocation, transfer.qty, 'Manual')) { notify('Transfer', 'Stok berhasil dipindah'); transfer.selectedItem = null; } };
+            const openReturnModal = (type) => { returnForm.type = type; showReturnModal.value = true; };
+            const executeReturn = () => { const item = store.inventory.find(i => i.id === returnForm.selectedItemId); if(ReturnService.processReturn(item, returnForm.qty, returnForm.type, returnForm.reason)) { notify('Retur', 'Retur Berhasil Diproses'); showReturnModal.value = false; } };
+
+            // --- FUNGSI ADJUSTMENT ---
+            const openAdjustModal = (item) => {
+                adjustForm.id = item.id;
+                adjustForm.itemName = item.name;
+                adjustForm.oldStock = item.stock;
+                adjustForm.newStock = item.stock; // Default sama
+                showAdjustModal.value = true;
+            };
+
+            const saveAdjustment = () => {
+                const item = store.inventory.find(i => i.id === adjustForm.id);
+                if(item) {
+                    const success = InventoryService.adjustStock(item, adjustForm.newStock, adjustForm.reason);
+                    if(success) notify('Adjustment', 'Stok berhasil diperbarui manual');
+                    else notify('Info', 'Tidak ada perubahan stok', 'warning');
+                }
+                showAdjustModal.value = false;
+            };
+
+            // --- FUNGSI ARCHIVE (NEW) ---
+            const openArchiveModal = (item) => {
+                archiveForm.id = item.id;
+                archiveForm.itemName = item.name;
+                archiveForm.isActive = item.isActive !== false; // Check status
+                archiveForm.reason = 'Discontinue / Tidak Dijual Lagi';
+                archiveForm.customReason = '';
+                showArchiveModal.value = true;
+            };
+
+            const confirmArchive = () => {
+                const item = store.inventory.find(i => i.id === archiveForm.id);
+                if(item) {
+                    const finalReason = archiveForm.reason === 'Lainnya' ? archiveForm.customReason : archiveForm.reason;
+                    InventoryService.toggleArchive(item, finalReason);
+                    notify('System', `Item berhasil di-${archiveForm.isActive ? 'arsipkan' : 'restore'}`);
+                }
+                showArchiveModal.value = false;
+            };
+            // ------------------------------
+
+            // --- HANDLE POS WITH NOTIFY ---
+            const processPOS = () => {
+                const total = posTotal.value - posState.discount;
+                if(posState.cashGiven < total) {
+                    notify('TRANSAKSI GAGAL', `Uang Kurang ${formatRupiah(total - posState.cashGiven)}`, 'error');
+                    return;
+                }
+                const result = POSService.processPayment();
+                if(result.success) {
+                    notify('TRANSAKSI SUKSES', 'Struk sedang dicetak...');
+                } else {
+                    notify('TRANSAKSI GAGAL', result.message, 'error');
+                }
+            };
+
+            // --- HANDLE ADD TO CART WITH NOTIFY ---
+            const handleAddToCart = (item) => {
+                const result = POSService.addToCart(item);
+                if(!result.success) {
+                    notify('GAGAL', result.message, 'error');
+                }
+            };
+
+            const openScanner = (mode) => {
+                scannerMode.value = mode; showScanner.value = true;
+                setTimeout(() => {
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    html5QrCode.value = new Html5Qrcode("reader");
+                    html5QrCode.value.start({ facingMode: "environment" }, config, (decodedText) => handleScan(decodedText));
+                }, 100);
+            };
+            const handleScan = (code) => {
+                const item = store.inventory.find(i => i.sku === code);
+                if (item) {
+                    if (scannerMode.value === 'inventory') {
+                        notify('SCANNER', `${item.name} | Stok: ${item.stock}`);
+                    } else if (scannerMode.value === 'opname') {
+                        // FIX: Gunakan Modal Adjustment, bukan Prompt
+                        openAdjustModal(item);
+                        notify('OPNAME', 'Silakan input stok fisik');
+                    }
+                    closeScanner();
+                } else notify('Error', "SKU Tidak Dikenal: " + code, 'error');
+            };
+            const closeScanner = async () => {
+                try {
+                    if(html5QrCode.value) await html5QrCode.value.stop().then(() => html5QrCode.value.clear());
+                } catch(e) { console.log("Force closing scanner"); }
+                showScanner.value = false;
+            };
+
+            // --- BACKUP & RESTORE ---
+            const downloadBackup = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localStorage));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "stock_sentry_backup_" + new Date().toISOString().slice(0,10) + ".json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+                notify('BACKUP', 'Data berhasil didownload');
+            };
+
+            const restoreBackup = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(data.ss_admin_v1) { // Simple validation check
+                            localStorage.clear();
+                            Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+                            notify('RESTORE SUKSES', 'Memuat ulang aplikasi...', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            notify('ERROR', 'File backup tidak valid!', 'error');
+                        }
+                    } catch(err) { notify('ERROR', 'Gagal membaca file', 'error'); }
+                };
+                reader.readAsText(file);
+            };
+
+            const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+            const getDaysLeft = (item) => PredictionService.predictDaysLeft(item);
+
+            return {
+                store, currentView, searchQuery, isDriveConnected,
+                showSidebar, showMobileCart, switchView,
+                filteredInventory, financials, deadStockItems, profitData, fastMoving, deadStock,
+                posState, posTotal, cartState,
+                showAddModal, addMode, showPOModal, showReturnModal, showScanner, scannerMode,
+                newItem, newPO, bundleComponents, transfer, returnForm,
+                showSettingsModal, storeProfile, notifications,
+                saveNewItem, addBundleComponent, handleCheckout, createPO, selectTransferItem, processTransfer, openReturnModal, executeReturn,
+                processPOS, openSettings, saveStoreProfile,
+                InventoryService, OutboundService, InboundService, POSService, WhatsAppService,
+                openScanner, closeScanner, formatRupiah, getDaysLeft, connectDrive: () => DriveAdapter.init(),
+                downloadReport: () => ExportService.downloadExcel(),
+                // --- RETURN VARIABLE BARU ---
+                showAdjustModal, adjustForm, openAdjustModal, saveAdjustment,
+                showArchiveModal, archiveForm, openArchiveModal, confirmArchive,
+                handleAddToCart, downloadBackup, restoreBackup, showArchived
+            };
+        }
+    }).mount('#stock-app');
+</script>

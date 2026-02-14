@@ -1,0 +1,27 @@
+{
+    "id": "story-sequencer",
+    "name": "STORY SEQUENCER - AUTO GENERATE SLIDE TIKTOK & IG DENGAN UNIQUE FINGERPRINT",
+    "version": "1.0.0",
+    "description": "Engine brutal buat bikin konten slide TikTok/IG secara massal. Dilengkapi fitur Random Noise & Frame untuk memanipulasi hash gambar agar terdeteksi unik oleh algoritma. Sekali klik jadi ZIP.",
+    "author": "Flowork Cyber Division",
+    "tier": "free",
+    "type": "apps",
+    "entry_point": "index.html",
+    "icon_file": "icon.svg",
+    "default_width": 12,
+    "default_height": 10,
+    "slug": "story-sequencer",
+    "capabilities": [
+        "canvas_rendering",
+        "file_system",
+        "client_side_only",
+        "batch_processing"
+    ],
+    "tags": [
+        "content automation",
+        "tiktok tools",
+        "image processing",
+        "anti-detect",
+        "bulk editor"
+    ]
+}
